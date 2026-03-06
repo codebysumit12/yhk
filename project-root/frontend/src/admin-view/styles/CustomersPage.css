@@ -1,0 +1,39 @@
+.customers-page {
+  background: var(--bg2);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.customers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.customers-header input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customers-table th,
+.customers-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.customers-table th {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.customers-table tr:hover {
+  background: var(--bg);
+}
