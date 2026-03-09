@@ -1,0 +1,168 @@
+:root {
+    --zomato-red: #e23744;
+    --zomato-dark: #1c1c1c;
+    --zomato-gray: #828282;
+    --zomato-light: #f8f8f8;
+    --zomato-border: #e8e8e8;
+    --zomato-green: #22c55e;
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.1);
+    --shadow-hover: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+/* Restaurant/Category Grid */
+.restaurant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+/* Restaurant/Category Card */
+.restaurant-card {
+    border: 1px solid var(--zomato-border);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+    background: white;
+}
+
+.restaurant-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-5px);
+}
+
+/* Category Image Container */
+.restaurant-image {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+
+.restaurant-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.restaurant-card:hover .restaurant-image img {
+    transform: scale(1.1);
+}
+
+/* Category Icon Placeholder */
+.category-icon-placeholder {
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    transition: transform 0.3s;
+}
+
+.restaurant-card:hover .category-icon-placeholder {
+    transform: scale(1.1);
+}
+
+.category-icon {
+    font-size: 64px;
+}
+
+/* Discount Badge - Bottom Left */
+.discount-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: var(--zomato-green);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Restaurant Info Section - LEFT ALIGNED */
+.restaurant-info {
+    padding: 15px;
+    text-align: left; /* ← ADDED: Force left alignment */
+}
+
+/* Category Name - LEFT ALIGNED */
+.restaurant-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--zomato-dark);
+    text-align: left; /* ← ADDED: Force left alignment */
+}
+
+/* Category Description - LEFT ALIGNED */
+.restaurant-cuisine {
+    font-size: 13px;
+    color: var(--zomato-gray);
+    margin-bottom: 10px;
+    text-align: left; /* ← ADDED: Force left alignment */
+}
+
+/* Bottom Details Row */
+.restaurant-details {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-size: 13px;
+    color: var(--zomato-gray);
+    padding-top: 10px;
+    gap: 10px;
+    border-top: 1px solid var(--zomato-border);
+}
+
+/* Rating Badge */
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: white;
+    background: var(--zomato-green);
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+/* Item Count / Delivery Time */
+.delivery-time {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--zomato-gray);
+    font-size: 13px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .restaurant-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .restaurant-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .restaurant-image {
+        height: 160px;
+    }
+    
+    .category-icon-placeholder {
+        height: 160px;
+        font-size: 48px;
+    }
+    
+    .category-icon {
+        font-size: 48px;
+    }
+}

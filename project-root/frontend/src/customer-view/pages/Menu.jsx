@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
+import Nav from './Nav';
 import './Menu.css';
+import './ItemsCard.css';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -14,14 +16,23 @@ const Menu = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('popular');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch categories and items
+  // Fetch categories, items and banners
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch banners
+        const bannersResponse = await fetch(`${API_URL}/banners?position=hero&isActive=true`);
+        const bannersData = await bannersResponse.json();
+        
+        if (bannersData.success) {
+          setBanners(bannersData.data);
+        }
+
         const categoriesResponse = await fetch(`${API_URL}/categories?isActive=true`);
         const categoriesData = await categoriesResponse.json();
         
@@ -50,7 +61,7 @@ const Menu = () => {
     };
 
     fetchData();
-  }, [urlCategoryId]);
+  }, [urlCategoryId, activeCategory]);
 
   // Handle item detail view from URL
   useEffect(() => {
@@ -67,7 +78,10 @@ const Menu = () => {
   }, [searchParams, items]);
 
   const getFilteredItems = () => {
-    let filtered = filteredItems;
+    let filtered = items.filter(item => {
+      const itemCategoryId = typeof item.category === 'object' ? item.category._id : item.category;
+      return itemCategoryId === activeCategory;
+    });
     
     // Apply search filter
     if (searchTerm) {
@@ -127,12 +141,10 @@ const Menu = () => {
     }
   };
 
-  const activeCategoryData = categories.find(cat => cat._id === activeCategory);
   
-  const filteredItems = items.filter(item => {
-    const itemCategoryId = typeof item.category === 'object' ? item.category._id : item.category;
-    return itemCategoryId === activeCategory;
-  });
+  // Get hero banner from backend
+  const heroBanner = banners.find(banner => banner.position === 'hero');
+  const bannerImage = heroBanner?.image?.url || heroBanner?.imageUrl || 'https://media.istockphoto.com/id/893041924/photo/masala-oats-upma-is-a-healthy-breakfast-menu-from-india.jpg?s=170667a&w=0&k=20&c=pZ-W1UxhHrV7bHRmLgs7eeNGvaMmvL8ymjxYPob2Kig=';
 
   if (loading) {
     return (
@@ -161,19 +173,15 @@ const Menu = () => {
                         'https://via.placeholder.com/1200x400?text=No+Image';
     
     return (
-      <div className="menu-page">
-        <section 
-          className="menu-hero" 
-          style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${primaryImage}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
+      <>
+        <Nav />
+        <div className="menu-page">
+        <section className="menu-hero" style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${primaryImage}')` 
+        }}>
           <div className="menu-hero-content">
             <button className="back-btn" onClick={handleBackToMenu}>
-              <i className="fas fa-arrow-left"></i> Back to Menu
+              <i className="fas fa-arrow-left"></i> Back to Home
             </button>
             <h1>{selectedItem.name}</h1>
             <p>{selectedItem.description}</p>
@@ -417,6 +425,7 @@ const Menu = () => {
           </button>
         )}
       </div>
+      </>
     );
   }
 
@@ -424,24 +433,32 @@ const Menu = () => {
 // MAIN MENU VIEW
 // ========================================
 return (
-  <div className="menu-page">
+  <>
+    <Nav />
+    <div className="related-page">
     <section 
-      className="menu-hero"
+      className="related-hero"
       style={{
-        backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(https://media.istockphoto.com/id/893041924/photo/masala-oats-upma-is-a-healthy-breakfast-menu-from-india.jpg?s=170667a&w=0&k=20&c=pZ-W1UxhHrV7bHRmLgs7eeNGvaMmvL8ymjxYPob2Kig=)',
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(46, 204, 113, 0.8)), url('${bannerImage}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}
     >
-      <div className="menu-hero-content">
-        <h1>Our Menu</h1>
-        <p>Explore our delicious range of dishes</p>
-      </div>
+    <div className="related-hero-content">
+      <button className="back-btn" onClick={() => navigate('/')}>
+        <i className="fas fa-arrow-left"></i> Back to Restaurant
+      </button>
+      <h1>
+        {categories.find(cat => cat._id === activeCategory)?.name || 'Our Menu'}
+      </h1>
+      <p>Explore our delicious range of dishes</p>
+    </div>
+
     </section>
 
-    {/* Filters Bar */}
     <div className="filters-container">
+    {/* Filters Bar */}
       <div className="related-filters">
         <div className="filter-group">
           <label>Sort by:</label>
@@ -454,7 +471,7 @@ return (
         </div>
         <div className="filter-group">
           <label>Search:</label>
-          <input 
+          <input  
             type="text" 
             placeholder="Search items..." 
             value={searchTerm}
@@ -462,87 +479,82 @@ return (
           />
         </div>
         <div className="item-count">
-          Showing {filteredItems.length} items
+          Showing {getFilteredItems().length} items
         </div>
       </div>
     </div>
 
-    {/* Main Content Area */}
-      {/* Menu Content */}
-      <main className="menu-content">
 
-        {filteredItems.length === 0 ? (
-          <div className="no-items">
-            <i className="fas fa-utensils"></i>
-            <p>No items available in this category</p>
-          </div>
-        ) : (
-          <div className="menu-items-grid">
-            {getFilteredItems().map(item => {
-              const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image';
-              
-              return (
-                <div 
-                  key={item._id} 
-                  className="menu-item-card clickable"
-                  onClick={() => handleItemClick(item)}
-                >
-                  {/* Image at top */}
-                  <div className="menu-item-image">
-                    <img src={itemImage} alt={item.name} />
-                    {item.discountPrice && (
-                      <span className="discount-badge">
-                        {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
-                      </span>
-                    )}
-                    {item.type && (
-                      <div className="type-indicator">
-                        {item.type === 'veg' && <span className="veg-badge">🟢</span>}
-                        {item.type === 'non-veg' && <span className="nonveg-badge">🔴</span>}
-                        {item.type === 'vegan' && <span className="vegan-badge">🌿</span>}
-                        {item.type === 'egg' && <span className="egg-badge">🥚</span>}
-                      </div>
-                    )}
-                  </div>
+ {/* Main Content Area */}
+<main className="menu-content">
 
-                  {/* Name below image */}
-                  <div className="menu-item-info">
-                    <h4>{item.name}</h4>
-                    {item.preparationTime && (
-                      <p className="prep-time">
-                        <i className="fas fa-clock"></i> {item.preparationTime} min
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Price and button at bottom */}
-                  <div className="menu-item-footer">
-                    <div className="price-section">
-                      {item.discountPrice ? (
-                        <>
-                          <span className="current-price">₹{item.discountPrice}</span>
-                          <span className="original-price">₹{item.price}</span>
-                        </>
-                      ) : (
-                        <span className="current-price">₹{item.price}</span>
-                      )}
-                    </div>
-                    <button 
-                      className="add-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(item);
-                      }}
-                    >
-                      <i className="fas fa-plus"></i> Add
-                    </button>
-                  </div>
+  {getFilteredItems().length === 0 ? (
+    <div className="no-items">
+      <i className="fas fa-utensils"></i>
+      <p>No items available in this category</p>
+    </div>
+  ) : (
+    <div className="menu-items-grid">
+      {getFilteredItems().map(item => {
+        const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop';
+        
+        return (
+          <div 
+            key={item._id} 
+            className="menu-item-card clickable"
+            onClick={() => handleItemClick(item)}
+          >
+            {/* Item Image */}
+            <div className="menu-item-image">
+              <img 
+                src={itemImage} 
+                alt={item.name}
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop';
+                }}
+              />
+              {/* Discount Badge */}
+              {item.discountPrice && (
+                <div className="discount-badge">
+                  {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
                 </div>
-              );
-            })}
+              )}
+            </div>
+
+            {/* Item Info */}
+            <div className="menu-item-info">
+              <h4>{item.name}</h4>
+              <p>{item.description || 'Delicious food item'}</p>
+
+              {/* Pricing Section */}
+              <div className="menu-item-pricing">
+                <div className="price-info">
+                  {item.discountPrice ? (
+                    <>
+                      <span className="original-price">₹{item.price}</span>
+                      <span className="discounted-price">₹{item.discountPrice}</span>
+                    </>
+                  ) : (
+                    <span className="discounted-price">₹{item.price}</span>
+                  )}
+                </div>
+                <button 
+                  className="add-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(item);
+                  }}
+                >
+                  Add +
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-      </main>
+        );
+      })}
+    </div>
+  )}
+</main>
 
       {/* Cart Sidebar */}
       <aside className={`cart-sidebar ${showCart ? 'open' : ''}`}>
@@ -594,7 +606,9 @@ return (
       </button>
     )}
   </div>
+  </>
 );
+
 };
 
 export default Menu;

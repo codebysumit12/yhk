@@ -7,8 +7,8 @@ const Main = ({ restaurants }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [heroBanner, setHeroBanner] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
 
   useEffect(() => {
     setFilteredRestaurants(restaurants);
@@ -64,31 +64,13 @@ const Main = ({ restaurants }) => {
     setFilteredRestaurants(filtered);
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const handleSearch = (query) => {
-    if (!query) {
-      setFilteredRestaurants(restaurants);
-      return;
-    }
-    const filtered = restaurants.filter(r => 
-      r.name.toLowerCase().includes(query.toLowerCase()) || 
-      r.cuisine.toLowerCase().includes(query.toLowerCase())
-    );
-    setFilteredRestaurants(filtered);
-  };
-
-  const handleCardClick = (restaurant) => {
-    // Navigate to related page with restaurant ID and name
-    navigate(`/related?id=${restaurant.id}&name=${encodeURIComponent(restaurant.name)}`);
-  };
-
   const handleCategoryClick = (category) => {
     // Navigate to menu page with category ID
     navigate(`/menu/${category._id}`);
   };
 
   return (
-    <>
+    <React.Fragment>
       {/* Navigation */}
       <Nav />
 
@@ -152,40 +134,47 @@ const Main = ({ restaurants }) => {
           </button>
         </div>
 
-        {/* Categories Grid */}
-        <h2 className="section-title">Food Categories</h2>
-        <div className="restaurant-grid">
-          {categories.map(category => (
-            <div 
-              key={category._id} 
-              className="restaurant-card"
-              onClick={() => handleCategoryClick(category)}
-              style={{ cursor: 'pointer' }}
-            > 
-              <div className="restaurant-image">
-                {category.imageUrl ? (
-                  <img src={category.imageUrl} alt={category.name} />
-                ) : (
-                  <div 
-                    className="category-icon-placeholder" 
-                    style={{ background: category.color + '20', color: category.color }}
-                  >
-                    <span className="category-icon">{category.icon}</span>
-                  </div>
-                )}
-                <div className="discount-badge">{category.itemCount || 0} items</div>
-              </div>
-              <div className="restaurant-info">
-                <div className="restaurant-name">{category.name}</div>
-                <div className="restaurant-cuisine">{category.description || 'Delicious food options'}</div>
-                <div className="restaurant-details">
-                  <span className="rating">★ {category.isActive ? 'Available' : 'Unavailable'}</span>
-                  <span className="delivery-time">📍 Order #{category.displayOrder}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+    {/* Categories Grid */}
+<div className="restaurant-grid">
+  {categories.map(category => (
+    <div 
+      key={category._id} 
+      className="restaurant-card"
+      onClick={() => handleCategoryClick(category)}
+    >
+      <div className="restaurant-image">
+        {category.imageUrl ? (
+          <img src={category.imageUrl} alt={category.name} />
+        ) : (
+          <div 
+            className="category-icon-placeholder" 
+            style={{ 
+              background: (category.color || '#22c55e') + '20', 
+              color: category.color || '#22c55e' 
+            }}
+          >
+            <span className="category-icon">{category.icon || '🍽️'}</span>
+          </div>
+        )}
+        {/* Discount Badge */}
+        {category.avgDiscount > 0 && (
+          <div className="discount-badge">{category.avgDiscount}% OFF</div>
+        )}
+      </div>
+      
+      <div className="restaurant-info">
+        <div className="restaurant-name">{category.name}</div>
+        <div className="restaurant-cuisine">
+          {category.description || 'Delicious food options'}
         </div>
+        <div className="restaurant-details">
+          <span className="rating">★ {category.avgRating || '4.5'}</span>
+          <span className="delivery-time">🍽️ {category.itemCount || 0} items</span>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
       </main>
 
       {/* Location Section */}
@@ -287,7 +276,7 @@ const Main = ({ restaurants }) => {
           2024 Yeswanth's Healthy Kitchen - All rights reserved
         </div>
       </footer>
-    </>
+    </React.Fragment>
   );
 };
 
