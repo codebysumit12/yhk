@@ -15,6 +15,24 @@ const itemSchema = new mongoose.Schema({
     trim: true
   },
   
+  rating: {
+    type: Number,
+    min: 0,
+    max: 5,
+    default: 4.5 // Default rating
+  },
+  
+  healthBenefits: [{
+    type: String,
+    trim: true
+  }],
+  
+  preparationSteps: [{
+    type: String,
+    trim: true,
+    maxlength: [500, 'Step cannot exceed 500 characters']
+  }],
+  
   description: {
     type: String,
     required: [true, 'Description is required'],
@@ -115,7 +133,10 @@ const itemSchema = new mongoose.Schema({
     protein: Number,
     carbs: Number,
     fat: Number,
-    fiber: Number
+    fiber: Number,
+    calories: Number,
+    sugar: Number,
+    sodium: Number
   },
   
   ratings: {

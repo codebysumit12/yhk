@@ -193,7 +193,9 @@ export const createItem = async (req, res) => {
       allergens,
       tags,
       displayOrder,
-      nutritionInfo
+      nutritionInfo,
+      rating, healthBenefits, preparationSteps,
+      isAvailable, isFeatured, isPopular,
     } = req.body;
 
     // Check if category exists
@@ -220,6 +222,8 @@ export const createItem = async (req, res) => {
     const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens) : allergens;
     const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
     const parsedNutrition = typeof nutritionInfo === 'string' ? JSON.parse(nutritionInfo) : nutritionInfo;
+    const parsedHealthBenefits = typeof healthBenefits === 'string' ? JSON.parse(healthBenefits) : healthBenefits;
+    const parsedPreparationSteps = typeof preparationSteps === 'string' ? JSON.parse(preparationSteps) : preparationSteps;
 
     // Create item
     const item = await Item.create({
@@ -238,8 +242,24 @@ export const createItem = async (req, res) => {
       allergens: parsedAllergens || [],
       tags: parsedTags || [],
       displayOrder: displayOrder ? Number(displayOrder) : 0,
-      nutritionInfo: parsedNutrition,
-      createdBy: req.user.id
+      nutritionInfo: {
+        protein:  parsedNutrition?.protein  ?? null,
+        carbs:    parsedNutrition?.carbs    ?? null,
+        fat:      parsedNutrition?.fat      ?? null,
+        fiber:    parsedNutrition?.fiber    ?? null,
+        calories: parsedNutrition?.calories ?? null,  // ← new
+        sugar:    parsedNutrition?.sugar    ?? null,  // ← new
+        sodium:   parsedNutrition?.sodium   ?? null,  // ← new
+      },
+       rating:           rating        ?? 4.5,
+      healthBenefits:   parsedHealthBenefits   || [],
+      preparationSteps: parsedPreparationSteps || [],
+      isAvailable:      isAvailable  ?? true,
+      isFeatured:       isFeatured   ?? false,
+      isPopular:        isPopular    ?? false,
+      
+      createdBy: req.user._id,
+     
     });
 
     res.status(201).json({
@@ -315,7 +335,11 @@ export const updateItem = async (req, res) => {
       isFeatured,
       isPopular,
       displayOrder,
-      nutritionInfo
+      nutritionInfo,
+      rating, 
+      healthBenefits,
+     preparationSteps,
+  
     } = req.body;
 
     if (name) item.name = name;
@@ -344,7 +368,21 @@ export const updateItem = async (req, res) => {
     if (isFeatured !== undefined) item.isFeatured = isFeatured;
     if (isPopular !== undefined) item.isPopular = isPopular;
     if (displayOrder !== undefined) item.displayOrder = Number(displayOrder);
-    if (nutritionInfo) item.nutritionInfo = typeof nutritionInfo === 'string' ? JSON.parse(nutritionInfo) : nutritionInfo;
+    if (nutritionInfo) { const parsed = typeof nutritionInfo === 'string' ? JSON.parse(nutritionInfo) : nutritionInfo;
+  item.nutritionInfo = {
+    protein:  parsed.protein  ?? item.nutritionInfo?.protein,
+    carbs:    parsed.carbs    ?? item.nutritionInfo?.carbs,
+    fat:      parsed.fat      ?? item.nutritionInfo?.fat,
+    fiber:    parsed.fiber    ?? item.nutritionInfo?.fiber,
+    calories: parsed.calories ?? item.nutritionInfo?.calories,
+    sugar:    parsed.sugar    ?? item.nutritionInfo?.sugar,
+    sodium:   parsed.sodium   ?? item.nutritionInfo?.sodium,
+  };
+
+  if (rating !== undefined) item.rating = Number(rating);
+  if (healthBenefits !== undefined) item.healthBenefits = typeof healthBenefits === 'string' ? JSON.parse(healthBenefits) : healthBenefits;
+  if (preparationSteps !== undefined) item.preparationSteps = typeof preparationSteps === 'string' ? JSON.parse(preparationSteps) : preparationSteps;
+}
 
     await item.save();
 

@@ -14,6 +14,8 @@ const ItemsPage = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [healthBenefitInput, setHealthBenefitInput] = useState('');
+const [prepStepInput, setPrepStepInput] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -21,6 +23,12 @@ const ItemsPage = () => {
     category: '',
     price: '',
     discountPrice: '',
+    rating: 4.5,
+    healthBenefits: [],
+    preparationSteps: [],
+    isAvailable: true,
+  isFeatured: false,
+  isPopular: false,
     type: 'veg',
     spiceLevel: 'none',
     servingSize: '',
@@ -34,7 +42,10 @@ const ItemsPage = () => {
       protein: '',
       carbs: '',
       fat: '',
-      fiber: ''
+      fiber: '',
+      calories: '',
+      sugar: '',
+      sodium: ''
     }
   });
 
@@ -90,12 +101,28 @@ const ItemsPage = () => {
     healthBenefits: []
   });
   
-  const [editingIngredient, setEditingIngredient] = useState(null);
-  const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
-  const [ingredientFilterCategory, setIngredientFilterCategory] = useState('all');
-
   const API_URL = 'http://localhost:5001/api';
   const token = localStorage.getItem('token');
+
+  const addHealthBenefit = () => {
+  if (healthBenefitInput.trim()) {
+    setFormData(prev => ({ ...prev, healthBenefits: [...prev.healthBenefits, healthBenefitInput.trim()] }));
+    setHealthBenefitInput('');
+  }
+};
+const removeHealthBenefit = (index) => {
+  setFormData(prev => ({ ...prev, healthBenefits: prev.healthBenefits.filter((_, i) => i !== index) }));
+};
+
+const addPrepStep = () => {
+  if (prepStepInput.trim()) {
+    setFormData(prev => ({ ...prev, preparationSteps: [...prev.preparationSteps, prepStepInput.trim()] }));
+    setPrepStepInput('');
+  }
+};
+const removePrepStep = (index) => {
+  setFormData(prev => ({ ...prev, preparationSteps: prev.preparationSteps.filter((_, i) => i !== index) }));
+};
 
   // Fetch items
   const fetchItems = async () => {
@@ -236,6 +263,12 @@ const ItemsPage = () => {
       category: '',
       price: '',
       discountPrice: '',
+      rating: 4.5,
+      healthBenefits: [],
+      preparationSteps: [],
+      isAvailable: true,
+      isFeatured: false,
+      isPopular: false,
       type: 'veg',
       spiceLevel: 'none',
       servingSize: '',
@@ -249,7 +282,10 @@ const ItemsPage = () => {
         protein: '',
         carbs: '',
         fat: '',
-        fiber: ''
+        fiber: '',
+        calories: '',
+        sugar: '',
+        sodium: ''
       }
     });
     setSelectedImages([]);
@@ -277,12 +313,20 @@ const ItemsPage = () => {
       formDataToSend.append('category', formData.category);
       formDataToSend.append('price', formData.price);
       if (formData.discountPrice) formDataToSend.append('discountPrice', formData.discountPrice);
+      formDataToSend.append('rating', formData.rating);
       formDataToSend.append('type', formData.type);
       formDataToSend.append('spiceLevel', formData.spiceLevel);
       if (formData.servingSize) formDataToSend.append('servingSize', formData.servingSize);
       if (formData.preparationTime) formDataToSend.append('preparationTime', formData.preparationTime);
       if (formData.calories) formDataToSend.append('calories', formData.calories);
       formDataToSend.append('displayOrder', formData.displayOrder);
+      
+      // Add new fields
+      formDataToSend.append('healthBenefits', JSON.stringify(formData.healthBenefits));
+      formDataToSend.append('preparationSteps', JSON.stringify(formData.preparationSteps));
+      formDataToSend.append('isAvailable', formData.isAvailable);
+      formDataToSend.append('isFeatured', formData.isFeatured);
+      formDataToSend.append('isPopular', formData.isPopular);
 
       // Add arrays as JSON strings
       formDataToSend.append('ingredients', JSON.stringify(formData.ingredients));
@@ -330,6 +374,12 @@ const ItemsPage = () => {
       category: item.category?._id || '',
       price: item.price,
       discountPrice: item.discountPrice || '',
+      rating: item.rating || 4.5,
+      healthBenefits: item.healthBenefits || [],
+      preparationSteps: item.preparationSteps || [],
+      isAvailable: item.isAvailable !== undefined ? item.isAvailable : true,
+      isFeatured: item.isFeatured || false,
+      isPopular: item.isPopular || false,
       type: item.type || 'veg',
       spiceLevel: item.spiceLevel || 'none',
       servingSize: item.servingSize || '',
@@ -339,7 +389,7 @@ const ItemsPage = () => {
       allergens: item.allergens || [],
       tags: item.tags || [],
       displayOrder: item.displayOrder,
-      nutritionInfo: item.nutritionInfo || { protein: '', carbs: '', fat: '', fiber: '' }
+      nutritionInfo: item.nutritionInfo || { protein: '', carbs: '', fat: '', fiber: '', calories: '', sugar: '', sodium: '' }
     });
     
     // Set preview URLs from existing images
@@ -442,7 +492,6 @@ const ItemsPage = () => {
       tags: [],
       healthBenefits: []
     });
-    setEditingIngredient(null);
   };
 
   const handleIngredientInputChange = (e) => {
@@ -905,6 +954,59 @@ const ItemsPage = () => {
                   />
                 </div>
 
+                {/* Health Benefits Section */}
+<div className="form-section">
+  <h4>💚 Health Benefits</h4>
+  <div className="form-group">
+    <div className="tag-input-container">
+      <input
+        type="text"
+        value={healthBenefitInput}
+        onChange={(e) => setHealthBenefitInput(e.target.value)}
+        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addHealthBenefit())}
+        placeholder="e.g., Rich in Vitamin C"
+      />
+      <button type="button" onClick={addHealthBenefit} className="add-tag-btn">
+        + Add
+      </button>
+    </div>
+    <div className="tags-list">
+      {formData.healthBenefits.map((benefit, index) => (
+        <span key={index} className="tag">
+          {benefit}
+          <button type="button" onClick={() => removeHealthBenefit(index)}>×</button>
+        </span>
+      ))}
+    </div>
+  </div>
+</div>
+
+{/* Preparation Steps Section */}
+<div className="form-section">
+  <h4>👨‍🍳 Preparation Steps</h4>
+  <div className="form-group">
+    <div className="tag-input-container">
+      <textarea
+        value={prepStepInput}
+        onChange={(e) => setPrepStepInput(e.target.value)}
+        placeholder="e.g., Preheat oven to 200°C"
+        rows="2"
+      />
+      <button type="button" onClick={addPrepStep} className="add-tag-btn">
+        + Add Step
+      </button>
+    </div>
+    <div className="tags-list" style={{ flexDirection: 'column', gap: '6px' }}>
+      {formData.preparationSteps.map((step, index) => (
+        <span key={index} className="tag" style={{ justifyContent: 'space-between', width: '100%' }}>
+          <span><strong>Step {index + 1}:</strong> {step}</span>
+          <button type="button" onClick={() => removePrepStep(index)}>×</button>
+        </span>
+      ))}
+    </div>
+  </div>
+</div>
+
                 <div className="form-row">
                   <div className="form-group">
                     <label>Category *</label>
@@ -972,6 +1074,57 @@ const ItemsPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Status & Flags Section */}
+<div className="form-section">
+  <h4>⚙️ Status & Visibility</h4>
+
+  <div className="form-row">
+    <div className="form-group">
+      <label>Default Rating</label>
+      <input
+        type="number"
+        name="rating"
+        value={formData.rating}
+        onChange={handleInputChange}
+        min="0"
+        max="5"
+        step="0.1"
+        placeholder="4.5"
+      />
+    </div>
+  </div>
+
+  <div className="checkbox-group">
+    <label>
+      <input
+        type="checkbox"
+        name="isAvailable"
+        checked={formData.isAvailable}
+        onChange={(e) => setFormData(prev => ({ ...prev, isAvailable: e.target.checked }))}
+      />
+      Available
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        name="isFeatured"
+        checked={formData.isFeatured}
+        onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
+      />
+      Featured
+    </label>
+    <label>
+      <input
+        type="checkbox"
+        name="isPopular"
+        checked={formData.isPopular}
+        onChange={(e) => setFormData(prev => ({ ...prev, isPopular: e.target.checked }))}
+      />
+      Popular
+    </label>
+  </div>
+</div>
 
               {/* Images Section */}
               <div className="form-section">
@@ -1217,6 +1370,48 @@ const ItemsPage = () => {
                       placeholder="12"
                     />
                   </div>
+
+                  <div className="form-row">
+  <div className="form-group">
+    <label>Calories (kcal)</label>
+    <input
+      type="number"
+      name="calories"
+      value={formData.nutritionInfo.calories}
+      onChange={handleNutritionChange}
+      min="0"
+      step="0.1"
+      placeholder="200"
+    />
+  </div>
+  <div className="form-group">
+    <label>Sugar (g)</label>
+    <input
+      type="number"
+      name="sugar"
+      value={formData.nutritionInfo.sugar}
+      onChange={handleNutritionChange}
+      min="0"
+      step="0.1"
+      placeholder="8"
+    />
+  </div>
+</div>
+
+<div className="form-row">
+  <div className="form-group">
+    <label>Sodium (mg)</label>
+    <input
+      type="number"
+      name="sodium"
+      value={formData.nutritionInfo.sodium}
+      onChange={handleNutritionChange}
+      min="0"
+      step="0.1"
+      placeholder="320"
+    />
+  </div>
+</div>
 
                   <div className="form-group">
                     <label>Fiber (g)</label>

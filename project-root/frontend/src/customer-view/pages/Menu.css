@@ -1,3 +1,35 @@
+/* Badges */
+.badge-featured {
+  background: #fef08a; color: #854d0e;
+  padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+}
+.badge-popular {
+  background: #fed7aa; color: #9a3412;
+  padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+}
+
+/* Hero rating */
+.hero-rating {
+  color: #fbbf24; font-size: 1.2rem; margin: 4px 0;
+}
+.hero-rating span { color: white; font-size: 0.9rem; }
+
+/* Prep steps */
+.prep-steps-list {
+  list-style: none; padding: 0; display: flex; flex-direction: column; gap: 12px;
+}
+.prep-step-item {
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.step-number {
+  background: #16a34a; color: white;
+  min-width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+}
+.step-text { padding-top: 4px; line-height: 1.5; }
+
+
 /* Related Items Page Container */
 .related-page {
     min-height: 100vh;

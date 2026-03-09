@@ -170,14 +170,17 @@ const Menu = () => {
     const primaryImage = selectedItem.images?.[0]?.url || 
                         selectedItem.image || 
                         selectedItem.imageUrl || 
-                        'https://via.placeholder.com/1200x400?text=No+Image';
+                        'https://via.placeholder.com/1200x400.png?text=No+Image';
     
     return (
       <>
         <Nav />
         <div className="menu-page">
         <section className="menu-hero" style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${primaryImage}')` 
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${primaryImage}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}>
           <div className="menu-hero-content">
             <button className="back-btn" onClick={handleBackToMenu}>
@@ -240,6 +243,112 @@ const Menu = () => {
                 </div>
               )}
 
+              {/* ⭐ RATING DISPLAY */}
+              {selectedItem.rating && (
+                <div className="recipe-section" style={{ background: '#fef3c7', border: '2px solid #f59e0b' }}>
+                  <h3><i className="fas fa-star"></i> Rating</h3>
+                  <div className="hero-rating">
+                    {'★'.repeat(Math.floor(selectedItem.rating))}{'☆'.repeat(5 - Math.floor(selectedItem.rating))}
+                    <span>{selectedItem.rating.toFixed(1)} out of 5</span>
+                  </div>
+                </div>
+              )}
+
+              {/* ⭐ BADGES SECTION */}
+              <div className="recipe-section">
+                <h3><i className="fas fa-award"></i> Special</h3>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {selectedItem.isFeatured && <span className="badge-featured">⭐ Featured</span>}
+                  {selectedItem.isPopular && <span className="badge-popular">🔥 Popular</span>}
+                  {!selectedItem.isFeatured && !selectedItem.isPopular && (
+                    <span style={{ color: '#6b7280', fontStyle: 'italic' }}>No special badges</span>
+                  )}
+                </div>
+              </div>
+
+              {/* ⭐ HEALTH BENEFITS */}
+              {selectedItem.healthBenefits && selectedItem.healthBenefits.length > 0 && (
+                <div className="recipe-section" style={{ background: '#f0fdf4', border: '2px solid #22c55e' }}>
+                  <h3><i className="fas fa-heart"></i> Health Benefits</h3>
+                  <ul className="benefits-list">
+                    {selectedItem.healthBenefits.map((benefit, index) => (
+                      <li key={index}>💚 {benefit}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* ⭐ PREPARATION STEPS */}
+              {selectedItem.preparationSteps && selectedItem.preparationSteps.length > 0 && (
+                <div className="recipe-section">
+                  <h3><i className="fas fa-list-ol"></i> Preparation Steps</h3>
+                  <ol className="prep-steps-list">
+                    {selectedItem.preparationSteps.map((step, index) => (
+                      <li key={index} className="prep-step-item">
+                        <span className="step-number">{index + 1}</span>
+                        <span className="step-text">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* ⭐ ENHANCED NUTRITION */}
+              {selectedItem.nutritionInfo && Object.values(selectedItem.nutritionInfo).some(val => val) && (
+                <div className="recipe-section nutritional-section">
+                  <h3><i className="fas fa-chart-pie"></i> Nutrition Information</h3>
+                  <div className="nutrition-grid">
+                    {selectedItem.nutritionInfo.calories && (
+                      <div className="nutrition-item">
+                        <span className="nutrition-label">Calories</span>
+                        <span className="nutrition-value">{selectedItem.nutritionInfo.calories} cal</span>
+                      </div>
+                    )}
+                    {selectedItem.nutritionInfo.protein && (
+                      <div className="nutrition-item">
+                        <span className="nutrition-label">Protein</span>
+                        <span className="nutrition-value">{selectedItem.nutritionInfo.protein}g</span>
+                      </div>
+                    )}
+                    {selectedItem.nutritionInfo.carbs && (
+                      <div className="nutrition-item">
+                        <span className="nutrition-label">Carbs</span>
+                        <span className="nutrition-value">{selectedItem.nutritionInfo.carbs}g</span>
+                      </div>
+                    )}
+                    {selectedItem.nutritionInfo.fat && (
+                      <div className="nutrition-item">
+                        <span className="nutrition-label">Fat</span>
+                        <span className="nutrition-value">{selectedItem.nutritionInfo.fat}g</span>
+                      </div>
+                    )}
+                    {selectedItem.nutritionInfo.fiber && (
+                      <div className="nutrition-item">
+                        <span className="nutrition-label">Fiber</span>
+                        <span className="nutrition-value">{selectedItem.nutritionInfo.fiber}g</span>
+                      </div>
+                    )}
+                    {selectedItem.nutritionInfo.sugar && (
+                      <div className="nutrition-item">
+                        <span className="nutrition-label">Sugar</span>
+                        <span className="nutrition-value">{selectedItem.nutritionInfo.sugar}g</span>
+                      </div>
+                    )}
+                    {selectedItem.nutritionInfo.sodium && (
+                      <div className="nutrition-item">
+                        <span className="nutrition-label">Sodium</span>
+                        <span className="nutrition-value">{selectedItem.nutritionInfo.sodium}mg</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+
+         
+
+
+
               {selectedItem.type && (
                 <div className="recipe-section">
                   <h3><i className="fas fa-leaf"></i> Type</h3>
@@ -291,37 +400,6 @@ const Menu = () => {
                 </div>
               )}
 
-              {selectedItem.nutritionInfo && Object.values(selectedItem.nutritionInfo).some(val => val) && (
-                <div className="recipe-section nutritional-section">
-                  <h3><i className="fas fa-chart-pie"></i> Nutrition Information</h3>
-                  <div className="nutrition-grid">
-                    {selectedItem.nutritionInfo.protein && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Protein</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.protein}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.carbs && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Carbs</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.carbs}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.fat && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Fat</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.fat}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.fiber && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Fiber</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.fiber}g</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {selectedItem.tags && selectedItem.tags.length > 0 && (
                 <div className="recipe-section">
