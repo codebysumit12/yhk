@@ -1,3 +1,10 @@
+.price-strikethrough {
+    text-decoration: line-through;
+    color: var(--zomato-gray);
+    font-size: 18px;
+    margin: 0 8px;
+}
+
 /* Badges */
 .badge-featured {
   background: #fef08a; color: #854d0e;
@@ -1116,36 +1123,86 @@
 }
 
 .nutritional-section {
-    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(46, 204, 113, 0.05));
-    border: 1px solid rgba(46, 204, 113, 0.2);
+     background: linear-gradient(135deg, rgba(46, 204, 113, 0.08), rgba(46, 204, 113, 0.03));
+    border: 1px solid rgba(46, 204, 113, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.nutritional-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #22c55e, #16a34a, #15803d);
 }
 
 .nutritional-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
+     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
 }
 
 .nutrient-item {
     background: white;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 18px 12px;
+    border-radius: 12px;
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(46, 204, 113, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nutrient-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15);
+    border-color: rgba(46, 204, 113, 0.3);
+}
+
+.nutrient-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 0 0 3px 3px;
 }
 
 .nutrient-name {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--zomato-gray);
     text-transform: capitalize;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
 }
 
 .nutrient-value {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--zomato-dark);
+    position: relative;
+}
+
+.nutrient-value::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 1px;
 }
 
 /* Recipe Image */
@@ -1273,6 +1330,54 @@
     border: 1px solid #90caf9;
 }
 
+/* Type Badge Styles */
+.type-badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.type-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.type-badge.veg {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border-color: #28a745;
+}
+
+.type-badge.non-veg {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+    border-color: #dc3545;
+}
+
+.type-badge.vegan {
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+    color: #0c5460;
+    border-color: #17a2b8;
+}
+
+.type-badge.egg {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+    border-color: #ffc107;
+}
+
+.type-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 /* Category icon styling */
 .category-icon {
     font-size: 20px;
@@ -1332,7 +1437,7 @@
 }
 
 .menu-hero {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), var(--hero-image);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), var(--hero-image);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

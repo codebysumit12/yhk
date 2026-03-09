@@ -11,6 +11,7 @@ const Signup = () => {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -114,7 +115,7 @@ const Signup = () => {
         <div className="auth-card">
           <div className="auth-header">
             <div className="auth-icon">
-              <i className="fas fa-user-plus"></i>
+        {/*        <i className="fas fa-user-plus"></i>  */}
             </div>
             <h1>Create Account!</h1>
             <p>Join Yeswanth's Healthy Kitchen today</p>
@@ -132,7 +133,7 @@ const Signup = () => {
                 onChange={handleChange}
                 autoComplete="name"
               />
-              <i className="fas fa-user input-icon"></i>
+            {/* <i className="fas fa-user input-icon"></i> */}
               {errors.name && <span className="error-message">{errors.name}</span>}
             </div>
             
@@ -147,7 +148,7 @@ const Signup = () => {
                 onChange={handleChange}
                 autoComplete="email"
               />
-              <i className="fas fa-envelope input-icon"></i>
+         {/*       <i className="fas fa-envelope input-icon"></i> */}
               {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
             
@@ -157,12 +158,12 @@ const Signup = () => {
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 name="password"
-                placeholder="Create a password"
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
                 autoComplete="new-password"
               />
-              <i className="fas fa-lock input-icon"></i>
+        {/*        <i className="fas fa-lock input-icon"></i>*/}
               <button
                 type="button"
                 className="password-toggle"
@@ -176,7 +177,7 @@ const Signup = () => {
             <div className={`form-group ${errors.confirmPassword ? 'error' : ''}`}>
               <label htmlFor="confirmPassword">Confirm Password</label>
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
                 name="confirmPassword"
                 placeholder="Confirm your password"
@@ -184,7 +185,14 @@ const Signup = () => {
                 onChange={handleChange}
                 autoComplete="new-password"
               />
-              <i className="fas fa-lock input-icon"></i>
+           {/*  <i className="fas fa-lock input-icon"></i>*/}   
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+              </button>
               {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
             </div>
             

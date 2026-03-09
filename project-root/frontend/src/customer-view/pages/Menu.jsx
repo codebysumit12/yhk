@@ -177,7 +177,7 @@ const Menu = () => {
         <Nav />
         <div className="menu-page">
         <section className="menu-hero" style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('${primaryImage}')`,
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(46, 204, 113, 0.8)), url('${primaryImage}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
@@ -243,16 +243,15 @@ const Menu = () => {
                 </div>
               )}
 
-              {/* ⭐ RATING DISPLAY */}
+         {/* ⭐ RATING DISPLAY 
               {selectedItem.rating && (
                 <div className="recipe-section" style={{ background: '#fef3c7', border: '2px solid #f59e0b' }}>
                   <h3><i className="fas fa-star"></i> Rating</h3>
                   <div className="hero-rating">
                     {'★'.repeat(Math.floor(selectedItem.rating))}{'☆'.repeat(5 - Math.floor(selectedItem.rating))}
-                    <span>{selectedItem.rating.toFixed(1)} out of 5</span>
                   </div>
                 </div>
-              )}
+              )}   */}
 
               {/* ⭐ BADGES SECTION */}
               <div className="recipe-section">
@@ -278,6 +277,22 @@ const Menu = () => {
                 </div>
               )}
 
+                 {/* ⭐ INGREDIENTS SECTION - THIS IS WHAT YOU WANT ⭐ */}
+              <div className="recipe-section" style={{ background: '#f0fdf4', border: '2px solid #22c55e' }}>
+                <h3><i className="fas fa-carrot"></i> Ingredients</h3>
+                {selectedItem.ingredients && selectedItem.ingredients.length > 0 ? (
+                  <ul className="ingredients-list">
+                    {selectedItem.ingredients.map((ingredient, index) => (
+                      <li key={index}>{ingredient}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="no-data">
+                    ⚠️ No ingredients added yet. Please add ingredients in the admin panel.
+                  </p>
+                )}
+              </div>
+
               {/* ⭐ PREPARATION STEPS */}
               {selectedItem.preparationSteps && selectedItem.preparationSteps.length > 0 && (
                 <div className="recipe-section">
@@ -296,50 +311,22 @@ const Menu = () => {
               {/* ⭐ ENHANCED NUTRITION */}
               {selectedItem.nutritionInfo && Object.values(selectedItem.nutritionInfo).some(val => val) && (
                 <div className="recipe-section nutritional-section">
-                  <h3><i className="fas fa-chart-pie"></i> Nutrition Information</h3>
-                  <div className="nutrition-grid">
-                    {selectedItem.nutritionInfo.calories && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Calories</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.calories} cal</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.protein && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Protein</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.protein}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.carbs && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Carbs</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.carbs}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.fat && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Fat</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.fat}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.fiber && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Fiber</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.fiber}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.sugar && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Sugar</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.sugar}g</span>
-                      </div>
-                    )}
-                    {selectedItem.nutritionInfo.sodium && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Sodium</span>
-                        <span className="nutrition-value">{selectedItem.nutritionInfo.sodium}mg</span>
-                      </div>
-                    )}
+                  <h3><i className="fas fa-chart-pie"></i> Nutritional Information</h3>
+                  <div className="nutritional-grid">
+                    {Object.entries(selectedItem.nutritionInfo).map(([key, value]) => (
+                      value && (
+                        <div key={key} className="nutrient-item">
+                          <span className="nutrient-name">
+                            {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
+                          </span>
+                          <span className="nutrient-value">
+                            {typeof value === 'number' ? value : value}
+                            {key.toLowerCase().includes('calorie') ? ' cal' : 
+                             key.toLowerCase().includes('sodium') ? 'mg' : 'g'}
+                          </span>
+                        </div>
+                      )
+                    ))}
                   </div>
                 </div>
               )}
@@ -349,14 +336,78 @@ const Menu = () => {
 
 
 
-              {selectedItem.type && (
+              {selectedItem?.type && (
                 <div className="recipe-section">
                   <h3><i className="fas fa-leaf"></i> Type</h3>
                   <div className="type-badge-container">
-                    {selectedItem.type === 'veg' && <span className="type-badge veg">🟢 Vegetarian</span>}
-                    {selectedItem.type === 'non-veg' && <span className="type-badge non-veg">🔴 Non-Vegetarian</span>}
-                    {selectedItem.type === 'vegan' && <span className="type-badge vegan">🌿 Vegan</span>}
-                    {selectedItem.type === 'egg' && <span className="type-badge egg">🥚 Contains Egg</span>}
+                    {selectedItem.type === 'veg' && (
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #d4edda, #c3e6cb)', 
+                        color: '#155724', 
+                        border: '2px solid #28a745',
+                        padding: '8px 16px', 
+                        borderRadius: '20px', 
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        🟢 Vegetarian
+                      </span>
+                    )}
+                    {selectedItem.type === 'non-veg' && (
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #f8d7da, #f5c6cb)', 
+                        color: '#721c24', 
+                        border: '2px solid #dc3545',
+                        padding: '8px 16px', 
+                        borderRadius: '20px', 
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        🔴 Non-Vegetarian
+                      </span>
+                    )}
+                    {selectedItem.type === 'vegan' && (
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #d1ecf1, #bee5eb)', 
+                        color: '#0c5460', 
+                        border: '2px solid #17a2b8',
+                        padding: '8px 16px', 
+                        borderRadius: '20px', 
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        🌿 Vegan
+                      </span>
+                    )}
+                    {selectedItem.type === 'egg' && (
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #fff3cd, #ffeaa7)', 
+                        color: '#856404', 
+                        border: '2px solid #ffc107',
+                        padding: '8px 16px', 
+                        borderRadius: '20px', 
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        🥚 Contains Egg
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -373,21 +424,7 @@ const Menu = () => {
                 </div>
               )}
 
-              {/* ⭐ INGREDIENTS SECTION - THIS IS WHAT YOU WANT ⭐ */}
-              <div className="recipe-section" style={{ background: '#f0fdf4', border: '2px solid #22c55e' }}>
-                <h3><i className="fas fa-carrot"></i> Ingredients</h3>
-                {selectedItem.ingredients && selectedItem.ingredients.length > 0 ? (
-                  <ul className="ingredients-list">
-                    {selectedItem.ingredients.map((ingredient, index) => (
-                      <li key={index}>{ingredient}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-data">
-                    ⚠️ No ingredients added yet. Please add ingredients in the admin panel.
-                  </p>
-                )}
-              </div>
+           
 
               {selectedItem.allergens && selectedItem.allergens.length > 0 && (
                 <div className="recipe-section">

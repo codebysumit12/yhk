@@ -23,6 +23,60 @@ const uploadToCloudinary = async (file) => {
   };
 };
 
+const calculateCategoryStats = async (categoryId) => {
+  try {
+    // Find all available items in this category
+    const items = await Item.find({ 
+      category: categoryId, 
+      isAvailable: true 
+    });
+    
+    const itemCount = items.length;
+    
+    // Calculate average rating
+    const ratingsSum = items.reduce((sum, item) => {
+      const rating = item.rating || 4.5; // Default to 4.5 if no rating
+      return sum + rating;
+    }, 0);
+    const avgRating = itemCount > 0 
+      ? (ratingsSum / itemCount).toFixed(1) 
+      : '4.5';
+    
+    // Calculate average discount percentage
+    const discountsSum = items.reduce((sum, item) => {
+      if (item.price && item.discountPrice && item.discountPrice < item.price) {
+        const discountPercent = Math.round(
+          ((item.price - item.discountPrice) / item.price) * 100
+        );
+        return sum + discountPercent;
+      }
+      return sum;
+    }, 0);
+    
+    const itemsWithDiscount = items.filter(item => 
+      item.price && item.discountPrice && item.discountPrice < item.price
+    ).length;
+    
+    const avgDiscount = itemsWithDiscount > 0 
+      ? Math.round(discountsSum / itemsWithDiscount) 
+      : 0;
+    
+    return {
+      itemCount,
+      avgRating: parseFloat(avgRating),
+      avgDiscount
+    };
+  } catch (error) {
+    console.error('Error calculating category stats:', error);
+    return {
+      itemCount: 0,
+      avgRating: 4.5,
+      avgDiscount: 0
+    };
+  }
+};
+
+
 // @desc    Get all categories
 // @route   GET /api/categories
 // @access  Public

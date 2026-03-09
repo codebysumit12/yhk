@@ -100,7 +100,7 @@ const Login = () => {
         <div className="auth-card">
           <div className="auth-header">
             <div className="auth-icon">
-              <i className="fas fa-utensils"></i>
+          <i className="fas fa-utensils"></i>
             </div>
             <h1>Welcome Back!</h1>
             <p>Sign in to continue to Yeswanth's Healthy Kitchen</p>
@@ -118,7 +118,7 @@ const Login = () => {
                 onChange={handleChange}
                 autoComplete="email"
               />
-              <i className="fas fa-envelope input-icon"></i>
+        {/*       <i className="fas fa-envelope input-icon"></i> */}
               {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
             
@@ -133,7 +133,7 @@ const Login = () => {
                 onChange={handleChange}
                 autoComplete="current-password"
               />
-              <i className="fas fa-lock input-icon"></i>
+            {/*     <i className="fas fa-lock input-icon"></i> */}
               <button
                 type="button"
                 className="password-toggle"
