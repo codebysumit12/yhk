@@ -9,7 +9,7 @@ const API_URL = 'http://localhost:5001/api';
 const Menu = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { categoryId: urlCategoryId } = useParams(); // Get category from URL params
+  const { categorySlug } = useParams(); // Get category slug from URL params
   const [activeCategory, setActiveCategory] = useState(null);
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
@@ -39,9 +39,10 @@ const Menu = () => {
         if (categoriesData.success) {
           setCategories(categoriesData.data);
           
-          // Set active category from URL or use first category
-          if (urlCategoryId) {
-            setActiveCategory(urlCategoryId);
+          // Find category by slug and set active category ID
+          const matchedCategory = categoriesData.data.find(c => c.slug === categorySlug);
+          if (matchedCategory) {
+            setActiveCategory(matchedCategory._id);
           } else if (categoriesData.data.length > 0 && !activeCategory) {
             setActiveCategory(categoriesData.data[0]._id);
           }
@@ -61,7 +62,7 @@ const Menu = () => {
     };
 
     fetchData();
-  }, [urlCategoryId, activeCategory]);
+  }, [categorySlug, activeCategory]);
 
   // Handle item detail view from URL
   useEffect(() => {
@@ -127,6 +128,18 @@ const Menu = () => {
     return cart.reduce((total, item) => total + (item.finalPrice || item.price), 0);
   };
 
+  const handleCheckout = () => {
+    // Save cart data to localStorage for checkout page
+    const checkoutData = {
+      items: cart,
+      restaurantId: 'default',
+      restaurantName: "Yeswanth's Healthy Kitchen",
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem('checkoutCart', JSON.stringify(checkoutData));
+    navigate('/checkout');
+  };
+
   const handleItemClick = (item) => {
     setSelectedItem(item);
     navigate(`/menu?id=${item._id}`);
@@ -134,8 +147,8 @@ const Menu = () => {
 
   const handleBackToMenu = () => {
     setSelectedItem(null);
-    if (urlCategoryId) {
-      navigate(`/menu/${urlCategoryId}`);
+    if (categorySlug) {
+      navigate(`/menu/${categorySlug}`);
     } else {
       navigate('/menu');
     }
@@ -457,7 +470,7 @@ const Menu = () => {
                 </h3>
                 <div className="related-items-list">
                   {relatedItems.map(item => {
-                    const relatedImage = item.images?.[0]?.url || item.image || item.imageUrl || 'https://via.placeholder.com/200x150?text=No+Image';
+                    const relatedImage = item.images?.[0]?.url || item.image || item.imageUrl || 'https://via.placeholder.com/200x150.png?text=No+Image';
                     return (
                       <div 
                         key={item._id} 
@@ -528,7 +541,7 @@ const Menu = () => {
                 <span>Total</span>
                 <span className="total-amount">₹{getCartTotal()}</span>
               </div>
-              <button className="checkout-btn">Checkout</button>
+              <button className="checkout-btn" onClick={handleCheckout}>Checkout</button>
             </div>
           )}
         </aside>
@@ -607,11 +620,18 @@ return (
     <div className="no-items">
       <i className="fas fa-utensils"></i>
       <p>No items available in this category</p>
+      <div style={{ background: '#f0f0f0', padding: '10px', margin: '10px 0', fontSize: '14px', borderRadius: '5px' }}>
+        <strong>DEBUG:</strong><br/>
+        Active Category: {activeCategory}<br/>
+        Total Items Loaded: {items.length}<br/>
+        Filtered Items: {getFilteredItems().length}<br/>
+        Items Data: {JSON.stringify(getFilteredItems().slice(0, 2), null, 2)}
+      </div>
     </div>
   ) : (
     <div className="menu-items-grid">
       {getFilteredItems().map(item => {
-        const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop';
+        const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}&bg=ffffff&color=cccccc`;
         
         return (
           <div 
@@ -625,8 +645,10 @@ return (
                 src={itemImage} 
                 alt={item.name}
                 onError={(e) => {
-                  e.target.src = 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop';
+                  console.error('Image failed to load:', itemImage, 'for item:', item.name);
+                  e.target.src = `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}&bg=ff6b6b&color=ffffff`;
                 }}
+                loading="lazy"
               />
               {/* Discount Badge */}
               {item.discountPrice && (
@@ -708,7 +730,7 @@ return (
               <span>Total</span>
               <span className="total-amount">₹{getCartTotal()}</span>
             </div>
-            <button className="checkout-btn">Checkout</button>
+            <button className="checkout-btn" onClick={handleCheckout}>Checkout</button>
           </div>
         )}
       </aside>

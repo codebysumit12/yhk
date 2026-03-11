@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Main from './customer-view/pages/Main';
 import Menu from './customer-view/pages/Menu';
-import Login from './customer-view/pages/Login';
-import Signup from './customer-view/pages/Signup';
-import RelatedItems from './customer-view/pages/RelatedItems';
 import Checkoutpage from './customer-view/pages/Checkoutpage';
+import TrackOrder from './customer-view/pages/TrackOrder';
+import Auth from './pages/Auth';
 import AdminDashboard from './admin-view/pages/AdminDashboard';
 import MenuManagement from './admin-view/pages/MenuManagement';
 import IngredientsPage from './admin-view/pages/IngredientsPage';
+import OrdersPage from './admin-view/pages/OrdersPage';
+import DeliveriesPage from './admin-view/pages/DeliveriesPage';
+import AdminLayout from './admin-view/layout/AdminLayout';
+
 import './App.css';
 
 // Sample restaurant data
@@ -69,23 +72,27 @@ const sampleRestaurants = [
   }
 ];
 
-function App() {
-  const [restaurants] = useState(sampleRestaurants);
 
+
+
+// Main App Component
+function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Main restaurants={restaurants} />} />
+          {/* Auth route - landing page */}
+          <Route path="/" element={<Auth />} />
+          
+          {/* Customer Routes */}
+          <Route path="/customer" element={<Main />} />
+          <Route path="/menu/:categorySlug" element={<Menu />} />
           <Route path="/menu" element={<Menu />} />
-          <Route path="/menu/:categoryId" element={<Menu />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/related" element={<RelatedItems />} />
           <Route path="/checkout" element={<Checkoutpage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/menu/:categoryId" element={<MenuManagement />} />
-          <Route path="/admin/ingredients" element={<IngredientsPage />} />
+          <Route path="/track-order" element={<TrackOrder />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin/*" element={<AdminLayout />} />
         </Routes>
       </div>
     </Router>

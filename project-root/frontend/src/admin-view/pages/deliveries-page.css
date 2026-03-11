@@ -1,0 +1,297 @@
+/* ========================================
+   DELIVERIES PAGE - ADMIN
+   ======================================== */
+
+.deliveries-page {
+  padding: 0;
+}
+
+/* Reuse common styles from orders-page.css */
+/* Stats, Filters, Loading, Empty State are same */
+
+/* Deliveries Table Specific Styles */
+.deliveries-table-container {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.deliveries-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.deliveries-table thead {
+  background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+  border-bottom: 2px solid #67e8f9;
+}
+
+.deliveries-table thead th {
+  padding: 16px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0e7490;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.deliveries-table tbody tr {
+  border-bottom: 1px solid #e0f2fe;
+  transition: background 0.2s;
+}
+
+.deliveries-table tbody tr:hover {
+  background: #f0f9ff;
+}
+
+.deliveries-table tbody td {
+  padding: 14px 12px;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+/* Order Time */
+.order-time {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* Address Info */
+.address-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.address-info p {
+  font-size: 13px;
+  color: var(--text);
+  margin: 0;
+  font-weight: 500;
+}
+
+.address-info small {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+}
+
+/* Delivery Person Info */
+.delivery-person-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delivery-person-info strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.delivery-person-info small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.delivery-person-info .vehicle {
+  font-family: monospace;
+  font-weight: 600;
+  color: #06b6d4;
+}
+
+.not-assigned {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Table Action Buttons - Delivery Specific */
+.table-action-btn.assign {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.table-action-btn.assign:hover {
+  background: #e0f2fe;
+  border-color: #06b6d4;
+}
+
+.table-action-btn.map {
+  background: #fef3c7;
+  border-color: #fde68a;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-action-btn.map:hover {
+  background: #fde68a;
+  border-color: #f59e0b;
+}
+
+.table-action-btn.call {
+  background: #dcfce7;
+  border-color: #bbf7d0;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-action-btn.call:hover {
+  background: #bbf7d0;
+  border-color: #22c55e;
+}
+
+.table-action-btn.deliver {
+  background: #d1fae5;
+  border-color: #a7f3d0;
+}
+
+.table-action-btn.deliver:hover {
+  background: #a7f3d0;
+  border-color: #10b981;
+}
+
+/* Stats Card Specific Colors */
+.stat-card.ready .stat-icon { background: #f3e8ff; }
+.stat-card.out-delivery .stat-icon { background: #cffafe; }
+.stat-card.delivered .stat-icon { background: #d1fae5; }
+.stat-card.total .stat-icon { background: #e0f2fe; }
+
+/* ========================================
+   ASSIGN DELIVERY PERSON MODAL
+   ======================================== */
+
+.order-info-banner {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid #bae6fd;
+}
+
+.order-info-banner p {
+  font-size: 13px;
+  color: var(--text);
+  margin: 4px 0;
+}
+
+.order-info-banner strong {
+  color: #0e7490;
+  font-weight: 600;
+}
+
+/* Delivery Person Form */
+.delivery-person-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.delivery-person-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delivery-person-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label-icon {
+  font-size: 16px;
+}
+
+.delivery-person-form input {
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text);
+  transition: all 0.3s;
+}
+
+.delivery-person-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 12px 24px;
+  background: #f1f5f9;
+  color: var(--text);
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .deliveries-table {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .deliveries-table-container {
+    overflow-x: auto;
+  }
+
+  .deliveries-table {
+    min-width: 1000px;
+  }
+
+  .order-info-banner {
+    padding: 12px 16px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+}

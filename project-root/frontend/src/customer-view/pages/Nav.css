@@ -1,0 +1,484 @@
+/* ========================================
+   PROFILE SECTION
+   ======================================== */
+
+.profile-section {
+  position: relative;
+}
+
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: white;
+  border: 2px solid #c9e8d1;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.profile-trigger:hover {
+  border-color: #22c55e;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+  transform: translateY(-1px);
+}
+
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials {
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-name {
+  font-weight: 600;
+  color: #0f2d1a;
+  font-size: 15px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  color: #6b8f74;
+  transition: transform 0.3s;
+}
+
+.dropdown-arrow.rotate {
+  transform: rotate(180deg);
+}
+
+/* ========================================
+   PROFILE DROPDOWN
+   ======================================== */
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 320px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 12px 48px rgba(34, 197, 94, 0.2);
+  border: 2px solid #c9e8d1;
+  z-index: 1000;
+  animation: dropdownFadeIn 0.3s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dropdown Header */
+.dropdown-header {
+  padding: 24px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-radius: 18px 18px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dropdown-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.dropdown-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials-large {
+  color: white;
+  font-weight: 700;
+  font-size: 24px;
+  text-transform: uppercase;
+}
+
+.dropdown-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dropdown-user-info strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f2d1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-user-info span {
+  font-size: 13px;
+  color: #6b8f74;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  display: inline-block;
+  padding: 4px 10px;
+  background: white;
+  border-radius: 12px;
+  font-size: 11px !important;
+  font-weight: 600;
+  color: #22c55e !important;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+/* Dropdown Divider */
+.dropdown-divider {
+  height: 1px;
+  background: #e8f5eb;
+  margin: 0;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  padding: 8px;
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-size: 14px;
+  color: #0f2d1a;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: #f0fdf4;
+  color: #22c55e;
+}
+
+.dropdown-item i {
+  width: 20px;
+  font-size: 16px;
+  color: #22c55e;
+}
+
+.dropdown-item span {
+  flex: 1;
+}
+
+.cart-item {
+  position: relative;
+}
+
+.cart-count-badge {
+  background: #22c55e;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.admin-item {
+  background: #fef3c7;
+}
+
+.admin-item:hover {
+  background: #fde68a;
+}
+
+.admin-item i {
+  color: #f59e0b;
+}
+
+/* Dropdown Footer */
+.dropdown-footer {
+  padding: 8px;
+}
+
+.logout-item {
+  color: #ef4444;
+}
+
+.logout-item:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.logout-item i {
+  color: #ef4444;
+}
+
+/* Login Button (when not logged in) */
+.login-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .profile-dropdown {
+    width: 280px;
+    right: -10px;
+  }
+
+  .profile-name {
+    max-width: 100px;
+  }
+
+  .dropdown-header {
+    padding: 16px;
+  }
+
+  .dropdown-avatar {
+    width: 50px;
+    height: 50px;
+  }
+
+  .avatar-initials-large {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-trigger {
+    padding: 6px 12px;
+    gap: 8px;
+  }
+
+  .profile-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .avatar-initials {
+    font-size: 14px;
+  }
+
+  .profile-name {
+    display: none;
+  }
+
+  .profile-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+
+/* Navigation Styles */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px;
+  background: white;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.nav a {
+  text-decoration: none;
+  color: #1c1c1c;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav a:hover {
+  background: #f8f8f8;
+  color: hwb(120 4% 11% / 0.674);
+}
+
+.nav a.active {
+  background: #b8ecc5;
+  color: white;
+}
+
+/* Track Order Button - Special Styling */
+.track-order-nav {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  margin-left: auto !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3) !important;
+  border: 1px solid #22c55e !important;
+}
+
+.track-order-nav:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4) !important;
+}
+
+.track-order-nav i {
+  font-size: 16px;
+}
+
+/* User Welcome Message */
+.user-welcome {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Logout Button */
+.logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.logout-btn i {
+  font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nav {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 15px;
+  }
+  
+  .nav a {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+  
+  .track-order-nav {
+    margin-left: 0 !important;
+    order: 10;
+    width: 100%;
+    justify-content: center;
+    margin-top: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav {
+    gap: 5px;
+    padding: 0 10px;
+  }
+  
+  .nav a {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  
+  .nav a i {
+    font-size: 12px;
+  }
+  
+  .track-order-nav {
+    font-size: 12px !important;
+  }
+  
+  .track-order-nav i {
+    font-size: 14px !important;
+  }
+}

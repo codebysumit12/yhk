@@ -1,5 +1,4 @@
 import React from 'react';
-import AdminLayout from '../layout/AdminLayout';
 
 const AdminDashboard = () => {
   // Sample stats data
@@ -38,7 +37,7 @@ const AdminDashboard = () => {
   const chartData = [40, 65, 45, 80, 55, 90, 70];
 
   return (
-    <AdminLayout>
+    <div className="admin-dashboard-content">
       {/* Stats Grid */}
       <div className="stats-grid">
         {stats.map((stat, index) => (
@@ -156,7 +155,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

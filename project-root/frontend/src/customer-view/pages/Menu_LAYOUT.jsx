@@ -62,6 +62,25 @@ const Menu = () => {
     return cart.reduce((total, item) => total + item.price, 0);
   };
 
+  const handleCheckout = () => {
+    if (cart.length === 0) {
+      alert('Your cart is empty. Please add items first.');
+      return;
+    }
+    
+    // Save cart data to localStorage for checkout page
+    const checkoutData = {
+      items: cart,
+      total: getCartTotal(),
+      timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem('checkoutCart', JSON.stringify(checkoutData));
+    
+    // Navigate to checkout page
+    navigate('/checkout');
+  };
+
   const handleItemClick = (item) => {
     // Navigate to recipe details if recipe details exist
     if (item.recipeDetails) {
@@ -518,7 +537,7 @@ const Menu = () => {
                 <span>Total</span>
                 <span className="total-amount">₹{getCartTotal()}</span>
               </div>
-              <button className="checkout-btn">Checkout</button>
+              <button className="checkout-btn" onClick={handleCheckout}>Checkout</button>
             </div>
           )}
         </aside>
@@ -642,7 +661,7 @@ const Menu = () => {
                 <span>Total</span>
                 <span className="total-amount">₹{getCartTotal()}</span>
               </div>
-              <button className="checkout-btn">Checkout</button>
+              <button className="checkout-btn" onClick={handleCheckout}>Checkout</button>
             </div>
           )}
         </aside>

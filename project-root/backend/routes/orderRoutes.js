@@ -5,18 +5,28 @@ import {
   getOrderById,
   createOrder,
   updateOrderStatus,
-  deleteOrder
+  deleteOrder,
+  trackOrder,
+  cancelOrder,
+  rateOrder
 } from '../controllers/orderController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Routes
-router.get('/', protect, getAllOrders);
+// Public routes
+router.post('/', createOrder);
+router.get('/track', trackOrder);
+
+// Protected routes (User)
 router.get('/my-orders', protect, getMyOrders);
 router.get('/:id', protect, getOrderById);
-router.post('/', protect, createOrder);
-router.put('/:id/status', protect, updateOrderStatus);
-router.delete('/:id', protect, deleteOrder);
+router.put('/:id/cancel', protect, cancelOrder);
+router.post('/:id/rate', protect, rateOrder);
+
+// Protected routes (Admin)
+router.get('/', protect, adminOnly, getAllOrders);
+router.put('/:id/status', protect, adminOnly, updateOrderStatus);
+router.delete('/:id', protect, adminOnly, deleteOrder);
 
 export default router;

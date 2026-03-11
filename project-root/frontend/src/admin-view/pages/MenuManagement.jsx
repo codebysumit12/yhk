@@ -24,10 +24,15 @@ const MenuManagement = () => {
     if (categoryId && categories.length > 0) {
       setActiveCategory(categoryId);
       fetchItemsByCategory(categoryId);
-    } else if (activeCategory && !categoryId) {
+    }
+  }, [categoryId, categories]);
+
+  // Fetch items when active category changes (but not on initial load)
+  useEffect(() => {
+    if (activeCategory && !categoryId) {
       fetchItemsByCategory(activeCategory);
     }
-  }, [categoryId, activeCategory, categories]);
+  }, [activeCategory]);
 
   const fetchCategories = async () => {
     try {
@@ -118,7 +123,10 @@ const MenuManagement = () => {
               <li 
                 key={category._id}
                 className={`category-item ${activeCategory === category._id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category._id)}
+                onClick={() => {
+                  setActiveCategory(category._id);
+                  fetchItemsByCategory(category._id);
+                }}
               >
                 <span className="category-icon">{category.icon}</span>
                 <span className="category-name">{category.name}</span>

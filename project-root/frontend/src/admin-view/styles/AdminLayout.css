@@ -19,6 +19,183 @@
   --sidebar-w: 240px;
 }
 
+
+/* ========================================
+   MENU MANAGEMENT SECTION
+   ======================================== */
+
+.menu-management {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Submenu Navigation - Enhanced */
+.submenu {
+  display: flex;
+  gap: 20px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+
+/* Submenu Button - Larger, Colorful */
+.submenu-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Submenu Icon */
+.submenu-icon {
+  font-size: 32px;
+  transition: transform 0.3s ease;
+}
+
+/* Submenu Text */
+.submenu-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Hover State */
+.submenu-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(34,197,94,.2);
+  border-color: rgba(34,197,94,.3);
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.submenu-btn:hover .submenu-icon {
+  transform: scale(1.15);
+}
+
+/* Active State */
+.submenu-btn.active {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  color: white;
+  border-color: var(--accent2);
+  box-shadow: 0 8px 24px rgba(34,197,94,.35);
+  transform: translateY(-2px);
+}
+
+.submenu-btn.active .submenu-text {
+  font-weight: 700;
+}
+
+/* Individual Button Colors (Optional Variant) */
+.submenu-btn:nth-child(1):not(.active) {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.submenu-btn:nth-child(1):hover:not(.active) {
+  border-color: rgba(245,158,11,.3);
+  box-shadow: 0 8px 20px rgba(245,158,11,.2);
+}
+
+.submenu-btn:nth-child(2):not(.active) {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.submenu-btn:nth-child(2):hover:not(.active) {
+  border-color: rgba(59,130,246,.3);
+  box-shadow: 0 8px 20px rgba(59,130,246,.2);
+}
+
+.submenu-btn:nth-child(3):not(.active) {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.submenu-btn:nth-child(3):hover:not(.active) {
+  border-color: rgba(239,68,68,.3);
+  box-shadow: 0 8px 20px rgba(239,68,68,.2);
+}
+
+.submenu-btn:nth-child(4):not(.active) {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+.submenu-btn:nth-child(4):hover:not(.active) {
+  border-color: rgba(168,85,247,.3);
+  box-shadow: 0 8px 20px rgba(168,85,247,.2);
+}
+
+/* Submenu Content */
+.submenu-content {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  min-height: 500px;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .submenu {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .submenu-btn {
+    padding: 18px 20px;
+  }
+  
+  .submenu-icon {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .submenu {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .submenu-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 16px 20px;
+    gap: 16px;
+  }
+  
+  .submenu-icon {
+    font-size: 24px;
+  }
+  
+  .submenu-text {
+    font-size: 15px;
+  }
+  
+  .submenu-content {
+    padding: 20px;
+  }
+}
+
+
 .admin-layout {
   font-family: 'DM Sans', sans-serif;
   background: var(--bg);

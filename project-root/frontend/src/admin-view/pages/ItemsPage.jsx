@@ -767,154 +767,143 @@ const removePrepStep = (index) => {
         </select>
       </div>
 
-      {/* Items Grid */}
-      {loading ? (
-        <div className="loading">Loading items...</div>
-      ) : filteredItems.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">🍽️</div>
-          <h3>No Items Found</h3>
-          <p>
-            {searchTerm || filterCategory !== 'all' || filterType !== 'all' || filterStatus !== 'all'
-              ? 'Try adjusting your search or filters' 
-              : 'Get started by creating your first menu item'}
-          </p>
-          {!searchTerm && filterCategory === 'all' && filterType === 'all' && filterStatus === 'all' && (
-            <button className="btn-primary" onClick={() => setShowModal(true)}>
-              + Create First Item
-            </button>
+   {/* Items List/Table View */}
+{loading ? (
+  <div className="loading">Loading items...</div>
+) : filteredItems.length === 0 ? (
+  <div className="empty-state">
+    <div className="empty-icon">🍽️</div>
+    <h3>No Items Found</h3>
+    <p>
+      {searchTerm || filterCategory !== 'all' || filterType !== 'all' || filterStatus !== 'all'
+        ? 'Try adjusting your search or filters' 
+        : 'Get started by creating your first menu item'}
+    </p>
+    {!searchTerm && filterCategory === 'all' && filterType === 'all' && filterStatus === 'all' && (
+      <button className="btn-primary" onClick={() => setShowModal(true)}>
+        + Create First Item
+      </button>
+    )}
+  </div>
+) : (
+  <div className="items-table-container">
+    <table className="items-table">
+   <thead>
+  <tr>
+    <th style={{ width: '80px' }}>Image</th>
+    <th style={{ width: '35%' }}>Item Details</th>
+    <th style={{ width: '18%' }}>Category</th>
+    <th style={{ width: '18%' }}>Price</th>
+    <th style={{ width: '15%' }}>Type</th>
+    <th style={{ width: '140px', textAlign: 'center' }}>Actions</th>
+  </tr>
+</thead>
+     <tbody>
+  {filteredItems.map(item => (
+    <tr key={item._id} className={!item.isAvailable ? 'item-unavailable' : ''}>
+      {/* Image */}
+      <td>
+        <div className="table-item-image">
+          {item.images && item.images.length > 0 ? (
+            <img 
+              src={item.images.find(img => img.isPrimary)?.url || item.images[0].url} 
+              alt={item.name} 
+            />
+          ) : (
+            <div className="no-image-small">🍽️</div>
           )}
         </div>
-      ) : (
-        <div className="items-grid">
-          {filteredItems.map(item => (
-            <div key={item._id} className="item-card">
-              {/* Status Badges */}
-              <div className="item-badges">
-                {!item.isAvailable && <span className="badge unavailable">Unavailable</span>}
-                {item.isFeatured && <span className="badge featured">⭐ Featured</span>}
-                {item.isPopular && <span className="badge popular">🔥 Popular</span>}
-              </div>
+      </td>
 
-              {/* Item Image */}
-              <div className="item-image">
-                {item.images && item.images.length > 0 ? (
-                  <img 
-                    src={item.images.find(img => img.isPrimary)?.url || item.images[0].url} 
-                    alt={item.name} 
-                  />
-                ) : (
-                  <div className="no-image">🍽️</div>
-                )}
-                <div className="type-badge" style={{
-                  background: (item.type === 'veg' || item.type === 'vegan') ? '#dcfce7' : 
-                              item.type === 'non-veg' ? '#fee2e2' : '#fef3c7'
-                }}>
-                  {typeEmojis[item.type] || '🟢'} {(item.type || 'veg').toUpperCase()}
-                </div>
-              </div>
-
-              {/* Item Info */}
-              <div className="item-info">
-                <h3>{item.name}</h3>
-                <p className="item-description">{item.description}</p>
-                
-                {/* Category */}
-                <div className="item-meta">
-                  {item.category && (
-                    <span className="category-tag" style={{ 
-                      background: (item.category.color || '#22c55e') + '20',
-                      color: item.category.color || '#22c55e' 
-                    }}>
-                      {item.category.icon || '🍽️'} {item.category.name || 'Unknown Category'}
-                    </span>
-                  )}
-                  {item.spiceLevel !== 'none' && (
-                    <span className="spice-level">{spiceLevelEmojis[item.spiceLevel]}</span>
-                  )}
-                </div>
-
-                {/* Price */}
-                <div className="item-price">
-                  {item.discountPrice ? (
-                    <>
-                      <span className="original-price">₹{item.price}</span>
-                      <span className="discount-price">₹{item.discountPrice}</span>
-                      <span className="discount-badge">
-                        {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
-                      </span>
-                    </>
-                  ) : (
-                    <span className="current-price">₹{item.price}</span>
-                  )}
-                </div>
-
-                {/* Additional Info */}
-                <div className="item-details">
-                  {item.preparationTime && (
-                    <span className="detail-item">⏱️ {item.preparationTime} min</span>
-                  )}
-                  {item.calories && (
-                    <span className="detail-item">🔥 {item.calories} cal</span>
-                  )}
-                  {item.servingSize && (
-                    <span className="detail-item">🍽️ {item.servingSize}</span>
-                  )}
-                </div>
-
-                {/* Ingredients Section */}
-                <div className="item-ingredients">
-                  <div className="ingredients-header">
-                    <span className="ingredients-label">🥬 Ingredients ({item.ingredients?.length || 0})</span>
-                    <button 
-                      className="manage-ingredients-btn"
-                      onClick={() => openIngredientsModal(item)}
-                    >
-                      + Add Ingredients
-                    </button>
-                  </div>
-                  {item.ingredients && item.ingredients.length > 0 && (
-                    <div className="ingredients-list">
-                      {item.ingredients.slice(0, 3).map((ingredient, index) => (
-                        <span key={index} className="ingredient-tag">
-                          {ingredient}
-                        </span>
-                      ))}
-                      {item.ingredients.length > 3 && (
-                        <span className="ingredient-more">+{item.ingredients.length - 3} more</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="item-actions">
-                  <button 
-                    className={`action-btn toggle-btn ${item.isAvailable ? 'available' : ''}`}
-                    onClick={() => toggleAvailability(item._id)}
-                    title={item.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
-                  >
-                    {item.isAvailable ? '✓' : '○'}
-                  </button>
-                  <button 
-                    className={`action-btn star-btn ${item.isFeatured ? 'featured' : ''}`}
-                    onClick={() => toggleFeatured(item._id)}
-                    title={item.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
-                  >
-                    ⭐
-                  </button>
-                  <button className="action-btn edit-btn" onClick={() => handleEdit(item)}>
-                    ✏️
-                  </button>
-                  <button className="action-btn delete-btn" onClick={() => handleDelete(item._id)}>
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* Item Details */}
+      <td>
+        <div className="table-item-details">
+          <div className="item-name-row">
+            <strong>{item.name}</strong>
+            {item.isFeatured && <span className="mini-badge featured">⭐</span>}
+            {item.isPopular && <span className="mini-badge popular">🔥</span>}
+            {/* Show availability badge inline with name */}
+            {!item.isAvailable && <span className="mini-badge unavailable">Unavailable</span>}
+          </div>
+          <p className="item-desc-small">{item.description}</p>
+         
         </div>
-      )}
+      </td>
+
+      {/* Category */}
+      <td>
+        {item.category && (
+          <span className="category-tag-small" style={{ 
+            background: (item.category.color || '#22c55e') + '20',
+            color: item.category.color || '#22c55e' 
+          }}>
+            {item.category.icon || '🍽️'} {item.category.name || 'Unknown'}
+          </span>
+        )}
+      </td>
+
+      {/* Price */}
+      <td>
+        <div className="table-price">
+          {item.discountPrice ? (
+            <>
+              <div className="price-row">
+                <span className="price-current">₹{item.discountPrice}</span>
+                
+              </div>
+              <span className="price-original"></span>
+            </>
+          ) : (
+            <span className="price-current"></span>
+          )}
+        </div>
+      </td>
+
+      {/* Type */}
+      <td>
+        <span className="type-badge-small" style={{
+          background: (item.type === 'veg' || item.type === 'vegan') ? '#dcfce7' : 
+                      item.type === 'non-veg' ? '#fee2e2' : '#fef3c7',
+          color: (item.type === 'veg' || item.type === 'vegan') ? '#15803d' : 
+                 item.type === 'non-veg' ? '#b91c1c' : '#b45309'
+        }}>
+          {typeEmojis[item.type] || '🟢'} {(item.type || 'veg').toUpperCase()}
+        </span>
+      </td>
+
+      {/* Actions */}
+     {/* Actions */}
+<td>
+  <div className="table-actions">
+    <button 
+      className="table-action-btn edit"
+      onClick={() => handleEdit(item)}
+      title="Edit Item"
+    >
+      ✏️
+    </button>
+    <button 
+      className={`table-action-btn toggle ${item.isAvailable ? 'active' : 'inactive'}`}
+      onClick={() => toggleAvailability(item._id)}
+      title={item.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
+    >
+      {item.isAvailable ? '👁️' : '🚫'}
+    </button>
+    <button 
+      className="table-action-btn delete"
+      onClick={() => handleDelete(item._id)}
+      title="Delete Item"
+    >
+      🗑️
+    </button>
+  </div>
+</td>
+    </tr>
+  ))}
+</tbody>
+    </table>
+  </div>
+)}
 
       {/* Create/Edit Modal */}
       {showModal && (

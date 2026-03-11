@@ -107,34 +107,33 @@ const Checkoutpage = () => {
     }
   }, [resendTimer]);
 
-  // Phone/OTP handlers - Firebase OTP
+  // Phone/OTP handlers - Mock OTP for development
   const handleSendOTP = async () => {
     if (!/^\d{10}$/.test(phoneNumber)) {
       setPhoneError(true);
       return;
     }
     
-    setPhoneError(false);
     setIsLoading(true);
+    setPhoneError(false);
     
     try {
-      // Setup reCAPTCHA
-      setupRecaptcha();
+      // Mock OTP sending - simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Format phone number with country code
-      const phoneWithCountryCode = `+91${phoneNumber}`;
+      // For development, use a fixed OTP: 123456
+      console.log(`Mock OTP sent to +91${phoneNumber}: 123456`);
       
-      // Send OTP via Firebase
-      const confirmation = await signInWithPhoneNumber(auth, phoneWithCountryCode, window.recaptchaVerifier);
-      
-      // Store confirmation result for verification
-      setConfirmationResult(confirmation);
+      // Set phone step to OTP verification
       setPhoneStep('otp');
       setResendTimer(30);
+      
+      // Show success message
+      alert('OTP sent successfully! For testing, use: 123456');
     } catch (error) {
       console.error('Error sending OTP:', error);
       setPhoneError(true);
-      alert('Failed to send OTP: ' + error.message);
+      alert('Failed to send OTP. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -165,7 +164,7 @@ const Checkoutpage = () => {
     }
   };
 
-  // Verify OTP using Firebase
+  // Verify OTP using Mock System
   const handleVerifyOTP = async () => {
     const otpValue = otp.join('');
     if (otpValue.length < 6) {
@@ -173,21 +172,21 @@ const Checkoutpage = () => {
       return;
     }
     
-    if (!confirmationResult) {
-      setOtpError(true);
-      alert('Session expired. Please request a new OTP.');
-      setPhoneStep('input');
-      return;
-    }
-    
     setIsLoading(true);
     
     try {
-      // Verify OTP with Firebase
-      await confirmationResult.confirm(otpValue);
+      // Mock verification - simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      setOtpError(false);
-      setPhoneStep('verified');
+      // For development, accept only the fixed OTP: 123456
+      if (otpValue === '123456') {
+        setOtpError(false);
+        setPhoneStep('verified');
+        console.log('Phone number verified successfully!');
+      } else {
+        setOtpError(true);
+        alert('Invalid OTP. For testing, use: 123456');
+      }
     } catch (error) {
       console.error('Error verifying OTP:', error);
       setOtpError(true);
@@ -203,7 +202,7 @@ const Checkoutpage = () => {
     setOtp(['', '', '', '', '', '']);
   };
 
-  // Resend OTP using Firebase
+  // Resend OTP using Mock System
   const handleResendOTP = async () => {
     if (!/^\d{10}$/.test(phoneNumber)) {
       setPhoneError(true);
@@ -213,19 +212,19 @@ const Checkoutpage = () => {
     setIsLoading(true);
     
     try {
-      // Setup reCAPTCHA
-      setupRecaptcha();
+      // Mock OTP sending - simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Format phone number with country code
-      const phoneWithCountryCode = `+91${phoneNumber}`;
+      // For development, use a fixed OTP: 123456
+      console.log(`Mock OTP resent to +91${phoneNumber}: 123456`);
       
-      // Send OTP via Firebase
-      const confirmation = await signInWithPhoneNumber(auth, phoneWithCountryCode, window.recaptchaVerifier);
-      
-      // Store confirmation result for verification
-      setConfirmationResult(confirmation);
+      // Reset OTP inputs and timer
       setOtp(['', '', '', '', '', '']);
       setResendTimer(30);
+      setOtpError(false);
+      
+      // Show success message
+      alert('OTP resent successfully! For testing, use: 123456');
     } catch (error) {
       console.error('Error resending OTP:', error);
       alert('Failed to resend OTP. Please try again.');
@@ -265,7 +264,7 @@ const Checkoutpage = () => {
     setAddressForm({ ...addressForm, [field]: value });
   };
 
-  // Payment handler - This is where we process the actual payment after checkout form
+  // Payment handler - Simulated payment for development
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
       alert('Your cart is empty. Please add items first.');
@@ -276,79 +275,82 @@ const Checkoutpage = () => {
     setIsProcessing(true);
     
     try {
-      // Initialize Razorpay for payment
-      const options = {
-        key: 'rzp_live_SKmIg2wGOwjrmD',
-        amount: total * 100, // Amount in paise
-        currency: 'INR',
-        name: "Yeswanth's Healthy Kitchen",
-        description: 'Order Payment',
-        handler: async (response) => {
-          // Payment successful
-          try {
-            // Save order to backend
-            const token = localStorage.getItem('userToken');
-            const orderItems = cartItems.map(item => ({
-              menuItem: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity || 1,
-              subtotal: (item.price * (item.quantity || 1))
-            }));
-
-            if (token) {
-              // Create order
-              await fetch('http://localhost:5000/api/orders', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                  orderItems,
-                  totalAmount: total,
-                  orderType: 'delivery',
-                  paymentMethod: 'online'
-                })
-              });
-
-              // Save payment
-              await fetch('http://localhost:5000/api/payments', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                  amount: total,
-                  paymentMethod: 'online',
-                  transactionId: response.razorpay_payment_id,
-                  paymentStatus: 'completed'
-                })
-              });
-            }
-            
-            // Clear cart and show success
-            localStorage.removeItem('checkoutCart');
-            setShowSuccessModal(true);
-          } catch (saveError) {
-            console.error('Error saving order:', saveError);
-            setShowSuccessModal(true);
-          }
-          setIsProcessing(false);
-        },
-        prefill: {
+      // First create order
+      const orderData = {
+        customer: {
           name: addressForm.fullName || 'Customer',
-          email: 'customer@example.com',
-          contact: phoneNumber || '9999999999'
+          phone: phoneNumber,
+          email: 'customer@example.com'
         },
-        theme: {
-          color: '#22c55e'
-        }
+        orderItems: cartItems.map(item => ({
+          menuItem: item.id || item._id,
+          name: item.name,
+          price: item.finalPrice || item.price,
+          quantity: item.quantity || 1,
+          subtotal: (item.finalPrice || item.price) * (item.quantity || 1)
+        })),
+        deliveryAddress: {
+          street: addressForm.addressLine1 || 'Default Address',
+          city: addressForm.city,
+          state: addressForm.state,
+          zipCode: addressForm.pinCode,
+          apartment: addressForm.flatNo,
+          landmark: addressForm.landmark,
+          instructions: deliveryNote
+        },
+        orderType: 'delivery',
+        paymentMethod: 'online',
+        delivery: {
+          type: 'standard'
+        },
+        specialInstructions: deliveryNote
       };
 
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      const orderResponse = await fetch('http://localhost:5001/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!orderResponse.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const orderResult = await orderResponse.json();
+      const orderId = orderResult.data._id;
+
+      // Simulate payment processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Save payment record (simulated successful payment)
+      const paymentResponse = await fetch('http://localhost:5001/api/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          amount: total,
+          paymentMethod: 'online',
+          transactionId: 'demo_payment_' + Date.now(),
+          paymentStatus: 'completed'
+        })
+      });
+
+      if (paymentResponse.ok) {
+        // Clear cart and show success
+        localStorage.removeItem('checkoutCart');
+        setShowSuccessModal(true);
+      } else {
+        console.error('Payment save failed');
+        setShowSuccessModal(true); // Still show success for demo
+      }
+      
+      setIsProcessing(false);
     } catch (error) {
       console.error('Payment error:', error);
       alert('Payment failed. Please try again.');
@@ -459,7 +461,7 @@ const Checkoutpage = () => {
                             Send OTP
                           </button>
                         </div>
-                        <div className="hint">📱 You'll receive a 6-digit OTP via SMS</div>
+                        <div className="hint">📱 You'll receive a 6-digit OTP via SMS (Testing: Use 123456)</div>
                         <div className={`error-text ${phoneError ? 'show' : ''}`}>
                           Please enter a valid 10-digit mobile number.
                         </div>

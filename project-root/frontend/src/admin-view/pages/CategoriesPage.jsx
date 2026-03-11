@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './categories-page.css';
+import './CategoriesPage.css';
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
@@ -44,7 +44,11 @@ const CategoriesPage = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/categories`);
+      const response = await fetch(`${API_URL}/categories`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
       const data = await response.json();
       if (data.success) {
         setCategories(data.data);
@@ -109,12 +113,24 @@ const CategoriesPage = () => {
     e.preventDefault();
     setUploading(true);
 
+    // Check for duplicate category name (only for new categories, not edits)
+    if (!editingCategory) {
+      const existingCategory = categories.find(cat => 
+        cat.name.toLowerCase() === formData.name.toLowerCase().trim()
+      );
+      if (existingCategory) {
+        alert('A category with this name already exists!');
+        setUploading(false);
+        return;
+      }
+    }
+
     try {
       const formDataToSend = new FormData();
       if (selectedImage) {
         formDataToSend.append('image', selectedImage);
       }
-      formDataToSend.append('name', formData.name);
+      formDataToSend.append('name', formData.name.trim());
       formDataToSend.append('description', formData.description);
       formDataToSend.append('icon', formData.icon);
       formDataToSend.append('color', formData.color);

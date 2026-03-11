@@ -12,7 +12,7 @@ const CustomersPage = () => {
       try {
         const token = localStorage.getItem('token');
         
-        const response = await fetch('http://localhost:5000/api/users', {
+        const response = await fetch('http://localhost:5001/api/users', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

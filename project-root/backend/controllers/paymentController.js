@@ -3,7 +3,7 @@ import Order from '../models/Order.js';
 
 // @desc    Save payment record after successful payment
 // @route   POST /api/payments
-// @access  Private
+// @access  Private (users are already authenticated)
 export const savePayment = async (req, res) => {
   try {
     const {
@@ -14,7 +14,7 @@ export const savePayment = async (req, res) => {
       paymentStatus
     } = req.body;
 
-    // Verify the order exists and belongs to the user
+    // Verify the order exists
     const order = await Order.findById(orderId);
 
     if (!order) {
@@ -24,8 +24,8 @@ export const savePayment = async (req, res) => {
       });
     }
 
-    // Verify the order belongs to the user
-    if (order.userId.toString() !== req.user._id.toString()) {
+    // Verify the order belongs to the authenticated user
+    if (order.userId && order.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         error: 'Not authorized to make payment for this order'
@@ -44,6 +44,7 @@ export const savePayment = async (req, res) => {
 
     // Update order payment status
     order.paymentStatus = 'paid';
+    order.status = 'confirmed'; // Move to confirmed status after payment
     await order.save();
 
     res.status(201).json({

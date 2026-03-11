@@ -65,8 +65,8 @@ const Main = ({ restaurants }) => {
   };
 
   const handleCategoryClick = (category) => {
-    // Navigate to menu page with category ID
-    navigate(`/menu/${category._id}`);
+    // Navigate to menu page with category slug
+    navigate(`/menu/${category.slug}`);
   };
 
   return (
