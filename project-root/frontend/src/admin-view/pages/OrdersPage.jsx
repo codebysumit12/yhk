@@ -36,7 +36,7 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, token]);
+  }, [filterStatus, API_URL, token]);
 
   useEffect(() => {
     fetchOrders();

@@ -20,19 +20,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Setup reCAPTCHA verifier
-const setupRecaptcha = () => {
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible',
-      callback: (response) => {
-        // reCAPTCHA solved
-      }
-    });
-  }
-  return window.recaptchaVerifier;
-};
-
 const Checkoutpage = () => {
   const navigate = useNavigate();
   

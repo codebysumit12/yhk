@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Nav from './Nav';
 
-import { API_CONFIG } from '../../config/api';
 const Main = ({ restaurants }) => {
-  const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants);
   const [activeFilter, setActiveFilter] = useState('all');
   const [heroBanner, setHeroBanner] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -12,7 +10,7 @@ const Main = ({ restaurants }) => {
 
 
   useEffect(() => {
-    setFilteredRestaurants(restaurants);
+    // Filter logic can be added here if needed
   }, [restaurants]);
 
   useEffect(() => {
@@ -62,7 +60,7 @@ const Main = ({ restaurants }) => {
         filtered = restaurants;
     }
     
-    setFilteredRestaurants(filtered);
+    // Filter logic can be implemented here
   };
 
   const handleCategoryClick = (category) => {

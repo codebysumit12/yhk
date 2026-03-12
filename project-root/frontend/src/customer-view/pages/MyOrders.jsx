@@ -35,7 +35,7 @@ const MyOrders = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, API_URL]);
 
   useEffect(() => {
     fetchMyOrders();

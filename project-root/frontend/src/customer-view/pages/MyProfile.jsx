@@ -61,7 +61,7 @@ const MyProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, API_URL]);
 
   useEffect(() => {
     if (!token) {
