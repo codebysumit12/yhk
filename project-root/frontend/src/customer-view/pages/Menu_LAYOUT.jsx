@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
+import CartSidebar from './CartSidebar';
 import './Menu.css';
 
 const API_URL = 'http://localhost:5001/api';
@@ -492,55 +493,14 @@ const Menu = () => {
           </div>
         </div>
 
-        {cart.length > 0 && (
-          <button className="floating-cart" onClick={() => setShowCart(true)}>
-            <i className="fas fa-shopping-cart"></i>
-            <span className="cart-count">{cart.length}</span>
-          </button>
-        )}
-
-        <aside className={`cart-sidebar ${showCart ? 'open' : ''}`}>
-          <div className="cart-header">
-            <h3>Your Cart</h3>
-            <button className="close-cart" onClick={() => setShowCart(false)}>
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <div className="cart-items">
-            {cart.length === 0 ? (
-              <div className="empty-cart">
-                <i className="fas fa-shopping-cart"></i>
-                <p>Your cart is empty</p>
-              </div>
-            ) : (
-              cart.map(item => (
-                <div key={item.cartId} className="cart-item">
-                  <div className="cart-item-info">
-                    <h5>{item.name}</h5>
-                    <span className="cart-item-price">₹{item.price}</span>
-                  </div>
-                  <button 
-                    className="remove-btn"
-                    onClick={() => handleRemoveFromCart(item.cartId)}
-                  >
-                    <i className="fas fa-trash"></i>
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-
-          {cart.length > 0 && (
-            <div className="cart-footer">
-              <div className="cart-total">
-                <span>Total</span>
-                <span className="total-amount">₹{getCartTotal()}</span>
-              </div>
-              <button className="checkout-btn" onClick={handleCheckout}>Checkout</button>
-            </div>
-          )}
-        </aside>
+        <CartSidebar
+          showCart={showCart}
+          setShowCart={setShowCart}
+          cart={cart}
+          onRemoveFromCart={handleRemoveFromCart}
+          onCheckout={handleCheckout}
+          getCartTotal={getCartTotal}
+        />
       </div>
     );
   }
@@ -623,56 +583,15 @@ const Menu = () => {
           )}
         </main>
 
-        <aside className={`cart-sidebar ${showCart ? 'open' : ''}`}>
-          <div className="cart-header">
-            <h3>Your Cart</h3>
-            <button className="close-cart" onClick={() => setShowCart(false)}>
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <div className="cart-items">
-            {cart.length === 0 ? (
-              <div className="empty-cart">
-                <i className="fas fa-shopping-cart"></i>
-                <p>Your cart is empty</p>
-              </div>
-            ) : (
-              cart.map(item => (
-                <div key={item.cartId} className="cart-item">
-                  <div className="cart-item-info">
-                    <h5>{item.name}</h5>
-                    <span className="cart-item-price">₹{item.price}</span>
-                  </div>
-                  <button 
-                    className="remove-btn"
-                    onClick={() => handleRemoveFromCart(item.cartId)}
-                  >
-                    <i className="fas fa-trash"></i>
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-
-          {cart.length > 0 && (
-            <div className="cart-footer">
-              <div className="cart-total">
-                <span>Total</span>
-                <span className="total-amount">₹{getCartTotal()}</span>
-              </div>
-              <button className="checkout-btn" onClick={handleCheckout}>Checkout</button>
-            </div>
-          )}
-        </aside>
+        <CartSidebar
+          showCart={showCart}
+          setShowCart={setShowCart}
+          cart={cart}
+          onRemoveFromCart={handleRemoveFromCart}
+          onCheckout={handleCheckout}
+          getCartTotal={getCartTotal}
+        />
       </div>
-
-      {cart.length > 0 && !showCart && (
-        <button className="floating-cart" onClick={() => setShowCart(true)}>
-          <i className="fas fa-shopping-cart"></i>
-          <span className="cart-count">{cart.length}</span>
-        </button>
-      )}
     </div>
   );
 };

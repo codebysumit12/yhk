@@ -20,7 +20,10 @@ const CategoriesPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
 
   const API_URL = 'http://localhost:5001/api';
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('userToken');
+  
+  console.log('Categories component - Token from localStorage:', token);
+  console.log('localStorage contents:', localStorage);
 
   // Available icons
   const availableIcons = [
@@ -29,8 +32,8 @@ const CategoriesPage = () => {
     '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🌭', '🥪',
     '🍰', '🎂', '🧁', '🍪', '🍩', '🥧', '🍦', '🥤',
     '☕', '🍵', '🧃', '🥛', '🍷', '🍺', '🥂', '🍾',
-    '🥗', '🥑', '🥕', '🌽', '🥒', '🍅', '🥦', '🧄',
-    '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🥘', '🍲'
+    '', '🥕', '🌽', '🥒', '🍅', '🥦', '🧄', '🍞',
+    '🥖', '🥨', '🧀', '🥚', '🍳'
   ];
 
   // Available colors
@@ -126,6 +129,9 @@ const CategoriesPage = () => {
       
       const method = editingCategory ? 'PUT' : 'POST';
 
+      console.log('Token being sent:', token);
+      console.log('Authorization header:', `Bearer ${token}`);
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -135,6 +141,7 @@ const CategoriesPage = () => {
       });
 
       const data = await response.json();
+      console.log('Response:', data);
 
       if (data.success) {
         alert(editingCategory ? 'Category updated successfully!' : 'Category created successfully!');

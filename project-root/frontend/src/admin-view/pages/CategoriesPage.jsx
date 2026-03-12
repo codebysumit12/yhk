@@ -20,7 +20,7 @@ const CategoriesPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
 
   const API_URL = 'http://localhost:5001/api';
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('userToken');
 
   // Available icons
   const availableIcons = [
@@ -29,8 +29,8 @@ const CategoriesPage = () => {
     '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🌭', '🥪',
     '🍰', '🎂', '🧁', '🍪', '🍩', '🥧', '🍦', '🥤',
     '☕', '🍵', '🧃', '🥛', '🍷', '🍺', '🥂', '🍾',
-    '🥗', '🥑', '🥕', '🌽', '🥒', '🍅', '🥦', '🧄',
-    '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🥘', '🍲'
+    '', '🥕', '🌽', '🥒', '🍅', '🥦', '🧄', '🍞',
+    '🥖', '🥨', '🧀', '🥚', '🍳'
   ];
 
   // Available colors
@@ -161,7 +161,7 @@ const CategoriesPage = () => {
       }
     } catch (error) {
       console.error('Error saving category:', error);
-      alert('Error saving category');
+      alert('Error saving category: ' + error.message);
     } finally {
       setUploading(false);
     }

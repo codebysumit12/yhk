@@ -3,7 +3,10 @@ import User from './models/User.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-await mongoose.connect(process.env.MONGO_URI);
+// Use hardcoded URI if env is not set
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/yhk-database';
+
+await mongoose.connect(MONGO_URI);
 
 const existing = await User.findOne({ email: 'admin@kitchen.com' });
 if (!existing) {

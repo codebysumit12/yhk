@@ -89,7 +89,7 @@ const IngredientsPage = () => {
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('userToken');
       const url = editingIngredient 
         ? `${API_URL}/ingredients/${editingIngredient._id}`
         : `${API_URL}/ingredients`;
@@ -168,7 +168,7 @@ const IngredientsPage = () => {
     }
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('userToken');
       const response = await fetch(`${API_URL}/ingredients/${id}`, {
         method: 'DELETE',
         headers: {
@@ -191,7 +191,7 @@ const IngredientsPage = () => {
 
   const toggleStatus = async (id) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('userToken');
       const response = await fetch(`${API_URL}/ingredients/${id}/toggle`, {
         method: 'PATCH',
         headers: {

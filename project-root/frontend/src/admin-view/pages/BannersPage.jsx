@@ -22,7 +22,7 @@ const BannersPage = () => {
   const [uploading, setUploading] = useState(false);
 
   const API_URL = 'http://localhost:5001/api';
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('userToken');
 
   // Fetch banners
   const fetchBanners = async () => {

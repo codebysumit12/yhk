@@ -24,7 +24,8 @@ export const savePayment = async (req, res) => {
       });
     }
 
-    // Verify the order belongs to the authenticated user
+    // For orders with userId, verify ownership
+    // For guest orders (without userId), allow payment
     if (order.userId && order.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -34,7 +35,7 @@ export const savePayment = async (req, res) => {
 
     // Create payment record
     const payment = await Payment.create({
-      userId: req.user._id,
+      userId: req.user._id, // Use authenticated user ID
       orderId,
       amount,
       paymentMethod: paymentMethod || 'online',
@@ -52,10 +53,10 @@ export const savePayment = async (req, res) => {
       data: payment
     });
   } catch (error) {
-    console.error(error);
+    console.error('Payment save error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error: ' + error.message
     });
   }
 };

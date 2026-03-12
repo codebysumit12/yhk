@@ -73,7 +73,7 @@ const AdminLayout = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('userToken');
     localStorage.removeItem('user');
     window.location.href = '/auth';
   };

@@ -11,7 +11,7 @@ const OrdersPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const API_URL = 'http://localhost:5001/api';
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('userToken');
 
   // Fetch orders
   const fetchOrders = async () => {
@@ -78,9 +78,9 @@ const OrdersPage = () => {
   // Filter orders
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.phone.includes(searchTerm);
+      (order.orderNumber && order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (order.customer && order.customer.name && order.customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (order.customer && order.customer.phone && order.customer.phone.includes(searchTerm));
     
     const matchesType = filterType === 'all' || order.orderType === filterType;
     

@@ -10,7 +10,7 @@ const DeliveriesPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const API_URL = 'http://localhost:5001/api';
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('userToken');
 
   // Fetch deliveries (orders that are out for delivery)
   const fetchDeliveries = async () => {
@@ -72,9 +72,9 @@ const DeliveriesPage = () => {
   // Filter deliveries
   const filteredDeliveries = deliveries.filter(delivery => {
     const matchesSearch = 
-      delivery.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      delivery.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      delivery.customer.phone.includes(searchTerm);
+      (delivery.orderNumber && delivery.orderNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (delivery.customer && delivery.customer.name && delivery.customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (delivery.customer && delivery.customer.phone && delivery.customer.phone.includes(searchTerm));
     
     return matchesSearch;
   });

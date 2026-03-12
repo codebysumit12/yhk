@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Nav.css';
 
-const Nav = () => {
+const Nav = ({ onOpenCart }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -18,8 +18,25 @@ const Nav = () => {
     }
 
     // Get cart count from localStorage
+    updateCartCount();
+  }, []);
+
+  // Update cart count
+  const updateCartCount = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    setCartCount(cart.length);
+    setCartCount(cart.reduce((total, item) => total + item.quantity, 0));
+  };
+
+  // Listen for storage changes (when cart is updated)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      updateCartCount();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -42,7 +59,7 @@ const Nav = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('userToken');
     localStorage.removeItem('user');
     localStorage.removeItem('cart');
     setUser(null);
@@ -56,7 +73,14 @@ const Nav = () => {
 
   const handleDropdownClick = (path) => {
     setShowProfileDropdown(false);
-    if (path) navigate(path);
+    if (path === '/cart') {
+      // Handle cart opening specially
+      if (onOpenCart) {
+        onOpenCart();
+      }
+    } else if (path) {
+      navigate(path);
+    }
   };
 
   // Get user initials for avatar
@@ -70,149 +94,151 @@ const Nav = () => {
   };
 
   return (
-    <header className="header">
-      <div className="header-top">
-        <Link to="/" className="logo">
-          <div className="logo-icon">
-            <i className="fas fa-carrot"></i>
-          </div>
-          Yashwanth's Healthy Kitchen
-        </Link>
-        
-        <div className="header-search">
-          <div className="search-bar">
-            <input 
-              type="text" 
-              id="searchInput" 
-              placeholder="Search for the best food..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
-            />
-            <button className="search-btn" onClick={handleSearch}>
-              <i className="fas fa-search"></i>
-            </button>
-          </div>
-        </div>
-        
-        <div className="header-actions">
-          {user ? (
-            <div className="profile-section" ref={dropdownRef}>
-              <button 
-                className="profile-trigger" 
-                onClick={toggleProfileDropdown}
-              >
-                <div className="profile-avatar">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={user.name} />
-                  ) : (
-                    <span className="avatar-initials">{getUserInitials()}</span>
-                  )}
-                </div>
-                <div className="profile-info">
-                  <span className="profile-name">{user.name}</span>
-                  <i className={`fas fa-chevron-down dropdown-arrow ${showProfileDropdown ? 'rotate' : ''}`}></i>
-                </div>
+    <>
+      <header className="header">
+        <div className="header-top">
+          <Link to="/" className="logo">
+            <div className="logo-icon">
+              <i className="fas fa-carrot"></i>
+            </div>
+            Yashwanth's Healthy Kitchen
+          </Link>
+          
+          <div className="header-search">
+            <div className="search-bar">
+              <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search for the best food..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
+              />
+              <button className="search-btn" onClick={handleSearch}>
+                <i className="fas fa-search"></i>
               </button>
-
-              {showProfileDropdown && (
-                <div className="profile-dropdown">
-                  <div className="dropdown-header">
-                    <div className="dropdown-avatar">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.name} />
-                      ) : (
-                        <span className="avatar-initials-large">{getUserInitials()}</span>
-                      )}
-                    </div>
-                    <div className="dropdown-user-info">
-                      <strong>{user.name}</strong>
-                      <span>{user.email}</span>
-                      <span className="user-role">{user.role === 'admin' ? '👑 Admin' : '🍽️ Foodie'}</span>
-                    </div>
-                  </div>
-
-                  <div className="dropdown-divider"></div>
-
-                  <div className="dropdown-menu">
-                    <button 
-                      className="dropdown-item"
-                      onClick={() => handleDropdownClick('/track-order')}
-                    >
-                      <i className="fas fa-map-marker-alt"></i>
-                      <span>Track My Order</span>
-                    </button>
-
-                    <button 
-                      className="dropdown-item"
-                      onClick={() => handleDropdownClick('/my-orders')}
-                    >
-                      <i className="fas fa-receipt"></i>
-                      <span>My Orders</span>
-                    </button>
-
-                    <button 
-                      className="dropdown-item cart-item"
-                      onClick={() => handleDropdownClick('/cart')}
-                    >
-                      <i className="fas fa-shopping-cart"></i>
-                      <span>Cart</span>
-                      {cartCount > 0 && (
-                        <span className="cart-count-badge">{cartCount}</span>
-                      )}
-                    </button>
-
-                    <button 
-                      className="dropdown-item"
-                      onClick={() => handleDropdownClick('/profile')}
-                    >
-                      <i className="fas fa-user-circle"></i>
-                      <span>My Profile</span>
-                    </button>
-
-                    {user.role === 'admin' && (
-                      <button 
-                        className="dropdown-item admin-item"
-                        onClick={() => handleDropdownClick('/admin')}
-                      >
-                        <i className="fas fa-crown"></i>
-                        <span>Admin Panel</span>
-                      </button>
+            </div>
+          </div>
+          
+          <div className="header-actions">
+            {user ? (
+              <div className="profile-section" ref={dropdownRef}>
+                <button 
+                  className="profile-trigger" 
+                  onClick={toggleProfileDropdown}
+                >
+                  <div className="profile-avatar">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.name} />
+                    ) : (
+                      <span className="avatar-initials">{getUserInitials()}</span>
                     )}
                   </div>
-
-                  <div className="dropdown-divider"></div>
-
-                  <div className="dropdown-footer">
-                    <button 
-                      className="dropdown-item logout-item"
-                      onClick={handleLogout}
-                    >
-                      <i className="fas fa-sign-out-alt"></i>
-                      <span>Logout</span>
-                    </button>
+                  <div className="profile-info">
+                    <span className="profile-name">{user.name}</span>
+                    <i className={`fas fa-chevron-down dropdown-arrow ${showProfileDropdown ? 'rotate' : ''}`}></i>
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link to="/auth" className="login-btn">
-              <i className="fas fa-user"></i> Login / Sign Up
-            </Link>
-          )}
+                </button>
+
+                {showProfileDropdown && (
+                  <div className="profile-dropdown">
+                    <div className="dropdown-header">
+                      <div className="dropdown-avatar">
+                        {user.avatar ? (
+                          <img src={user.avatar} alt={user.name} />
+                        ) : (
+                          <span className="avatar-initials-large">{getUserInitials()}</span>
+                        )}
+                      </div>
+                      <div className="dropdown-user-info">
+                        <strong>{user.name}</strong>
+                        <span>{user.email}</span>
+                        <span className="user-role">{user.role === 'admin' ? '👑 Admin' : '🍽️ Foodie'}</span>
+                      </div>
+                    </div>
+
+                    <div className="dropdown-divider"></div>
+
+                    <div className="dropdown-menu">
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => handleDropdownClick('/track-order')}
+                      >
+                        <i className="fas fa-map-marker-alt"></i>
+                        <span>Track My Order</span>
+                      </button>
+
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => handleDropdownClick('/my-orders')}
+                      >
+                        <i className="fas fa-receipt"></i>
+                        <span>My Orders</span>
+                      </button>
+
+                      <button 
+                        className="dropdown-item cart-item"
+                        onClick={() => handleDropdownClick('/cart')}
+                      >
+                        <i className="fas fa-shopping-cart"></i>
+                        <span>Cart</span>
+                        {cartCount > 0 && (
+                          <span className="cart-count-badge">{cartCount}</span>
+                        )}
+                      </button>
+
+                      <button 
+                        className="dropdown-item"
+                        onClick={() => handleDropdownClick('/profile')}
+                      >
+                        <i className="fas fa-user-circle"></i>
+                        <span>My Profile</span>
+                      </button>
+
+                      {user.role === 'admin' && (
+                        <button 
+                          className="dropdown-item admin-item"
+                          onClick={() => handleDropdownClick('/admin')}
+                        >
+                          <i className="fas fa-crown"></i>
+                          <span>Admin Panel</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="dropdown-divider"></div>
+
+                    <div className="dropdown-footer">
+                      <button 
+                        className="dropdown-item logout-item"
+                        onClick={handleLogout}
+                      >
+                        <i className="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/auth" className="login-btn">
+                <i className="fas fa-user"></i> Login / Sign Up
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
-      
-      <nav className="nav">
-        <Link to="/" className="active"><i className="fas fa-home"></i> Home</Link>
-        <Link to="/menu"><i className="fas fa-utensils"></i> Menu</Link>
-        <Link to="/offers"><i className="fas fa-percent"></i> Offers</Link>
-        <Link to="/food"><i className="fas fa-hamburger"></i> Food</Link>
-        <Link to="/drinks"><i className="fas fa-mug-hot"></i> Drinks</Link>
-        <Link to="/smoothies"><i className="fas fa-blender"></i> Smoothies</Link>
-        <Link to="/desserts"><i className="fas fa-birthday-cake"></i> Desserts</Link>
-      </nav>
-    </header>
+        
+        <nav className="nav">
+          <Link to="/" className="active"><i className="fas fa-home"></i> Home</Link>
+          <Link to="/menu"><i className="fas fa-utensils"></i> Menu</Link>
+          <Link to="/offers"><i className="fas fa-percent"></i> Offers</Link>
+          <Link to="/food"><i className="fas fa-hamburger"></i> Food</Link>
+          <Link to="/drinks"><i className="fas fa-mug-hot"></i> Drinks</Link>
+          <Link to="/smoothies"><i className="fas fa-blender"></i> Smoothies</Link>
+          <Link to="/desserts"><i className="fas fa-birthday-cake"></i> Desserts</Link>
+        </nav>
+      </header>
+    </>
   );
 };
 

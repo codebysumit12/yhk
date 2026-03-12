@@ -72,7 +72,7 @@ const Main = ({ restaurants }) => {
   return (
     <React.Fragment>
       {/* Navigation */}
-      <Nav />
+      <Nav onOpenCart={() => {}} />
 
       {/* Hero Section */}
       <section className="hero" style={{

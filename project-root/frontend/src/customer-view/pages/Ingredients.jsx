@@ -66,7 +66,7 @@ const Ingredients = () => {
   if (loading) {
     return (
       <div className="ingredients-page">
-        <Nav />
+        <Nav onOpenCart={() => {}} />
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Loading fresh ingredients...</p>
@@ -77,7 +77,7 @@ const Ingredients = () => {
 
   return (
     <div className="ingredients-page">
-      <Nav />
+      <Nav onOpenCart={() => {}} />
       
       <div className="page-header">
         <div>

@@ -10,7 +10,7 @@ const CustomersPage = () => {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('userToken');
         
         const response = await fetch('http://localhost:5001/api/users', {
           method: 'GET',

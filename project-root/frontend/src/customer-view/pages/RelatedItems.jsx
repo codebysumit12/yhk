@@ -137,7 +137,7 @@ const RelatedItems = () => {
   return (
     <>
       {/* Navigation */}
-      <Nav />
+      <Nav onOpenCart={() => setShowCart(true)} />
 
       {/* Hero Section */}
       <section className="menu-hero">

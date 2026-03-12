@@ -102,7 +102,7 @@ const [prepStepInput, setPrepStepInput] = useState('');
   });
   
   const API_URL = 'http://localhost:5001/api';
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('userToken');
 
   const addHealthBenefit = () => {
   if (healthBenefitInput.trim()) {

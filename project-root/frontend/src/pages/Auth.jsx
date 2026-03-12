@@ -48,7 +48,7 @@ const Auth = () => {
 
      if (data.success) {
   // ✅ Save token and user to localStorage FIRST
-  localStorage.setItem('token', data.token);
+  localStorage.setItem('userToken', data.token);
   localStorage.setItem('user', JSON.stringify(data.user));
 
   setSuccess('Login successful!');

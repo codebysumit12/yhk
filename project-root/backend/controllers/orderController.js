@@ -199,17 +199,26 @@ export const getOrderById = async (req, res) => {
   }
 };
 
-// @desc    Get authenticated user's orders
-// @route   GET /api/orders/my
+// @desc    Get current user's orders
+// @route   GET /api/orders/my-orders
 // @access  Private
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.user.id })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .populate('orderItems.menuItem', 'name images');
 
-    res.json({ success: true, data: orders });
+    res.json({
+      success: true,
+      count: orders.length,
+      data: orders
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Get my orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

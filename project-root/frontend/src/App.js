@@ -1,17 +1,18 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Auth from './pages/Auth';
 import Main from './customer-view/pages/Main';
 import Menu from './customer-view/pages/Menu';
 import Checkoutpage from './customer-view/pages/Checkoutpage';
-import TrackOrder from './customer-view/pages/TrackOrder';
-import Auth from './pages/Auth';
+import TrackOrder from './customer-view/pages/TrackMyOrder';
+import MyOrders from './customer-view/pages/MyOrders';
+import MyProfile from './customer-view/pages/MyProfile';
 import AdminDashboard from './admin-view/pages/AdminDashboard';
 import MenuManagement from './admin-view/pages/MenuManagement';
 import IngredientsPage from './admin-view/pages/IngredientsPage';
 import OrdersPage from './admin-view/pages/OrdersPage';
 import DeliveriesPage from './admin-view/pages/DeliveriesPage';
 import AdminLayout from './admin-view/layout/AdminLayout';
-
 import './App.css';
 
 // Sample restaurant data
@@ -73,6 +74,22 @@ const sampleRestaurants = [
 ];
 
 
+// Protected Route Component
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const token = localStorage.getItem('userToken');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  if (!token) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 
 
 // Main App Component
@@ -91,8 +108,22 @@ function App() {
           <Route path="/checkout" element={<Checkoutpage />} />
           <Route path="/track-order" element={<TrackOrder />} />
           
+          {/* Customer Routes */}
+          <Route path="/my-orders" element={<MyOrders />} />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <MyProfile />
+              </ProtectedRoute>
+            } 
+          />
+          
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayout />} />
+          
+          {/* Redirect unknown routes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>

@@ -15,10 +15,10 @@ import { protect, adminOnly } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // Public routes
-router.post('/', createOrder);
 router.get('/track', trackOrder);
 
 // Protected routes (User)
+router.post('/', protect, createOrder);
 router.get('/my-orders', protect, getMyOrders);
 router.get('/:id', protect, getOrderById);
 router.put('/:id/cancel', protect, cancelOrder);

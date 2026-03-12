@@ -54,7 +54,11 @@ const Checkoutpage = () => {
   }, []);
 
   // Order summary calculations
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((sum, item) => {
+    const price = item.finalPrice || item.discountPrice || item.price || 0;
+    const quantity = item.quantity || 1;
+    return sum + (price * quantity);
+  }, 0);
   const discount = Math.round(subtotal * 0.20);
   const deliveryFee = 0; // Free delivery
   const packaging = cartItems.length > 0 ? 20 : 0;
@@ -322,35 +326,190 @@ const Checkoutpage = () => {
       const orderResult = await orderResponse.json();
       const orderId = orderResult.data._id;
 
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Initialize custom payment modal (replaces Razorpay)
+      showCustomPaymentModal();
 
-      // Save payment record (simulated successful payment)
-      const paymentResponse = await fetch('http://localhost:5001/api/payments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        },
-        body: JSON.stringify({
-          orderId: orderId,
-          amount: total,
-          paymentMethod: 'online',
-          transactionId: 'demo_payment_' + Date.now(),
-          paymentStatus: 'completed'
-        })
-      });
+      function showCustomPaymentModal() {
+        // Create payment modal HTML
+        const modalHtml = `
+          <div id="paymentModal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+          ">
+            <div style="
+              background: white;
+              padding: 30px;
+              border-radius: 10px;
+              max-width: 400px;
+              width: 90%;
+              text-align: center;
+            ">
+              <h3 style="margin-bottom: 20px; color: #333;">Yeswanth's Healthy Kitchen</h3>
+              <div style="margin-bottom: 20px;">
+                <p style="margin: 5px 0; color: #666;">Order #${orderId}</p>
+                <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #22c55e;">₹${total}</p>
+              </div>
+              <div style="margin-bottom: 20px;">
+                <p style="color: #666; font-size: 14px;">Choose Payment Method</p>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                  <button id="cardPayment" style="
+                    padding: 12px;
+                    border: 1px solid #ddd;
+                    background: #f9f9f9;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                  ">💳 Credit/Debit Card</button>
+                  <button id="upiPayment" style="
+                    padding: 12px;
+                    border: 1px solid #ddd;
+                    background: #f9f9f9;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                  ">📱 UPI</button>
+                  <button id="netbankingPayment" style="
+                    padding: 12px;
+                    border: 1px solid #ddd;
+                    background: #f9f9f9;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                  ">🏦 Net Banking</button>
+                </div>
+              </div>
+              <button id="cancelPayment" style="
+                padding: 10px 20px;
+                background: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+              ">Cancel</button>
+            </div>
+          </div>
+        `;
 
-      if (paymentResponse.ok) {
-        // Clear cart and show success
-        localStorage.removeItem('checkoutCart');
-        setShowSuccessModal(true);
-      } else {
-        console.error('Payment save failed');
-        setShowSuccessModal(true); // Still show success for demo
+        // Add modal to body
+        const modalDiv = document.createElement('div');
+        modalDiv.innerHTML = modalHtml;
+        document.body.appendChild(modalDiv);
+
+        // Handle payment method selection
+        document.getElementById('cardPayment').onclick = () => processPayment('Card');
+        document.getElementById('upiPayment').onclick = () => processPayment('UPI');
+        document.getElementById('netbankingPayment').onclick = () => processPayment('Net Banking');
+        document.getElementById('cancelPayment').onclick = () => {
+          document.body.removeChild(modalDiv);
+          setIsProcessing(false);
+        };
       }
-      
-      setIsProcessing(false);
+
+      function processPayment(method) {
+        // Remove payment modal safely
+        const modal = document.getElementById('paymentModal');
+        if (modal && modal.parentNode) {
+          modal.parentNode.removeChild(modal);
+        }
+
+        // Show processing modal
+        const processingHtml = `
+          <div id="processingModal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+          ">
+            <div style="
+              background: white;
+              padding: 30px;
+              border-radius: 10px;
+              max-width: 400px;
+              width: 90%;
+              text-align: center;
+            ">
+              <div style="
+                width: 40px;
+                height: 40px;
+                border: 3px solid #f3f3f3;
+                border-top: 3px solid #22c55e;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+              "></div>
+              <h3 style="margin-bottom: 10px; color: #333;">Processing Payment</h3>
+              <p style="color: #666; margin-bottom: 10px;">Paying with ${method}</p>
+              <p style="color: #999; font-size: 14px;">Amount: ₹${total}</p>
+              <style>
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              </style>
+            </div>
+          </div>
+        `;
+
+        const processingDiv = document.createElement('div');
+        processingDiv.innerHTML = processingHtml;
+        document.body.appendChild(processingDiv);
+
+        // Simulate payment processing
+        setTimeout(async () => {
+          // Remove processing modal safely
+          const processingModal = document.getElementById('processingModal');
+          if (processingModal && processingModal.parentNode) {
+            processingModal.parentNode.removeChild(processingModal);
+          }
+
+          // Save payment record
+          try {
+            const paymentResponse = await fetch('http://localhost:5001/api/payments', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+              },
+              body: JSON.stringify({
+                orderId: orderId,
+                amount: total,
+                paymentMethod: method.toLowerCase().replace(' ', '_'),
+                transactionId: 'txn_' + Date.now(),
+                paymentStatus: 'completed'
+              })
+            });
+
+            if (paymentResponse.ok) {
+              // Clear cart and show success
+              localStorage.removeItem('checkoutCart');
+              setShowSuccessModal(true);
+            } else {
+              console.error('Payment save failed');
+              alert('Payment successful but failed to save record. Please contact support.');
+              setShowSuccessModal(true);
+            }
+          } catch (saveError) {
+            console.error('Error saving payment:', saveError);
+            alert('Payment successful but failed to save record. Please contact support.');
+            setShowSuccessModal(true);
+          }
+          setIsProcessing(false);
+        }, 3000); // 3 second processing time
+      }
     } catch (error) {
       console.error('Payment error:', error);
       alert('Payment failed. Please try again.');
