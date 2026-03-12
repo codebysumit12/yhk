@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
 import { API_CONFIG } from '../../config/api';
@@ -35,7 +35,7 @@ const MyOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchMyOrders();

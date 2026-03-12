@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
 import './MyProfile.css';
@@ -61,7 +61,7 @@ const MyProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (!token) {

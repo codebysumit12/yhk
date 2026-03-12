@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../../config/api';
 import './orders-page.css';
 
@@ -36,7 +36,7 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus, token]);
 
   useEffect(() => {
     fetchOrders();

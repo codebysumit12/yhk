@@ -334,7 +334,7 @@ const Auth = () => {
                 <div className="form-extras">
                   <button type="button" className="forgot-link" onClick={(e) => { e.preventDefault(); /* Add forgot password logic */ }}>
                     Forgot Password? 🤔
-                  </a>
+                  </button>
                 </div>
               )}
 

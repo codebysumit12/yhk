@@ -60,8 +60,7 @@ const IngredientsPage = () => {
   // Fetch ingredients
   useEffect(() => {
     fetchIngredients();
-    fetchCategories();
-  }, [fetchIngredients, fetchCategories]);
+  }, [fetchIngredients]);
 
   const fetchIngredients = useCallback(async () => {
     try {
