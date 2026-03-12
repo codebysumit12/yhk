@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from "firebase/app";
 import { getAuth, RecaptchaVerifier } from "firebase/auth";
-import { API_CONFIG } from '../../config/api';
+// import { API_CONFIG } from '../../config/api'; // Removed unused
 import './Checkout.css';
 
 // Firebase configuration
@@ -21,7 +21,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Setup reCAPTCHA verifier
-const setupRecaptcha = () => {
+// const setupRecaptcha = () => { // Removed unused
   if (!window.recaptchaVerifier) {
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       size: 'invisible',

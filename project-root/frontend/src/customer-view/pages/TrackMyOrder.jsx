@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import './trackmyorder.css';
 import { API_CONFIG } from '../../config/api';
 
@@ -40,7 +40,7 @@ const TrackOrder = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [API_URL]);
 
   const handleSelectOrder = (order) => {
     setSelectedOrder(order);

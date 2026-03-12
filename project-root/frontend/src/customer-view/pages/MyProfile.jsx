@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
 import './MyProfile.css';
@@ -36,7 +36,7 @@ const MyProfile = () => {
   const token = localStorage.getItem('userToken');
 
   // Fetch user profile
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/auth/me`, {

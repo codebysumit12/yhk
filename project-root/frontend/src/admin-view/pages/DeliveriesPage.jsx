@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../../config/api';
 import './deliveries-page.css';
 
@@ -36,7 +36,7 @@ const DeliveriesPage = () => {
 
   useEffect(() => {
     fetchDeliveries();
-  }, []);
+  }, [fetchDeliveries]);
 
   // Update delivery status
   const updateDeliveryStatus = async (deliveryId, newStatus) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
 import { API_CONFIG } from '../../config/api';
@@ -17,7 +17,7 @@ const MyOrders = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Fetch user's orders
-  const fetchMyOrders = async () => {
+  const fetchMyOrders = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/orders/my-orders`, {

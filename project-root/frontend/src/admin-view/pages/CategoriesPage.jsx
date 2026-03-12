@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../../config/api';
 import './CategoriesPage.css';
 
@@ -42,7 +42,7 @@ const CategoriesPage = () => {
   ];
 
   // Fetch categories
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/categories`, {
@@ -59,11 +59,11 @@ const CategoriesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   // Handle image selection
   const handleImageChange = (e) => {

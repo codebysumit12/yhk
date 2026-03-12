@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; from 'react';
 import { API_CONFIG } from '../../config/api';
 import './items-page.css';
 
@@ -126,7 +126,7 @@ const removePrepStep = (index) => {
 };
 
   // Fetch items
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/items`);
@@ -142,7 +142,7 @@ const removePrepStep = (index) => {
   };
 
   // Fetch categories
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/categories`);
       const data = await response.json();
@@ -672,7 +672,7 @@ const removePrepStep = (index) => {
   };
 
   // Spice level emoji mapping
-  const spiceLevelEmojis = {
+  // const spiceLevelEmojis = { // Removed unused
     none: '',
     mild: '🌶️',
     medium: '🌶️🌶️',

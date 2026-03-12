@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; from 'react';
 import { API_CONFIG } from '../../config/api';
 import './orders-page.css';
 
@@ -15,7 +15,7 @@ const OrdersPage = () => {
   const token = localStorage.getItem('userToken');
 
   // Fetch orders
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();

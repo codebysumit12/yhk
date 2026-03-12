@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../../config/api';
 import './BannersPage.css';
 
@@ -26,7 +26,7 @@ const BannersPage = () => {
   const token = localStorage.getItem('userToken');
 
   // Fetch banners
-  const fetchBanners = async () => {
+  const fetchBanners = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/banners`);
@@ -39,11 +39,11 @@ const BannersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBanners();
-  }, []);
+  }, [fetchBanners]);
 
   // Handle file selection
   const handleFileChange = (e) => {

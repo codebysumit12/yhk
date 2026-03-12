@@ -332,7 +332,7 @@ const Auth = () => {
               {/* Forgot Password Link (Login Only) */}
               {isLogin && (
                 <div className="form-extras">
-                  <a href="#" className="forgot-link">
+                  <button type="button" className="forgot-link" onClick={(e) => { e.preventDefault(); /* Add forgot password logic */ }}>
                     Forgot Password? 🤔
                   </a>
                 </div>

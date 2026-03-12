@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../../config/api';
 import './ingredients-page.css';
 
@@ -10,7 +10,7 @@ const IngredientsPage = () => {
   const [editingIngredient, setEditingIngredient] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage] = useState(1); // eslint-disable-line no-unused-vars
 
   const API_URL = API_CONFIG.API_URL;
 
@@ -60,9 +60,10 @@ const IngredientsPage = () => {
   // Fetch ingredients
   useEffect(() => {
     fetchIngredients();
-  }, []);
+    fetchCategories();
+  }, [fetchIngredients, fetchCategories]);
 
-  const fetchIngredients = async () => {
+  const fetchIngredients = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         ...(filterCategory !== 'all' && { category: filterCategory }),
@@ -84,7 +85,7 @@ const IngredientsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterCategory, searchTerm, currentPage, API_URL]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -258,20 +259,6 @@ const IngredientsPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const addArrayItem = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: [...prev[field], value]
-    }));
-  };
-
-  const removeArrayItem = (field, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
   };
 
   return (
