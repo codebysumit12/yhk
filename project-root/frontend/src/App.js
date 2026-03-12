@@ -10,13 +10,6 @@ import MyProfile from './customer-view/pages/MyProfile';
 import AdminLayout from './admin-view/layout/AdminLayout';
 import './App.css';
 
-  {
-  {
-  {
-  {
-  {
-  {
-
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const token = localStorage.getItem('userToken');
@@ -24,13 +17,14 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (!token) {
     return <Navigate to="/auth" replace />;
+  }
 
   if (requiredRole && user.role !== requiredRole) {
     return <Navigate to="/" replace />;
+  }
 
   return children;
-
-
+};
 
 // Main App Component
 function App() {
@@ -56,6 +50,7 @@ function App() {
               <ProtectedRoute>
                 <MyProfile />
               </ProtectedRoute>
+            } 
           />
           
           {/* Admin Routes */}
@@ -67,5 +62,6 @@ function App() {
       </div>
     </Router>
   );
+}
 
 export default App;
