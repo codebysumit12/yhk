@@ -43,7 +43,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001', 'https://yhk-66ta.onrender.com'],
   credentials: true
 }));
 app.use(express.json());
@@ -51,6 +51,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Connect to MongoDB
 connectDB();
@@ -73,9 +76,15 @@ app.use((err, req, res, next) => {
     message: err.message || 'Server Error'
   });
 });
+
 // Health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'API is running' });
+});
+
+// Serve frontend for all non-API routes (MUST be last)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
 // Seed Admin User
