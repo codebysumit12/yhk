@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import Nav from './Nav';
+import { API_CONFIG } from '../../config/api';
 import './Menu.css';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = API_CONFIG.API_URL;
 
 const RelatedItems = () => {
   const [searchParams] = useSearchParams();

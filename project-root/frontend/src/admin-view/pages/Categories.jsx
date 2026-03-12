@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_CONFIG } from '../../config/api';
 import './CategoriesPage.css';
 
 const CategoriesPage = () => {
@@ -19,7 +20,7 @@ const CategoriesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
   const token = localStorage.getItem('userToken');
   
   console.log('Categories component - Token from localStorage:', token);

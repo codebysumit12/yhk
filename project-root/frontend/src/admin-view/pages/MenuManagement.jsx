@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { API_CONFIG } from '../../config/api';
 import './MenuManagement.css';
 
 const MenuManagement = () => {
@@ -12,7 +13,7 @@ const MenuManagement = () => {
   const navigate = useNavigate();
   const { categoryId } = useParams();
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
 
   // Fetch categories
   useEffect(() => {

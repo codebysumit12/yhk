@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
+import { API_CONFIG } from '../../config/api';
 import './Checkout.css';
 
 // Firebase configuration

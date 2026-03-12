@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
 import './MyProfile.css';
+import { API_CONFIG } from '../../config/api';
 
 const MyProfile = () => {
   const [user, setUser] = useState(null);
@@ -31,7 +32,7 @@ const MyProfile = () => {
   });
 
   const navigate = useNavigate();
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
   const token = localStorage.getItem('userToken');
 
   // Fetch user profile

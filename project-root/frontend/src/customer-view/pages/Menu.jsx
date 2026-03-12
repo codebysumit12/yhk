@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import Nav from './Nav';
 import CartSidebar from './CartSidebar';
+import { API_CONFIG } from '../../config/api';
 import './Menu.css';
 import './ItemsCard.css';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = API_CONFIG.API_URL;
 
 const Menu = () => {
   const [searchParams] = useSearchParams();

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_CONFIG } from '../../config/api';
 import './orders-page.css';
 
 const OrdersPage = () => {
@@ -10,7 +11,7 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
   const token = localStorage.getItem('userToken');
 
   // Fetch orders

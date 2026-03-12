@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Auth.css';
+import { API_CONFIG } from '../config/api';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,7 +16,7 @@ const Auth = () => {
     confirmPassword: ''
   });
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
 
   // Handle input change
   const handleChange = (e) => {

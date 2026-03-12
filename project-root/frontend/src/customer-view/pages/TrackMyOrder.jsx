@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './trackmyorder.css';
+import { API_CONFIG } from '../../config/api';
 
 const TrackOrder = () => {
   const [trackingMode, setTrackingMode] = useState('loading'); // 'loading', 'orders', 'tracking'
@@ -7,7 +8,7 @@ const TrackOrder = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [error, setError] = useState('');
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
 
   // Fetch user's orders
   useEffect(() => {

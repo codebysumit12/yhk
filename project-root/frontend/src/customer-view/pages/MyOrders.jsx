@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
+import { API_CONFIG } from '../../config/api';
 import './MyOrders.css';
 
 const MyOrders = () => {
@@ -11,7 +12,7 @@ const MyOrders = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
   const token = localStorage.getItem('userToken');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 

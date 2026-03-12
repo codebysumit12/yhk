@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_CONFIG } from '../../config/api';
 import './ingredients-page.css';
 
 const IngredientsPage = () => {
@@ -11,7 +12,7 @@ const IngredientsPage = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
 
   // Form state
   const [formData, setFormData] = useState({

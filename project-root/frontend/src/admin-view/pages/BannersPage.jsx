@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_CONFIG } from '../../config/api';
 import './BannersPage.css';
 
 const BannersPage = () => {
@@ -21,7 +22,7 @@ const BannersPage = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = API_CONFIG.API_URL;
   const token = localStorage.getItem('userToken');
 
   // Fetch banners

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Nav from './Nav';
 
+import { API_CONFIG } from '../../config/api';
 const Main = ({ restaurants }) => {
   const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants);
   const [activeFilter, setActiveFilter] = useState('all');
