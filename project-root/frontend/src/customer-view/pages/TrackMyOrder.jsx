@@ -5,9 +5,7 @@ const TrackOrder = () => {
   const [trackingMode, setTrackingMode] = useState('loading'); // 'loading', 'orders', 'tracking'
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [user, setUser] = useState(null);
 
   const API_URL = 'http://localhost:5001/api';
 
@@ -15,13 +13,7 @@ const TrackOrder = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const userInfo = localStorage.getItem('user');
         const token = localStorage.getItem('userToken');
-
-        if (userInfo) {
-          const user = JSON.parse(userInfo);
-          setUser(user);
-        }
 
         const response = await fetch(`${API_URL}/orders/my-orders`, {
           headers: {
