@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../../config/api';
 import './items-page.css';
 
@@ -139,7 +139,7 @@ const removePrepStep = (index) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
@@ -152,12 +152,12 @@ const removePrepStep = (index) => {
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     fetchItems();
     fetchCategories();
-  }, []);
+  }, [fetchItems, fetchCategories]);
 
   // Handle image selection
   const handleImagesChange = (e) => {
@@ -673,12 +673,12 @@ const removePrepStep = (index) => {
 
   // Spice level emoji mapping
   // const spiceLevelEmojis = { // Removed unused
-    none: '',
-    mild: '🌶️',
-    medium: '🌶️🌶️',
-    hot: '🌶️🌶️🌶️',
-    'extra-hot': '🔥🔥🔥'
-  };
+  //   none: '',
+  //   mild: '🌶️',
+  //   medium: '🌶️🌶️',
+  //   hot: '🌶️🌶️🌶️',
+  //   'extra-hot': '🔥🔥🔥'
+  // };
 
   return (
     <div className="items-page">
