@@ -1,2 +1,2 @@
 // Import and start the backend server
-import './backend/server.js';
+import './project-root/backend/server.js';
