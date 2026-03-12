@@ -5,15 +5,13 @@ import '../styles/CustomersPage.css';
 const CustomersPage = () => {
   const [customers, setCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
         const token = localStorage.getItem('userToken');
         
-        const response = await fetch('http://localhost:5001/api/users', {
+        const response = await fetch(`${API_CONFIG.API_URL}/users`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -33,14 +31,9 @@ const CustomersPage = () => {
             isAdmin: user.isAdmin || false
           }));
           setCustomers(mappedCustomers);
-        } else {
-          setError(data.error || 'Failed to fetch customers');
         }
       } catch (err) {
-        setError('Server error. Please try again.');
         console.error('Error fetching customers:', err);
-      } finally {
-        setIsLoading(false);
       }
     };
 

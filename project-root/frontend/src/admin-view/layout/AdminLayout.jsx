@@ -244,9 +244,9 @@ const AdminLayout = () => {
       <footer className="admin-footer">
         <span>© 2026 FeastOS Restaurant Admin Panel. All rights reserved.</span>
         <div className="footer-links">
-          <a href="#">Support</a>
-          <a href="#">Privacy</a>
-          <a href="#">Docs</a>
+          <button onClick={() => window.open('#', '_blank')}>Support</button>
+          <button onClick={() => window.open('#', '_blank')}>Privacy</button>
+          <button onClick={() => window.open('#', '_blank')}>Docs</button>
         </div>
       </footer>
     </div>

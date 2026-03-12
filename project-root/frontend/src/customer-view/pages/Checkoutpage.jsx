@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
+import { getAuth, RecaptchaVerifier } from "firebase/auth";
 import { API_CONFIG } from '../../config/api';
 import './Checkout.css';
 
@@ -26,7 +26,7 @@ const setupRecaptcha = () => {
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       size: 'invisible',
       callback: (response) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
+        // reCAPTCHA solved
       }
     });
   }
@@ -73,8 +73,6 @@ const Checkoutpage = () => {
   const [phoneError, setPhoneError] = useState(false);
   const [otpError, setOtpError] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
-  const [confirmationResult, setConfirmationResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [orderNumber] = useState(`ORD-${Math.floor(1000 + Math.random() * 9000)}`);
   
   // Address state
@@ -119,7 +117,6 @@ const Checkoutpage = () => {
       return;
     }
     
-    setIsLoading(true);
     setPhoneError(false);
     
     try {
@@ -139,8 +136,6 @@ const Checkoutpage = () => {
       console.error('Error sending OTP:', error);
       setPhoneError(true);
       alert('Failed to send OTP. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -177,7 +172,7 @@ const Checkoutpage = () => {
       return;
     }
     
-    setIsLoading(true);
+    
     
     try {
       // Mock verification - simulate API call delay
@@ -197,7 +192,7 @@ const Checkoutpage = () => {
       setOtpError(true);
       alert('Invalid OTP. Please try again.');
     } finally {
-      setIsLoading(false);
+      
     }
   };
 
@@ -213,8 +208,6 @@ const Checkoutpage = () => {
       setPhoneError(true);
       return;
     }
-    
-    setIsLoading(true);
     
     try {
       // Mock OTP sending - simulate API call delay
@@ -233,8 +226,6 @@ const Checkoutpage = () => {
     } catch (error) {
       console.error('Error resending OTP:', error);
       alert('Failed to resend OTP. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
