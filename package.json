@@ -2,7 +2,7 @@
   "name": "yhk_02",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "server-root.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
