@@ -98,7 +98,7 @@ export const getItems = async (req, res) => {
 export const getItemById = async (req, res) => {
   try {
     const item = await Item.findById(req.params.id)
-      .populate('category', 'name slug icon color')
+      .populate('categoryId', 'name slug icon color')
       .populate('createdBy', 'name email');
 
     if (!item) {
@@ -126,7 +126,7 @@ export const getItemById = async (req, res) => {
 export const getItemBySlug = async (req, res) => {
   try {
     const item = await Item.findOne({ slug: req.params.slug })
-      .populate('category', 'name slug icon color')
+      .populate('categoryId', 'name slug icon color')
       .populate('createdBy', 'name email');
 
     if (!item) {
@@ -157,11 +157,11 @@ export const getItemsByCategory = async (req, res) => {
     const { isAvailable = true } = req.query;
 
     const items = await Item.find({ 
-      category: categoryId,
+      categoryId: categoryId,
       isAvailable: isAvailable === 'true'
     })
       .sort({ displayOrder: 1, createdAt: -1 })
-      .populate('category', 'name slug icon color');
+      .populate('categoryId', 'name slug icon color');
 
     res.json({
       success: true,
@@ -184,7 +184,7 @@ export const createItem = async (req, res) => {
     const {
       name,
       description,
-      category,
+      categoryId,
       price,
       discountPrice,
       type,
@@ -202,7 +202,7 @@ export const createItem = async (req, res) => {
     } = req.body;
 
     // Check if category exists
-    const categoryExists = await Category.findById(category);
+    const categoryExists = await Category.findById(categoryId);
     if (!categoryExists) {
       return res.status(404).json({
         success: false,
@@ -232,7 +232,7 @@ export const createItem = async (req, res) => {
     const item = await Item.create({
       name,
       description,
-      category,
+      categoryId,
       price: Number(price),
       discountPrice: discountPrice ? Number(discountPrice) : undefined,
       images,
