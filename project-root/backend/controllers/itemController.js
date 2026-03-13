@@ -30,6 +30,8 @@ const uploadImagesToCloudinary = async (files) => {
 // @access  Public
 export const getItems = async (req, res) => {
   try {
+    console.log('🔍 getItems called with query:', req.query);
+    
     const { 
       category, 
       type, 
@@ -85,6 +87,8 @@ export const getItems = async (req, res) => {
       data: items
     });
   } catch (error) {
+    console.error('❌ getItems error:', error.message);
+    console.error('❌ Full error:', error);
     res.status(500).json({
       success: false,
       message: error.message
