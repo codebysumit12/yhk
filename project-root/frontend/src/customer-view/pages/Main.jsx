@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Nav from './Nav';
+import { API_CONFIG } from '../../config/api';
 
 const Main = ({ restaurants }) => {
   const [activeFilter, setActiveFilter] = useState('all');
@@ -16,7 +17,7 @@ const Main = ({ restaurants }) => {
   useEffect(() => {
     const fetchHeroBanner = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/banners?position=hero&isActive=true');
+        const response = await fetch(`${API_CONFIG.API_URL}/banners?position=hero&isActive=true`);
         const data = await response.json();
         if (data.success && data.data.length > 0) {
           setHeroBanner(data.data[0]);
@@ -28,7 +29,7 @@ const Main = ({ restaurants }) => {
 
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/categories?isActive=true');
+        const response = await fetch(`${API_CONFIG.API_URL}/categories?isActive=true`);
         const data = await response.json();
         if (data.success) {
           setCategories(data.data);

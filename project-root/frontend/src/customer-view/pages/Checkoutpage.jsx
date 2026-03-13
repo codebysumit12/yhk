@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from "firebase/app";
 import { getAuth, RecaptchaVerifier } from "firebase/auth";
-// import { API_CONFIG } from '../../config/api'; // Removed unused
+// import { API_CONFIG } from '../../config/api';
+import { API_CONFIG } from '../../config/api';
 import './Checkout.css';
 
 // Firebase configuration
@@ -289,7 +290,7 @@ const Checkoutpage = () => {
         specialInstructions: deliveryNote
       };
 
-      const orderResponse = await fetch('http://localhost:5001/api/orders', {
+      const orderResponse = await fetch(`${API_CONFIG.API_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -457,7 +458,7 @@ const Checkoutpage = () => {
 
           // Save payment record
           try {
-            const paymentResponse = await fetch('http://localhost:5001/api/payments', {
+            const paymentResponse = await fetch(`${API_CONFIG.API_URL}/payments`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
