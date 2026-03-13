@@ -79,7 +79,7 @@ app.use((err, req, res, next) => {
 
 // Health check route
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'API is running' });
+  res.json({ status: 'ok', message: 'API is running', timestamp: new Date().toISOString() });
 });
 
 // Serve frontend for all non-API routes (MUST be last)
