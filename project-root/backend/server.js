@@ -109,7 +109,7 @@ const seedAdminUser = async () => {
         name: 'Admin Manager',
         email: 'admin@yhk.com',
         password: 'admin123',
-        isAdmin: true
+        role: 'admin'
       });
       console.log('✅ Admin user created:', adminUser.email);
     } else {
