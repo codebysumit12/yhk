@@ -46,12 +46,21 @@ const Menu = () => {
           if (matchedCategory) {
             setActiveCategory(matchedCategory._id);
           } else if (categoriesData.data.length > 0 && !activeCategory) {
-            // Set first active category, not just first category
-            const firstActiveCategory = categoriesData.data.find(c => c.isActive);
-            if (firstActiveCategory) {
-              setActiveCategory(firstActiveCategory._id);
+            // Set first category that has items, not just first active category
+            const firstCategoryWithItems = categoriesData.data.find(c => c.itemCount > 0);
+            if (firstCategoryWithItems) {
+              setActiveCategory(firstCategoryWithItems._id);
+              console.log('🎯 Set category with items:', firstCategoryWithItems.name);
             } else {
-              setActiveCategory(categoriesData.data[0]._id);
+              // Fallback to first active category
+              const firstActiveCategory = categoriesData.data.find(c => c.isActive);
+              if (firstActiveCategory) {
+                setActiveCategory(firstActiveCategory._id);
+                console.log('⚠️ Set first active category (no items):', firstActiveCategory.name);
+              } else {
+                setActiveCategory(categoriesData.data[0]._id);
+                console.log('⚠️ Set first category (no active, no items):', categoriesData.data[0].name);
+              }
             }
           }
         }
@@ -87,11 +96,24 @@ const Menu = () => {
   }, [searchParams, items]);
 
   const getFilteredItems = () => {
+    console.log('🔍 Filtering items:', {
+      activeCategory,
+      totalItems: items.length,
+      items: items.map(item => ({
+        name: item.name,
+        categoryId: item.categoryId,
+        categoryIdType: typeof item.categoryId,
+        match: String(item.categoryId) === String(activeCategory)
+      }))
+    });
+    
     let filtered = items.filter(item => {
       // Handle both categoryId and category field formats
       // Convert both to strings for comparison
       const itemCategoryId = item.categoryId || (item.category && typeof item.category === 'object' ? item.category._id : item.category);
-      return String(itemCategoryId) === String(activeCategory);
+      const matches = String(itemCategoryId) === String(activeCategory);
+      console.log(`   ${item.name}: ${itemCategoryId} vs ${activeCategory} = ${matches}`);
+      return matches;
     });
     
     // Apply search filter
