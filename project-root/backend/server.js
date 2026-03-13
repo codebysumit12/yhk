@@ -90,6 +90,9 @@ app.get('*', (req, res) => {
 // Seed Admin User
 const seedAdminUser = async () => {
   try {
+    // Wait a bit for MongoDB to be fully connected
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     const adminExists = await User.findOne({ email: 'admin@yhk.com' });
 
     if (!adminExists) {
