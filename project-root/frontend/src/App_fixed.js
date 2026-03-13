@@ -10,13 +10,6 @@ import MyProfile from './customer-view/pages/MyProfile';
 import AdminLayout from './admin-view/layout/AdminLayout';
 import './App.css';
 
-  {
-  {
-  {
-  {
-  {
-  {
-
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const token = localStorage.getItem('userToken');
@@ -24,13 +17,14 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (!token) {
     return <Navigate to="/auth" replace />;
+  }
 
   if (requiredRole && user.role !== requiredRole) {
     return <Navigate to="/" replace />;
+  }
 
   return children;
-
-
+};
 
 // Main App Component
 function App() {
@@ -38,34 +32,37 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Auth route - landing page */}
+
+          {/* Auth route */}
           <Route path="/" element={<Auth />} />
-          
+
           {/* Customer Routes */}
           <Route path="/customer" element={<Main />} />
           <Route path="/menu/:categorySlug" element={<Menu />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/checkout" element={<Checkoutpage />} />
           <Route path="/track-order" element={<TrackOrder />} />
-          
-          {/* Customer Routes */}
           <Route path="/my-orders" element={<MyOrders />} />
-          <Route 
-            path="/profile" 
+
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
                 <MyProfile />
               </ProtectedRoute>
+            }
           />
-          
+
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayout />} />
-          
+
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
+
         </Routes>
       </div>
     </Router>
   );
+}
 
 export default App;
