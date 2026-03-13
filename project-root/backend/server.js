@@ -53,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 // Serve frontend static files
-app.use(express.static(path.join(__dirname, '../../../frontend/build')));
+app.use(express.static(path.join(__dirname, '../../frontend/build')));
 
 // Connect to MongoDB
 connectDB();
@@ -84,7 +84,16 @@ app.get('/api/health', (req, res) => {
 
 // Serve frontend for all non-API routes (MUST be last)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../../frontend/build/index.html'));
+  const indexPath = path.join(__dirname, '../../frontend/build/index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.log('Frontend build not found, serving API response');
+      res.status(404).json({ 
+        message: 'Frontend not built yet. API is running.',
+        status: 'API_AVAILABLE'
+      });
+    }
+  });
 });
 
 // Seed Admin User
