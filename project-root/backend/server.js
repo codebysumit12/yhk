@@ -50,10 +50,26 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads'), {
-  fallthrough: false
-}));
+// Serve uploaded files with error handling
+app.use('/uploads', (req, res, next) => {
+  const filePath = path.join(__dirname, '../../uploads', req.path);
+  
+  // Check if file exists before serving
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.log(`❌ Upload file not found: ${req.path}`);
+      // Return a placeholder image or 404
+      res.status(404).json({ 
+        message: 'Upload file not found',
+        path: req.path 
+      });
+      return;
+    }
+    
+    // File exists, serve it
+    express.static(path.join(__dirname, '../../uploads'))(req, res, next);
+  });
+});
 
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../../frontend/build')));

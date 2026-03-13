@@ -40,7 +40,7 @@ const itemSchema = new mongoose.Schema({
     maxlength: [500, 'Description cannot exceed 500 characters']
   },
   
-  category: {
+  categoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
     required: [true, 'Category is required']
@@ -181,25 +181,25 @@ itemSchema.pre('save', function(next) {
 itemSchema.post('save', async function() {
   const Category = mongoose.model('Category');
   const count = await mongoose.model('Item').countDocuments({ 
-    category: this.category,
+    categoryId: this.categoryId,
     isAvailable: true 
   });
-  await Category.findByIdAndUpdate(this.category, { itemCount: count });
+  await Category.findByIdAndUpdate(this.categoryId, { itemCount: count });
 });
 
 // Update category item count when item is deleted
 itemSchema.post('deleteOne', { document: true, query: false }, async function() {
   const Category = mongoose.model('Category');
   const count = await mongoose.model('Item').countDocuments({ 
-    category: this.category,
+    categoryId: this.categoryId,
     isAvailable: true 
   });
-  await Category.findByIdAndUpdate(this.category, { itemCount: count });
+  await Category.findByIdAndUpdate(this.categoryId, { itemCount: count });
 });
 
 // Indexes
 itemSchema.index({ slug: 1 });
-itemSchema.index({ category: 1, isAvailable: 1 });
+itemSchema.index({ categoryId: 1, isAvailable: 1 });
 itemSchema.index({ name: 'text', description: 'text', tags: 'text' });
 itemSchema.index({ price: 1 });
 itemSchema.index({ isFeatured: 1, isPopular: 1 });

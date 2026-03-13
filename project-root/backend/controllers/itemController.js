@@ -46,7 +46,7 @@ export const getItems = async (req, res) => {
     
     const filter = {};
     
-    if (category) filter.category = category;
+    if (category) filter.categoryId = category; // Use categoryId instead of category
     if (type) filter.type = type;
     if (isAvailable !== undefined) filter.isAvailable = isAvailable === 'true';
     if (isFeatured !== undefined) filter.isFeatured = isFeatured === 'true';
@@ -68,7 +68,10 @@ export const getItems = async (req, res) => {
       .sort(sort)
       .limit(Number(limit))
       .skip(skip)
-      .populate('category', 'name slug icon color')
+      .populate({
+        path: 'categoryId',
+        select: 'name slug icon color'
+      })
       .populate('createdBy', 'name email');
 
     const total = await Item.countDocuments(filter);
