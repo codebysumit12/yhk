@@ -89,8 +89,9 @@ const Menu = () => {
   const getFilteredItems = () => {
     let filtered = items.filter(item => {
       // Handle both categoryId and category field formats
+      // Convert both to strings for comparison
       const itemCategoryId = item.categoryId || (item.category && typeof item.category === 'object' ? item.category._id : item.category);
-      return itemCategoryId === activeCategory;
+      return String(itemCategoryId) === String(activeCategory);
     });
     
     // Apply search filter
