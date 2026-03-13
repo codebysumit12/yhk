@@ -46,7 +46,13 @@ const Menu = () => {
           if (matchedCategory) {
             setActiveCategory(matchedCategory._id);
           } else if (categoriesData.data.length > 0 && !activeCategory) {
-            setActiveCategory(categoriesData.data[0]._id);
+            // Set first active category, not just first category
+            const firstActiveCategory = categoriesData.data.find(c => c.isActive);
+            if (firstActiveCategory) {
+              setActiveCategory(firstActiveCategory._id);
+            } else {
+              setActiveCategory(categoriesData.data[0]._id);
+            }
           }
         }
 
@@ -82,7 +88,8 @@ const Menu = () => {
 
   const getFilteredItems = () => {
     let filtered = items.filter(item => {
-      const itemCategoryId = typeof item.category === 'object' ? item.category._id : item.category;
+      // Handle both categoryId and category field formats
+      const itemCategoryId = item.categoryId || (item.category && typeof item.category === 'object' ? item.category._id : item.category);
       return itemCategoryId === activeCategory;
     });
     

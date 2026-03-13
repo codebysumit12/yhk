@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import fs from 'fs';
 
 // Load environment variables
 dotenv.config();
@@ -50,7 +51,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads'), {
+  fallthrough: false
+}));
 
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../../frontend/build')));
