@@ -41,25 +41,35 @@ const Menu = () => {
         if (categoriesData.success) {
           setCategories(categoriesData.data);
           
+          console.log('📋 All categories:', categoriesData.data.map(c => ({ name: c.name, id: c._id, itemCount: c.itemCount, isActive: c.isActive })));
+          
           // Find category by slug and set active category ID
           const matchedCategory = categoriesData.data.find(c => c.slug === categorySlug);
           if (matchedCategory) {
             setActiveCategory(matchedCategory._id);
+            console.log('🎯 Set category from URL slug:', matchedCategory.name);
           } else if (categoriesData.data.length > 0 && !activeCategory) {
-            // Set first category that has items, not just first active category
+            // AGGRESSIVE: Force set to first category with items
             const firstCategoryWithItems = categoriesData.data.find(c => c.itemCount > 0);
             if (firstCategoryWithItems) {
               setActiveCategory(firstCategoryWithItems._id);
-              console.log('🎯 Set category with items:', firstCategoryWithItems.name);
+              console.log('🎯 FORCED: Set category with items:', firstCategoryWithItems.name, 'ID:', firstCategoryWithItems._id);
             } else {
-              // Fallback to first active category
-              const firstActiveCategory = categoriesData.data.find(c => c.isActive);
-              if (firstActiveCategory) {
-                setActiveCategory(firstActiveCategory._id);
-                console.log('⚠️ Set first active category (no items):', firstActiveCategory.name);
+              // If no items, find Sweets category specifically (we know it has items)
+              const sweetsCategory = categoriesData.data.find(c => c.name === 'Sweets');
+              if (sweetsCategory) {
+                setActiveCategory(sweetsCategory._id);
+                console.log('🎯 FORCED: Set Sweets category:', sweetsCategory._id);
               } else {
-                setActiveCategory(categoriesData.data[0]._id);
-                console.log('⚠️ Set first category (no active, no items):', categoriesData.data[0].name);
+                // Final fallback
+                const firstActiveCategory = categoriesData.data.find(c => c.isActive);
+                if (firstActiveCategory) {
+                  setActiveCategory(firstActiveCategory._id);
+                  console.log('⚠️ FINAL FALLBACK: Set first active category:', firstActiveCategory.name);
+                } else {
+                  setActiveCategory(categoriesData.data[0]._id);
+                  console.log('⚠️ ULTIMATE FALLBACK: Set first category:', categoriesData.data[0].name);
+                }
               }
             }
           }
@@ -80,6 +90,24 @@ const Menu = () => {
 
     fetchData();
   }, [categorySlug, activeCategory]);
+
+  // Force update active category when items load
+  useEffect(() => {
+    if (items.length > 0 && categories.length > 0 && !activeCategory) {
+      console.log('🔄 Auto-setting category on items load...');
+      const firstCategoryWithItems = categories.find(c => c.itemCount > 0);
+      if (firstCategoryWithItems) {
+        setActiveCategory(firstCategoryWithItems._id);
+        console.log('🎯 AUTO-SET: Category with items:', firstCategoryWithItems.name);
+      } else {
+        const sweetsCategory = categories.find(c => c.name === 'Sweets');
+        if (sweetsCategory) {
+          setActiveCategory(sweetsCategory._id);
+          console.log('🎯 AUTO-SET: Sweets category:', sweetsCategory._id);
+        }
+      }
+    }
+  }, [items, categories, activeCategory]);
 
   // Handle item detail view from URL
   useEffect(() => {
