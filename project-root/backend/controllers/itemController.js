@@ -210,14 +210,20 @@ export const createItem = async (req, res) => {
       });
     }
 
-    // Upload images if provided
+    // Upload images if provided (same method as categories)
     let images = [];
-    if (req.files && req.files.length > 0) {
-      const uploadedImages = await uploadImagesToCloudinary(req.files);
-      images = uploadedImages.map((img, index) => ({
-        ...img,
-        isPrimary: index === 0
-      }));
+    if (req.file) {
+      try {
+        const uploadResult = await uploadImagesToCloudinary([req.file]);
+        images = [{
+          url: uploadResult[0].url,
+          cloudinaryId: uploadResult[0].cloudinaryId,
+          isPrimary: true
+        }];
+      } catch (uploadError) {
+        console.error('Upload error:', uploadError);
+        // Continue without image if upload fails
+      }
     }
 
     // Parse arrays if they're strings

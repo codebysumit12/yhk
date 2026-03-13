@@ -23,8 +23,8 @@ router.get('/category/:categoryId', getItemsByCategory);
 router.get('/:id', getItemById);
 
 // Protected routes (Admin only)
-router.post('/', protect, adminOnly, upload.array('images', 5), createItem);
-router.put('/:id', protect, adminOnly, upload.array('images', 5), updateItem);
+router.post('/', protect, adminOnly, upload.single('file'), createItem); 
+router.put('/:id', protect, adminOnly, upload.single('file'), updateItem); 
 router.delete('/:id', protect, adminOnly, deleteItem);
 router.patch('/:id/toggle-availability', protect, adminOnly, toggleItemAvailability);
 router.patch('/:id/toggle-featured', protect, adminOnly, toggleFeaturedStatus);
