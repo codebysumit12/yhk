@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Auth.css';
 import { API_CONFIG } from '../config/api';
+import { auth } from '../firebase';
+import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [usePhoneAuth, setUsePhoneAuth] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [otp, setOtp] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -16,6 +22,7 @@ const Auth = () => {
     confirmPassword: ''
   });
 
+  const recaptchaVerifierRef = useRef(null);
   const API_URL = API_CONFIG.API_URL;
 
   // Handle input change
@@ -136,6 +143,9 @@ const Auth = () => {
     setIsLogin(!isLogin);
     setError('');
     setSuccess('');
+    setOtpSent(false);
+    setConfirmationResult(null);
+    setOtp('');
     setFormData({
       name: '',
       email: '',
@@ -143,6 +153,98 @@ const Auth = () => {
       password: '',
       confirmPassword: ''
     });
+  };
+
+  // Initialize reCAPTCHA
+  useEffect(() => {
+    if (usePhoneAuth && !recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: (response) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
+      });
+    }
+  }, [usePhoneAuth]);
+
+  // Send OTP
+  const handleSendOTP = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (!formData.phone || formData.phone.length !== 10) {
+      setError('Please enter a valid 10-digit phone number');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const phoneNumber = `+91${formData.phone}`;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifierRef.current);
+      setConfirmationResult(confirmation);
+      setOtpSent(true);
+      setSuccess('OTP sent to your phone!');
+    } catch (error) {
+      setError('Failed to send OTP. Please try again.');
+      console.error('OTP send error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Verify OTP
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (!otp || otp.length !== 6) {
+      setError('Please enter a valid 6-digit OTP');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const result = await confirmationResult.confirm(otp);
+      const user = result.user;
+      
+      // Create or update user in your backend
+      const response = await fetch(`${API_URL}/auth/firebase-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          uid: user.uid,
+          phone: user.phoneNumber,
+          name: formData.name || 'User'
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('userToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setSuccess('Login successful!');
+        
+        setTimeout(() => {
+          if (data.user.isAdmin || data.user.role === 'admin') {
+            window.location.href = '/admin';
+          } else {
+            window.location.href = '/customer';
+          }
+        }, 1500);
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (error) {
+      setError('Invalid OTP. Please try again.');
+      console.error('OTP verification error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -232,7 +334,156 @@ const Auth = () => {
               </div>
             )}
 
-            {/* Auth Form */}
+            {/* Auth Method Toggle */}
+            <div className="auth-method-toggle">
+              <button 
+                type="button" 
+                className={`auth-method-btn ${!usePhoneAuth ? 'active' : ''}`}
+                onClick={() => setUsePhoneAuth(false)}
+              >
+                📧 Email & Password
+              </button>
+              <button 
+                type="button" 
+                className={`auth-method-btn ${usePhoneAuth ? 'active' : ''}`}
+                onClick={() => setUsePhoneAuth(true)}
+              >
+                📱 Phone Number
+              </button>
+
+    if (data.success) {
+      localStorage.setItem('userToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setSuccess('Login successful!');
+      
+      setTimeout(() => {
+        if (data.user.isAdmin || data.user.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/customer';
+        }
+      }, 1500);
+    } else {
+      setError(data.message || 'Login failed');
+    }
+  } catch (error) {
+    setError('Invalid OTP. Please try again.');
+    console.error('OTP verification error:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+return (
+  <div className="auth-page">
+    {/* Floating Food Elements */}
+    <div className="floating-food food-1">🍕</div>
+    <div className="floating-food food-2">🍔</div>
+    <div className="floating-food food-3">🍜</div>
+    <div className="floating-food food-4">🍰</div>
+    <div className="floating-food food-5">🥗</div>
+    <div className="floating-food food-6">🍱</div>
+    <div className="floating-food food-7">🌮</div>
+    <div className="floating-food food-8">🍩</div>
+
+    {/* Main Container */}
+    <div className="auth-container">
+      {/* Left Side - Branding */}
+      <div className="auth-branding">
+        <div className="brand-content">
+          <div className="brand-logo">
+            <div className="logo-circle">
+              <span className="logo-icon">🍽️</span>
+            </div>
+          </div>
+          <h1 className="brand-name">
+            Yashwanth's
+            <br />
+            <span className="highlight">Healthy Kitchen</span>
+          </h1>
+          <p className="brand-tagline">
+            Where every bite tells a story of health & happiness! 🌿
+          </p>
+          
+          <div className="brand-features">
+            <div className="feature-item">
+              <span className="feature-icon">✨</span>
+              <span>Fresh & Organic</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">🚀</span>
+              <span>Fast Delivery</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">❤️</span>
+              <span>Made with Love</span>
+            </div>
+          </div>
+
+          {/* Happy Mascot */}
+          <div className="mascot">
+            <div className="mascot-character">
+              😋
+            </div>
+            <div className="mascot-speech">
+              {isLogin ? "Welcome back, foodie!" : "Join our food family!"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Auth Form */}
+      <div className="auth-form-section">
+        <div className="auth-form-container">
+          {/* Form Header */}
+          <div className="form-header">
+            <h2>{isLogin ? '🎉 Welcome Back!' : '🌟 Join Us!'}</h2>
+            <p>
+              {isLogin 
+                ? 'Login to explore delicious meals' 
+                : 'Create your account and start your food journey'}
+            </p>
+          </div>
+
+          {/* Success Message */}
+          {success && (
+            <div className="alert alert-success">
+              <span className="alert-icon">✓</span>
+              {success}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="alert alert-error">
+              <span className="alert-icon">⚠️</span>
+              {error}
+            </div>
+          )}
+
+          {/* Auth Method Toggle */}
+          <div className="auth-method-toggle">
+            <button 
+              type="button" 
+              className={`auth-method-btn ${!usePhoneAuth ? 'active' : ''}`}
+              onClick={() => setUsePhoneAuth(false)}
+            >
+              📧 Email & Password
+            </button>
+            <button 
+              type="button" 
+              className={`auth-method-btn ${usePhoneAuth ? 'active' : ''}`}
+              onClick={() => setUsePhoneAuth(true)}
+            >
+              📱 Phone Number
+            </button>
+          </div>
+
+          {/* reCAPTCHA Container */}
+          <div id="recaptcha-container"></div>
+
+          {/* Auth Form */}
+          {!usePhoneAuth ? (
             <form onSubmit={isLogin ? handleLogin : handleSignup} className="auth-form">
               {/* Name Field (Signup Only) */}
               {!isLogin && (
@@ -353,6 +604,107 @@ const Auth = () => {
                 )}
               </button>
             </form>
+          ) : (
+            /* Phone Authentication Form */
+            !otpSent ? (
+              <form onSubmit={handleSendOTP} className="auth-form">
+                {/* Name Field */}
+                <div className="form-group">
+                  <label htmlFor="name">
+                    <span className="label-icon">👤</span>
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+
+                {/* Phone Field */}
+                <div className="form-group">
+                  <label htmlFor="phone">
+                    <span className="label-icon">📱</span>
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="9876543210"
+                    pattern="[0-9]{10}"
+                    maxLength="10"
+                    required
+                  />
+                </div>
+
+                {/* Send OTP Button */}
+                <button type="submit" className="submit-btn" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="spinner"></span>
+                      Sending OTP...
+                    </>
+                  ) : (
+                    <>
+                      <span className="btn-icon">📱</span>
+                      Send OTP
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOTP} className="auth-form">
+                {/* OTP Field */}
+                <div className="form-group">
+                  <label htmlFor="otp">
+                    <span className="label-icon">🔢</span>
+                    Enter OTP
+                  </label>
+                  <input
+                    type="text"
+                    id="otp"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter 6-digit OTP"
+                    maxLength="6"
+                    required
+                  />
+                </div>
+
+                {/* Verify OTP Button */}
+                <button type="submit" className="submit-btn" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="spinner"></span>
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <span className="btn-icon">✅</span>
+                      Verify OTP
+                    </>
+                  )}
+                </button>
+
+                {/* Resend OTP */}
+                <button 
+                  type="button" 
+                  className="resend-otp-btn"
+                  onClick={handleSendOTP}
+                  disabled={loading}
+                >
+                  🔄 Resend OTP
+                </button>
+              </form>
+            )
+          )}
 
             {/* Toggle Auth Mode */}
             <div className="toggle-auth">

@@ -506,3 +506,61 @@
   margin: 0 10px;
   font-size: 0.9rem;
 }
+
+/* Auth Method Toggle */
+.auth-method-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 12px;
+}
+
+.auth-method-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auth-method-btn.active {
+  background: white;
+  color: #0f2d1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auth-method-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Resend OTP Button */
+.resend-otp-btn {
+  background: transparent;
+  border: 2px solid #6366f1;
+  color: #6366f1;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.resend-otp-btn:hover:not(:disabled) {
+  background: #6366f1;
+  color: white;
+}
+
+.resend-otp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
