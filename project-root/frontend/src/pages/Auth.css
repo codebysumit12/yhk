@@ -478,3 +478,25 @@
     font-size: 48px;
   }
 }
+
+/* Privacy Policy Link Styles */
+.footer-links {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.privacy-link {
+  color: #6366f1;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.privacy-link:hover {
+  color: #4f46e5;
+  background-color: rgba(99, 102, 241, 0.1);
+  text-decoration: underline;
+}

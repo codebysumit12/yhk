@@ -369,6 +369,11 @@ const Auth = () => {
               <p className="info-text">
                 🔒 Your data is safe with us
               </p>
+              <div className="footer-links">
+                <a href="/privacy-policy" className="privacy-link">
+                  Privacy Policy
+                </a>
+              </div>
             </div>
           </div>
         </div>

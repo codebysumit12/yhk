@@ -8,6 +8,7 @@ import TrackOrder from './customer-view/pages/TrackMyOrder';
 import MyOrders from './customer-view/pages/MyOrders';
 import MyProfile from './customer-view/pages/MyProfile';
 import AdminLayout from './admin-view/layout/AdminLayout';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import './App.css';
 
 // Protected Route Component
@@ -55,6 +56,9 @@ function App() {
           
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayout />} />
+          
+          {/* Privacy Policy Route */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
