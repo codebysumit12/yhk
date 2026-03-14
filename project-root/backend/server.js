@@ -25,6 +25,9 @@ import authRoutes from './routes/authRoutes.js';
 
 import User from './models/User.js';
 
+// Import cleanup script
+import { cleanupTempFiles } from './utils/cleanupTempFiles.js';
+
 // Import all models to sync with MongoDB
 import './models/MenuItem.js';
 import './models/Category.js';
@@ -39,6 +42,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
+
+// ✅ CREATE UPLOADS DIRECTORY IF IT DOESN'T EXIST
+const uploadsDir = path.join(__dirname, '..', 'uploads', 'temp');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Created uploads/temp directory');
+}
 
 const app = express();
 
@@ -136,13 +146,15 @@ const seedAdminUser = async () => {
       console.log('ℹ️  Admin user already exists');
     }
   } catch (error) {
-    console.error('❌ Error seeding admin user:', error);
+    console.error(' Error seeding admin user:', error);
   }
 };
 
 const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(` Server running on port ${PORT}`);
   await seedAdminUser();
+  // Start cleanup timer
+  cleanupTempFiles();
 });

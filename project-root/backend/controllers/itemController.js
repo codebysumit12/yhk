@@ -205,28 +205,55 @@ export const createItem = async (req, res) => {
       isAvailable, isFeatured, isPopular,
     } = req.body;
 
+    console.log('📝 Creating item:', name);
+    console.log('📁 Files received:', req.files?.length || 0);
+
     // Check if category exists
     const categoryExists = await Category.findById(categoryId);
     if (!categoryExists) {
+      // Clean up uploaded files
+      if (req.files) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+      
       return res.status(404).json({
         success: false,
         message: 'Category not found'
       });
     }
 
-    // Upload images if provided (same method as categories)
+    // Upload images
     let images = [];
     if (req.files && req.files.length > 0) {
       try {
+        console.log('📤 Uploading to Cloudinary...');
         const uploadedImages = await uploadImagesToCloudinary(req.files);
         images = uploadedImages.map((img, index) => ({
           url: img.url,
           cloudinaryId: img.cloudinaryId,
-          isPrimary: index === 0  // First image is primary
+          isPrimary: index === 0
         }));
+        console.log('✅ Images uploaded:', images.length);
       } catch (uploadError) {
-        console.error('Upload error:', uploadError);
-        // Continue without images if upload fails
+        console.error('❌ Cloudinary upload error:', uploadError);
+        
+        // Clean up temp files
+        if (req.files) {
+          req.files.forEach(file => {
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+            }
+          });
+        }
+        
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload images: ' + uploadError.message
+        });
       }
     }
 
@@ -283,11 +310,15 @@ export const createItem = async (req, res) => {
   } catch (error) {
     console.error('❌ Create item error:', error);
     
-    // Clean up files if upload fails
+    // Clean up files
     if (req.files) {
       req.files.forEach(file => {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
+        try {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        } catch (cleanupError) {
+          console.error('Failed to cleanup file:', file.path);
         }
       });
     }
