@@ -194,7 +194,7 @@ const Main = ({ restaurants }) => {
             />
           </div>
           <div className="location-info">
-            <h3>Yeswanth's Healthy Kitchen</h3>
+            <h3>YHK-P2 - Food Delivery</h3>
             <div className="address-detail">
               <i className="fas fa-map-marker-alt"></i>
               <div>
@@ -234,7 +234,7 @@ const Main = ({ restaurants }) => {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-section">
-            <h4>About Yeswanth's Healthy Kitchen</h4>
+            <h4>YHK-P2 - Food Ordering Platform</h4>
             <ul>
               <li><Link to="">About Us</Link></li>
               <li><Link to="">Culture</Link></li>
@@ -255,8 +255,8 @@ const Main = ({ restaurants }) => {
           <div className="footer-section">
             <h4>Learn More</h4>
             <ul>
-              <li><Link to="">Privacy</Link></li>
-              <li><Link to="">Terms</Link></li>
+              <li><Link to="/privacy-policy">Privacy Policy</Link></li>
+              <li><Link to="/terms">Terms of Service</Link></li>
               <li><Link to="">Security</Link></li>
               <li><Link to="">Sitemap</Link></li>
             </ul>
@@ -272,8 +272,9 @@ const Main = ({ restaurants }) => {
           </div>
         </div>
         <div className="footer-bottom">
+          <p>YHK-P2 is a comprehensive food ordering and delivery platform that connects customers with local restaurants, providing a seamless dining experience with online ordering, real-time tracking, and secure payments.</p>
           <p>By continuing past this page, you agree to our Terms of Service, Cookie Policy, Privacy Policy and Content Policies. All trademarks are properties of their respective owners.</p>
-          2024 Yeswanth's Healthy Kitchen - All rights reserved
+          2024 YHK-P2 - All rights reserved
         </div>
       </footer>
     </React.Fragment>
