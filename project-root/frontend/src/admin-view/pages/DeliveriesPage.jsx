@@ -72,6 +72,8 @@ const DeliveriesPage = () => {
       (delivery.customer && delivery.customer.name && delivery.customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (delivery.customer && delivery.customer.phone && delivery.customer.phone.includes(searchTerm));
     
+    const matchesStatus = filterStatus === 'all' || delivery.status === filterStatus;
+    
     return matchesSearch && matchesStatus;
   });
 
