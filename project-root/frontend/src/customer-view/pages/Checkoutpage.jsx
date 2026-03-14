@@ -519,7 +519,7 @@ const Checkoutpage = () => {
         <nav className="checkout-topnav">
           <div className="checkout-brand">
             <div className="checkout-brand-icon">🍽️</div>
-            <h1>FeastOS</h1>
+            <h1>Yashwant's Healthy Kitchen</h1>
           </div>
         </nav>
         <div className="checkout-page-container" style={{ textAlign: 'center', paddingTop: '100px' }}>
@@ -1004,7 +1004,7 @@ const Checkoutpage = () => {
                   <span>₹{subtotal}</span>
                 </div>
                 <div className="total-row discount">
-                  <span>🎉 FEAST20 (-20%)</span>
+                  <span>🎉 YHK20 (-20%)</span>
                   <span>−₹{discount}</span>
                 </div>
                 <div className="total-row delivery">

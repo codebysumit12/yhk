@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../../config/api';
 import './deliveries-page.css';
 
@@ -13,26 +13,21 @@ const DeliveriesPage = () => {
   const API_URL = API_CONFIG.API_URL;
   const token = localStorage.getItem('userToken');
 
-  // Fetch deliveries (orders that are out for delivery)
-  const fetchDeliveries = async () => {
+  // Wrap with useCallback so it's stable
+  const fetchDeliveries = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/orders?status=out-for-delivery`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      
-      if (data.success) {
-        setDeliveries(data.data);
-      }
+      if (data.success) setDeliveries(data.data);
     } catch (error) {
       console.error('Error fetching deliveries:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL, token]); // stable deps that don't change
 
   useEffect(() => {
     fetchDeliveries();
@@ -77,7 +72,7 @@ const DeliveriesPage = () => {
       (delivery.customer && delivery.customer.name && delivery.customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (delivery.customer && delivery.customer.phone && delivery.customer.phone.includes(searchTerm));
     
-    return matchesSearch;
+    return matchesSearch && matchesStatus;
   });
 
   // Stats
