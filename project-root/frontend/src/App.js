@@ -9,6 +9,7 @@ import MyOrders from './customer-view/pages/MyOrders';
 import MyProfile from './customer-view/pages/MyProfile';
 import AdminLayout from './admin-view/layout/AdminLayout';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import './App.css';
 
 // Protected Route Component
@@ -59,6 +60,9 @@ function App() {
           
           {/* Privacy Policy Route */}
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          
+          {/* Terms of Service Route */}
+          <Route path="/terms" element={<TermsOfService />} />
           
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />

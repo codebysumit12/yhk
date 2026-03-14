@@ -373,6 +373,10 @@ const Auth = () => {
                 <a href="/privacy-policy" className="privacy-link">
                   Privacy Policy
                 </a>
+                <span className="link-separator">•</span>
+                <a href="/terms" className="privacy-link">
+                  Terms of Service
+                </a>
               </div>
             </div>
           </div>
