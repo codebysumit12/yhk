@@ -14,7 +14,7 @@ const PrivacyPolicy = () => {
           <section className="policy-section">
             <h2>Information We Collect</h2>
             <p>
-              When you use Yeswanth's Healthy Kitchen, we may collect certain information to provide you with the best service possible.
+              When you use sumitweb.xyz, we may collect certain information to provide you with the best service possible.
             </p>
             <ul>
               <li>Personal information (name, email, phone number)</li>
@@ -77,8 +77,8 @@ const PrivacyPolicy = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <div className="contact-info">
-              <p>Email: privacy@healthykitchen.com</p>
-              <p>Phone: +91 98765 43210</p>
+              <p>Email: privacy@sumitweb.xyz</p>
+              <p>Website: https://sumitweb.xyz</p>
             </div>
           </section>
         </div>

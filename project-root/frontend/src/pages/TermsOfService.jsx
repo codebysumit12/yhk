@@ -13,7 +13,7 @@ const TermsOfService = () => {
         <div className="terms-content">
           <section className="terms-section">
             <h2>Acceptance of Terms</h2>
-            <p>By using Yeswanth's Healthy Kitchen, you agree to these terms.</p>
+            <p>By using sumitweb.xyz, you agree to these terms.</p>
           </section>
 
           <section className="terms-section">
@@ -47,7 +47,8 @@ const TermsOfService = () => {
 
           <section className="terms-section">
             <h2>Contact</h2>
-            <p>Email: support@healthykitchen.com</p>
+            <p>Email: support@sumitweb.xyz</p>
+            <p>Website: https://sumitweb.xyz</p>
           </section>
         </div>
 
