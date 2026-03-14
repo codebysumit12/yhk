@@ -251,7 +251,7 @@ const Menu = () => {
         }}>
           <div className="menu-hero-content">
             <button className="back-btn" onClick={handleBackToMenu}>
-              <i className="fas fa-arrow-left"></i> Back to Home
+              <i className="fas fa-arrow-left"></i> Back to Items
             </button>
             <h1>{selectedItem.name}</h1>
             <p>{selectedItem.description}</p>
@@ -589,8 +589,8 @@ return (
       }}
     >
     <div className="related-hero-content">
-      <button className="back-btn" onClick={() => navigate('/')}>
-        <i className="fas fa-arrow-left"></i> Back to Restaurant
+      <button className="back-btn" onClick={() => navigate('/customer')}>
+        <i className="fas fa-arrow-left"></i> Back to Menu
       </button>
       <h1>
         {categories.find(cat => cat._id === activeCategory)?.name || 'Our Menu'}
