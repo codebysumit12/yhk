@@ -118,7 +118,7 @@ const Menu = () => {
         }
       }
     }
-  }, [items, categories, activeCategory]);
+  }, [items, categories]);
 
   // Handle item detail view from URL
   useEffect(() => {
@@ -674,7 +674,18 @@ return (
   ) : (
     <div className="menu-items-grid">
       {getFilteredItems().map(item => {
-        const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}&bg=ffffff&color=cccccc`;
+        // Fix malformed image URLs
+        const fixImageUrl = (url) => {
+          if (!url) return url;
+          // If URL starts with 'via.placeholder.com' or similar, add https://
+          if (url.startsWith('via.placeholder.com') || url.match(/^\d+x\d+\.png/)) {
+            return `https://via.placeholder.com/${url}`;
+          }
+          return url;
+        };
+        
+        const itemImage = fixImageUrl(item.images?.[0]?.url || item.image || item.imageUrl) || 
+                         `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}&bg=ffffff&color=cccccc`;
         
         return (
           <div 
@@ -689,7 +700,8 @@ return (
                 alt={item.name}
                 onError={(e) => {
                   console.error('Image failed to load:', itemImage, 'for item:', item.name);
-                  e.target.src = `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}&bg=ff6b6b&color=ffffff`;
+                  const fallbackUrl = `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}&bg=ff6b6b&color=ffffff`;
+                  e.target.src = fallbackUrl;
                 }}
                 loading="lazy"
               />
