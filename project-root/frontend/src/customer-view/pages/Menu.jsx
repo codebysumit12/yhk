@@ -89,36 +89,8 @@ const Menu = () => {
     };
 
     fetchData();
-  }, [categorySlug, activeCategory]);
+  }, [categorySlug]);
 
-  // Force update active category when items load
-  useEffect(() => {
-    if (items.length > 0 && categories.length > 0) {
-      console.log('🔄 Auto-setting category on items load...');
-      
-      // FORCE: Always select Sweets category if it exists and has items
-      const sweetsCategory = categories.find(c => c.name === 'Sweets' && c.itemCount > 0);
-      if (sweetsCategory) {
-        setActiveCategory(sweetsCategory._id);
-        console.log('🎯 FORCE-SET: Sweets category:', sweetsCategory._id);
-        return; // Exit early
-      }
-      
-      // Fallback to first category with items
-      const firstCategoryWithItems = categories.find(c => c.itemCount > 0);
-      if (firstCategoryWithItems) {
-        setActiveCategory(firstCategoryWithItems._id);
-        console.log('🎯 FALLBACK: Category with items:', firstCategoryWithItems.name);
-      } else {
-        // Final fallback - set to first active category
-        const firstActiveCategory = categories.find(c => c.isActive);
-        if (firstActiveCategory) {
-          setActiveCategory(firstActiveCategory._id);
-          console.log('⚠️ FINAL FALLBACK: First active category:', firstActiveCategory.name);
-        }
-      }
-    }
-  }, [items, categories]);
 
   // Handle item detail view from URL
   useEffect(() => {
