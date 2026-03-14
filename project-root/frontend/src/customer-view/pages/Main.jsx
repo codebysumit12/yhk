@@ -84,8 +84,8 @@ const Main = ({ restaurants }) => {
         backgroundRepeat: 'no-repeat'
       }}>
         <div className="hero-content">
-          <h1>{heroBanner?.overlayText?.title || 'Discover the best food & drinks'}</h1>
-          <p>{heroBanner?.overlayText?.subtitle || 'Order food from the best restaurant near you'}</p>
+          <h1>YHK-P2</h1>
+          <p>Food Ordering & Delivery Platform - Order from the best restaurants near you with real-time tracking and secure payments</p>
           
           <div className="quick-links">
             <Link to="" className="quick-link"><i className="fas fa-birthday-cake"></i> Birthday Party</Link>

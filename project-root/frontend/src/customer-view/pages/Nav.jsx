@@ -101,7 +101,7 @@ const Nav = ({ onOpenCart }) => {
             <div className="logo-icon">
               <i className="fas fa-carrot"></i>
             </div>
-            Yashwanth's Healthy Kitchen
+            YHK-P2
           </Link>
           
           <div className="header-search">
@@ -236,6 +236,8 @@ const Nav = ({ onOpenCart }) => {
           <Link to="/drinks"><i className="fas fa-mug-hot"></i> Drinks</Link>
           <Link to="/smoothies"><i className="fas fa-blender"></i> Smoothies</Link>
           <Link to="/desserts"><i className="fas fa-birthday-cake"></i> Desserts</Link>
+          <Link to="/privacy-policy"><i className="fas fa-shield-alt"></i> Privacy</Link>
+          <Link to="/terms"><i className="fas fa-file-contract"></i> Terms</Link>
         </nav>
       </header>
     </>
