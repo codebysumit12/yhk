@@ -216,17 +216,17 @@ export const createItem = async (req, res) => {
 
     // Upload images if provided (same method as categories)
     let images = [];
-    if (req.file) {
+    if (req.files && req.files.length > 0) {
       try {
-        const uploadResult = await uploadImagesToCloudinary([req.file]);
-        images = [{
-          url: uploadResult[0].url,
-          cloudinaryId: uploadResult[0].cloudinaryId,
-          isPrimary: true
-        }];
+        const uploadedImages = await uploadImagesToCloudinary(req.files);
+        images = uploadedImages.map((img, index) => ({
+          url: img.url,
+          cloudinaryId: img.cloudinaryId,
+          isPrimary: index === 0  // First image is primary
+        }));
       } catch (uploadError) {
         console.error('Upload error:', uploadError);
-        // Continue without image if upload fails
+        // Continue without images if upload fails
       }
     }
 
@@ -281,6 +281,8 @@ export const createItem = async (req, res) => {
       data: item
     });
   } catch (error) {
+    console.error('❌ Create item error:', error);
+    
     // Clean up files if upload fails
     if (req.files) {
       req.files.forEach(file => {

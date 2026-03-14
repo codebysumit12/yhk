@@ -311,7 +311,7 @@ const removePrepStep = (index) => {
       // Add text fields
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('category', formData.category);
+      formDataToSend.append('categoryId', formData.category);
       formDataToSend.append('price', formData.price);
       if (formData.discountPrice) formDataToSend.append('discountPrice', formData.discountPrice);
       formDataToSend.append('rating', formData.rating);
@@ -341,26 +341,35 @@ const removePrepStep = (index) => {
       
       const method = editingItem ? 'PUT' : 'POST';
 
+      console.log('📤 Sending request to:', url);
+      console.log('📤 Method:', method);
+
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}` 
+          // Don't set Content-Type - let browser handle it for FormData
         },
         body: formDataToSend
       });
 
       const data = await response.json();
+      console.log('📥 Response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
 
       if (data.success) {
         alert(editingItem ? 'Item updated successfully!' : 'Item created successfully!');
         fetchItems();
         resetForm();
       } else {
-        alert(data.message || 'Failed to save item');
+        throw new Error(data.message || 'Failed to save item');
       }
     } catch (error) {
-      console.error('Error saving item:', error);
-      alert('Error saving item');
+      console.error('❌ Error saving item:', error);
+      alert(`Error: ${error.message}`);
     } finally {
       setUploading(false);
     }
