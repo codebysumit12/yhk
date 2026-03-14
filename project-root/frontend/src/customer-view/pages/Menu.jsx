@@ -135,56 +135,67 @@ const Menu = () => {
   }, [searchParams, items]);
 
   const getFilteredItems = () => {
-    console.log('🔍 Filtering items:', {
-      activeCategory,
-      totalItems: items.length,
-      items: items.map(item => ({
-        name: item.name,
-        categoryId: item.categoryId,
-        categoryIdType: typeof item.categoryId,
-        match: String(item.categoryId) === String(activeCategory)
-      }))
-    });
+  console.log('🔍 Filtering items for category:', activeCategory);
+  
+  let filtered = items.filter(item => {
+    // ✅ FIXED: Handle both object and string category formats
+    let itemCategoryId;
     
-    let filtered = items.filter(item => {
-      // Handle both categoryId and category field formats
-      // Convert both to strings for comparison
-      const itemCategoryId = item.categoryId || (item.category && typeof item.category === 'object' ? item.category._id : item.category);
-      const matches = String(itemCategoryId) === String(activeCategory);
-      console.log(`   ${item.name}: ${itemCategoryId} vs ${activeCategory} = ${matches}`);
-      return matches;
-    });
-    
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    if (item.categoryId) {
+      // If categoryId exists, check if it's an object or string
+      if (typeof item.categoryId === 'object' && item.categoryId !== null) {
+        itemCategoryId = item.categoryId._id; // ✅ Extract _id from populated object
+      } else {
+        itemCategoryId = item.categoryId; // ✅ Use string directly
+      }
+    } else if (item.category) {
+      // Fallback to category field
+      if (typeof item.category === 'object' && item.category !== null) {
+        itemCategoryId = item.category._id;
+      } else {
+        itemCategoryId = item.category;
+      }
     }
     
-    // Apply sorting
-    switch (sortBy) {
-      case 'price-low':
-        filtered = [...filtered].sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
-        break;
-      case 'price-high':
-        filtered = [...filtered].sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
-        break;
-      case 'discount':
-        filtered = [...filtered].sort((a, b) => {
-          const aDiscount = a.discountPrice ? (1 - a.discountPrice/a.price) * 100 : 0;
-          const bDiscount = b.discountPrice ? (1 - b.discountPrice/b.price) * 100 : 0;
-          return bDiscount - aDiscount;
-        });
-        break;
-      default:
-        // Keep original order (popularity)
-        break;
-    }
+    const matches = String(itemCategoryId) === String(activeCategory);
     
-    return filtered;
-  };
+    console.log(`   ${item.name}: categoryId=${itemCategoryId} vs activeCategory=${activeCategory} = ${matches}`);
+    
+    return matches;
+  });
+  
+  console.log(`✅ Filtered ${filtered.length} items for category ${activeCategory}`);
+  
+  // Apply search filter
+  if (searchTerm) {
+    filtered = filtered.filter(item => 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
+  
+  // Apply sorting
+  switch (sortBy) {
+    case 'price-low':
+      filtered = [...filtered].sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
+      break;
+    case 'price-high':
+      filtered = [...filtered].sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
+      break;
+    case 'discount':
+      filtered = [...filtered].sort((a, b) => {
+        const aDiscount = a.discountPrice ? (1 - a.discountPrice/a.price) * 100 : 0;
+        const bDiscount = b.discountPrice ? (1 - b.discountPrice/b.price) * 100 : 0;
+        return bDiscount - aDiscount;
+      });
+      break;
+    default:
+      // Keep original order (popularity)
+      break;
+  }
+  
+  return filtered;
+};
 
   const handleAddToCart = (item) => {
     const price = item.discountPrice || item.price;
