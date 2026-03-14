@@ -229,7 +229,7 @@ const Nav = ({ onOpenCart }) => {
         </div>
         
         <nav className="nav">
-          <Link to="/" className="active"><i className="fas fa-home"></i> Home</Link>
+          <Link to="/customer" className="active"><i className="fas fa-home"></i> Home</Link>
           <Link to="/menu"><i className="fas fa-utensils"></i> Menu</Link>
           <Link to="/offers"><i className="fas fa-percent"></i> Offers</Link>
           <Link to="/food"><i className="fas fa-hamburger"></i> Food</Link>

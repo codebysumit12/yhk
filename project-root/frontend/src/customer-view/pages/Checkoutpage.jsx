@@ -501,7 +501,7 @@ const Checkoutpage = () => {
     setShowSuccessModal(false);
     // Clear cart data
     localStorage.removeItem('checkoutCart');
-    navigate('/');
+    navigate('/track-order');
   };
 
   // Get formatted phone for display
