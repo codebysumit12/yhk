@@ -1,0 +1,17 @@
+{
+  "auth": {
+    "providers": {
+      "anonymous": true,
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Yeswanth's Healthy Kitchen",
+        "supportEmail": "sumitkhekare@gmail.com"
+      },
+      "phone": {
+        "testMode": true,
+        "testPhoneNumber": "+16505553434",
+        "testVerificationCode": "123456"
+      }
+    }
+  }
+}
