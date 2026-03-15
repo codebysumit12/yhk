@@ -564,3 +564,17 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* reCAPTCHA Container */
+#recaptcha-container {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+}
+
+#recaptcha-container > div {
+  border-radius: 8px;
+  overflow: hidden;
+}
