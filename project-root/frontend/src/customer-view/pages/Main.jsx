@@ -84,13 +84,33 @@ const Main = ({ restaurants }) => {
         backgroundRepeat: 'no-repeat'
       }}>
         <div className="hero-content">
-          <h1>YHK-P2 - Yeswanth's Healthy Kitchen</h1>
-          <p>Experience the future of food ordering with YHK-P2, your comprehensive food delivery platform. We connect you with the best local restaurants, offering real-time order tracking, secure payments, and fast delivery to your doorstep. Whether you're craving healthy meals, party food, or everyday dining, we make ordering food simple, convenient, and reliable.</p>
+          {/* Clear app name and purpose */}
+          <h1>Yeswanth's Healthy Kitchen</h1>
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            marginTop: '1rem', 
+            marginBottom: '1.5rem',
+            color: '#22c55e',
+            fontWeight: '600'
+          }}>
+            Your Complete Food Ordering & Delivery Platform
+          </h2>
           
+          <p style={{ 
+            fontSize: '1.1rem', 
+            lineHeight: '1.8',
+            maxWidth: '800px',
+            margin: '0 auto 2rem'
+          }}>
+            <strong>Yeswanth's Healthy Kitchen</strong> is a comprehensive food ordering and delivery platform 
+            that connects you with delicious, healthy meals from local kitchens. We make ordering food simple, 
+            convenient, and reliable with real-time order tracking, secure payments, and fast delivery to your doorstep.
+          </p>
+
           <div className="app-features">
             <div className="feature">
               <i className="fas fa-utensils"></i>
-              <span>100+ Restaurants</span>
+              <span>Fresh & Healthy Meals</span>
             </div>
             <div className="feature">
               <i className="fas fa-clock"></i>
@@ -108,25 +128,81 @@ const Main = ({ restaurants }) => {
           
           <div className="hero-links">
             <div className="quick-links">
-              <Link to="" className="quick-link"><i className="fas fa-birthday-cake"></i> Birthday Party</Link>
-              <Link to="" className="quick-link"><i className="fas fa-leaf"></i> Healthy Food</Link>
-              <Link to="" className="quick-link"><i className="fas fa-pizza-slice"></i> Veg</Link>
-              <Link to="" className="quick-link"><i className="fas fa-drumstick-bite"></i> Non-Veg</Link>
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-birthday-cake"></i> Birthday Party
+              </Link>
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-leaf"></i> Healthy Food
+              </Link>
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-pizza-slice"></i> Veg
+              </Link>
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-drumstick-bite"></i> Non-Veg
+              </Link>
             </div>
             
-            <div className="legal-links">
-              <Link to="/privacy-policy" className="legal-link"><i className="fas fa-shield-alt"></i> Privacy Policy</Link>
-              <Link to="/terms" className="legal-link"><i className="fas fa-file-contract"></i> Terms of Service</Link>
+            {/* Clear privacy policy and terms links */}
+            <div className="legal-links" style={{ 
+              marginTop: '2rem',
+              padding: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '10px',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <h3 style={{ 
+                color: 'white', 
+                marginBottom: '1rem',
+                fontSize: '1.2rem'
+              }}>
+                Important Links
+              </h3>
+              <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Link to="/privacy-policy" className="legal-link" style={{
+                  color: '#22c55e',
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  padding: '0.5rem 1rem',
+                  border: '2px solid #22c55e',
+                  borderRadius: '8px',
+                  transition: 'all 0.3s'
+                }}>
+                  <i className="fas fa-shield-alt"></i> Privacy Policy
+                </Link>
+                <Link to="/terms" className="legal-link" style={{
+                  color: '#22c55e',
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  padding: '0.5rem 1rem',
+                  border: '2px solid #22c55e',
+                  borderRadius: '8px',
+                  transition: 'all 0.3s'
+                }}>
+                  <i className="fas fa-file-contract"></i> Terms of Service
+                </Link>
+              </div>
             </div>
           </div>
           
-          {heroBanner?.overlayText?.buttonText && (
-            <div className="hero-cta">
-              <a href={heroBanner.link || '#menu'} className="hero-btn">
-                {heroBanner.overlayText.buttonText}
-              </a>
-            </div>
-          )}
+          {/* Login/Order button */}
+          <div className="hero-cta" style={{ marginTop: '2rem' }}>
+            <Link to="/auth" className="hero-btn" style={{
+              display: 'inline-block',
+              padding: '1rem 2.5rem',
+              background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+              color: 'white',
+              fontSize: '1.2rem',
+              fontWeight: '700',
+              borderRadius: '12px',
+              textDecoration: 'none',
+              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.4)',
+              transition: 'all 0.3s'
+            }}>
+              Start Ordering Now
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -220,7 +296,7 @@ const Main = ({ restaurants }) => {
             />
           </div>
           <div className="location-info">
-            <h3>YHK-P2 - Food Delivery</h3>
+            <h3>Yeswanth's Healthy Kitchen - Food Delivery</h3>
             <div className="address-detail">
               <i className="fas fa-map-marker-alt"></i>
               <div>
@@ -260,7 +336,7 @@ const Main = ({ restaurants }) => {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-section">
-            <h4>YHK-P2 - Food Ordering Platform</h4>
+            <h4>Yeswanth's Healthy Kitchen - Food Ordering Platform</h4>
             <ul>
               <li><Link to="">About Us</Link></li>
               <li><Link to="">Culture</Link></li>
@@ -298,9 +374,9 @@ const Main = ({ restaurants }) => {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>YHK-P2 is a comprehensive food ordering and delivery platform that connects customers with local restaurants, providing a seamless dining experience with online ordering, real-time tracking, and secure payments.</p>
+          <p>Yeswanth's Healthy Kitchen is a comprehensive food ordering and delivery platform that connects customers with local restaurants, providing a seamless dining experience with online ordering, real-time tracking, and secure payments.</p>
           <p>By continuing past this page, you agree to our Terms of Service, Cookie Policy, Privacy Policy and Content Policies. All trademarks are properties of their respective owners.</p>
-          2024 YHK-P2 - All rights reserved
+          2024 Yeswanth's Healthy Kitchen - All rights reserved
         </div>
       </footer>
     </React.Fragment>

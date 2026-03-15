@@ -28,24 +28,24 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   return children;
 };
 
-// Main App Component
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
-          {/* Auth route - landing page */}
-          <Route path="/" element={<Auth />} />
+          {/* ✅ FIXED: Main landing page at / */}
+          <Route path="/" element={<Main />} />
+          
+          {/* ✅ FIXED: Auth at /auth */}
+          <Route path="/auth" element={<Auth />} />
           
           {/* Customer Routes */}
-          <Route path="/customer" element={<Main />} />
           <Route path="/menu/:categorySlug" element={<Menu />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/checkout" element={<Checkoutpage />} />
           <Route path="/track-order" element={<TrackOrder />} />
-          
-          {/* Customer Routes */}
           <Route path="/my-orders" element={<MyOrders />} />
+          
           <Route 
             path="/profile" 
             element={
@@ -58,10 +58,8 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminLayout />} />
           
-          {/* Privacy Policy Route */}
+          {/* ✅ FIXED: Privacy Policy & Terms */}
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          
-          {/* Terms of Service Route */}
           <Route path="/terms" element={<TermsOfService />} />
           
           {/* Redirect unknown routes */}

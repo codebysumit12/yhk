@@ -6,14 +6,14 @@ const TermsOfService = () => {
     <div className="terms-page">
       <div className="terms-container">
         <div className="terms-header">
-          <h1>Terms of Service</h1>
+          <h1>Yeswanth's Healthy Kitchen - Terms of Service</h1>
           <p className="last-updated">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
 
         <div className="terms-content">
           <section className="terms-section">
             <h2>Acceptance of Terms</h2>
-            <p>By using sumitweb.xyz, you agree to these terms.</p>
+            <p>By using Yeswanth's Healthy Kitchen, you agree to these terms.</p>
           </section>
 
           <section className="terms-section">

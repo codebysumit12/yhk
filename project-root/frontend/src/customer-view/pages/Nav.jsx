@@ -101,7 +101,7 @@ const Nav = ({ onOpenCart }) => {
             <div className="logo-icon">
               <i className="fas fa-carrot"></i>
             </div>
-            YHK-P2
+            Yeswanth's Healthy Kitchen
           </Link>
           
           <div className="header-search">

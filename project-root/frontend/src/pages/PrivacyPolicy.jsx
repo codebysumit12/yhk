@@ -6,22 +6,35 @@ const PrivacyPolicy = () => {
     <div className="privacy-policy-page">
       <div className="privacy-container">
         <div className="privacy-header">
-          <h1>YHK Healthy Kitchen Privacy Policy</h1>
-          <p className="app-description">YHK Healthy Kitchen - Food Ordering & Delivery Platform</p>
+          <h1>Privacy Policy</h1>
+          <p className="app-description">
+            <strong>Yeswanth's Healthy Kitchen</strong> - Food Ordering & Delivery Platform
+          </p>
+          <p className="website-url">Website: https://sumitweb.xyz</p>
           <p className="last-updated">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
 
         <div className="privacy-content">
           <section className="policy-section">
+            <h2>About Yeswanth's Healthy Kitchen</h2>
+            <p>
+              <strong>Yeswanth's Healthy Kitchen</strong> is a comprehensive food ordering and delivery platform 
+              that connects customers with local restaurants and kitchens. We are committed to protecting your 
+              privacy and ensuring the security of your personal information.
+            </p>
+          </section>
+
+          <section className="policy-section">
             <h2>Information We Collect</h2>
             <p>
-              When you use YHK Healthy Kitchen, we may collect certain information to provide you with the best food ordering and delivery service possible.
+              When you use Yeswanth's Healthy Kitchen, we may collect certain information to provide you with the best food ordering and delivery service possible.
             </p>
             <ul>
               <li>Personal information (name, email, phone number)</li>
-              <li>Order history and preferences</li>
+              <li>Order history and food preferences</li>
               <li>Delivery address information</li>
-              <li>Payment information (processed securely)</li>
+              <li>Payment information (processed securely through Razorpay)</li>
+              <li>Location data for delivery tracking</li>
             </ul>
           </section>
 
@@ -78,16 +91,17 @@ const PrivacyPolicy = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <div className="contact-info">
-              <p>Email: privacy@yhk-p2.com</p>
-              <p>Website: https://sumitweb.xyz</p>
-              <p>App: YHK Healthy Kitchen</p>
+              <p><strong>Email:</strong> privacy@sumitweb.xyz</p>
+              <p><strong>Website:</strong> https://sumitweb.xyz</p>
+              <p><strong>Platform:</strong> Yeswanth's Healthy Kitchen</p>
+              <p><strong>Address:</strong> 46-7-26/1, Danavaipeta, Above Meg Unisex Lounge, Rajahmundry - 533101</p>
             </div>
           </section>
         </div>
 
         <div className="privacy-footer">
-          <button onClick={() => window.history.back()} className="back-btn">
-            ← Back to Previous Page
+          <button onClick={() => window.location.href = '/'} className="back-btn">
+            ← Back to Home
           </button>
         </div>
       </div>

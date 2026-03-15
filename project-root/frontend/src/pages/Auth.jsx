@@ -250,24 +250,25 @@ const Auth = () => {
               </div>
             </div>
             <h1 className="brand-name">
-              YHK
+              Yeswanth's
               <br />
               <span className="highlight">Healthy Kitchen</span>
             </h1>
             <p className="brand-tagline">
-              Where every bite tells a story of health & happiness! 🌿
+              Your Complete Food Ordering & Delivery Platform �️
             </p>
             
             <div className="brand-description">
-              <h3>Welcome to YHK Healthy Kitchen!</h3>
+              <h3>Welcome to Yeswanth's Healthy Kitchen!</h3>
               <p>
-                Your ultimate food delivery platform for healthy, delicious meals. 
+                Your ultimate food ordering and delivery platform for healthy, delicious meals. 
                 We connect you with nutritious food options from local kitchens, 
                 making healthy eating convenient and enjoyable.
               </p>
               <p>
                 Order fresh, organic meals crafted with love and delivered fast to your doorstep. 
-                Whether you're looking for meal prep, dietary-specific options, or just want to eat healthier - YHK has you covered!
+                Whether you're looking for meal prep, dietary-specific options, or just want to eat healthier - 
+                Yeswanth's Healthy Kitchen has you covered!
               </p>
             </div>
             
