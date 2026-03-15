@@ -250,13 +250,26 @@ const Auth = () => {
               </div>
             </div>
             <h1 className="brand-name">
-              Yashwanth's
+              YHK
               <br />
               <span className="highlight">Healthy Kitchen</span>
             </h1>
             <p className="brand-tagline">
               Where every bite tells a story of health & happiness! 🌿
             </p>
+            
+            <div className="brand-description">
+              <h3>Welcome to YHK Healthy Kitchen!</h3>
+              <p>
+                Your ultimate food delivery platform for healthy, delicious meals. 
+                We connect you with nutritious food options from local kitchens, 
+                making healthy eating convenient and enjoyable.
+              </p>
+              <p>
+                Order fresh, organic meals crafted with love and delivered fast to your doorstep. 
+                Whether you're looking for meal prep, dietary-specific options, or just want to eat healthier - YHK has you covered!
+              </p>
+            </div>
             
             <div className="brand-features">
               <div className="feature-item">
@@ -562,6 +575,17 @@ const Auth = () => {
                 </form>
               )
             )}
+
+            {/* Privacy Policy Link */}
+            <div className="privacy-link">
+              <a href="/privacy-policy" className="privacy-policy-link">
+                🔒 Privacy Policy
+              </a>
+              <span className="separator">•</span>
+              <a href="/terms" className="terms-link">
+                📋 Terms of Service
+              </a>
+            </div>
 
             {/* Toggle Auth Mode */}
             <div className="auth-toggle">

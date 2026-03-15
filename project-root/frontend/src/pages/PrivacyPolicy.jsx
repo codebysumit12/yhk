@@ -6,7 +6,8 @@ const PrivacyPolicy = () => {
     <div className="privacy-policy-page">
       <div className="privacy-container">
         <div className="privacy-header">
-          <h1>Privacy Policy</h1>
+          <h1>YHK Healthy Kitchen Privacy Policy</h1>
+          <p className="app-description">YHK Healthy Kitchen - Food Ordering & Delivery Platform</p>
           <p className="last-updated">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
 
@@ -14,7 +15,7 @@ const PrivacyPolicy = () => {
           <section className="policy-section">
             <h2>Information We Collect</h2>
             <p>
-              When you use sumitweb.xyz, we may collect certain information to provide you with the best service possible.
+              When you use YHK Healthy Kitchen, we may collect certain information to provide you with the best food ordering and delivery service possible.
             </p>
             <ul>
               <li>Personal information (name, email, phone number)</li>
@@ -77,8 +78,9 @@ const PrivacyPolicy = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <div className="contact-info">
-              <p>Email: privacy@sumitweb.xyz</p>
+              <p>Email: privacy@yhk-p2.com</p>
               <p>Website: https://sumitweb.xyz</p>
+              <p>App: YHK Healthy Kitchen</p>
             </div>
           </section>
         </div>

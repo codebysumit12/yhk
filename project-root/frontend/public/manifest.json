@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "YHK Healthy Kitchen",
+  "name": "YHK Healthy Kitchen - Food Ordering & Delivery Platform",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,7 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#22c55e",
+  "background_color": "#ffffff",
+  "description": "YHK Healthy Kitchen - Your ultimate food delivery platform for healthy, delicious meals"
 }

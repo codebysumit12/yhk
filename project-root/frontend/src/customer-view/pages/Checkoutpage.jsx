@@ -1,25 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { initializeApp } from "firebase/app";
-import { getAuth, RecaptchaVerifier } from "firebase/auth";
+import { getAuth } from "firebase/auth";
+import { auth } from '../../firebase';
 // import { API_CONFIG } from '../../config/api';
 import { API_CONFIG } from '../../config/api';
 import './Checkout.css';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyByJyNj9tzbNcSuD9HOQwc71hRN69L15ms",
-  authDomain: "yhk-61561.firebaseapp.com",
-  projectId: "yhk-61561",
-  storageBucket: "yhk-61561.firebasestorage.app",
-  messagingSenderId: "701646445349",
-  appId: "1:701646445349:web:1071e6daf71e2cbf1858cc",
-  measurementId: "G-CMLE6L54V8"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 const Checkoutpage = () => {
   const navigate = useNavigate();

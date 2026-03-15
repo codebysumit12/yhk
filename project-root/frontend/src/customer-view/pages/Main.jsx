@@ -84,14 +84,40 @@ const Main = ({ restaurants }) => {
         backgroundRepeat: 'no-repeat'
       }}>
         <div className="hero-content">
-          <h1>YHK-P2</h1>
-          <p>Food Ordering & Delivery Platform - Order from the best restaurants near you with real-time tracking and secure payments</p>
+          <h1>YHK-P2 - Yeswanth's Healthy Kitchen</h1>
+          <p>Experience the future of food ordering with YHK-P2, your comprehensive food delivery platform. We connect you with the best local restaurants, offering real-time order tracking, secure payments, and fast delivery to your doorstep. Whether you're craving healthy meals, party food, or everyday dining, we make ordering food simple, convenient, and reliable.</p>
           
-          <div className="quick-links">
-            <Link to="" className="quick-link"><i className="fas fa-birthday-cake"></i> Birthday Party</Link>
-            <Link to="" className="quick-link"><i className="fas fa-leaf"></i> Healthy Food</Link>
-            <Link to="" className="quick-link"><i className="fas fa-pizza-slice"></i> Veg</Link>
-            <Link to="" className="quick-link"><i className="fas fa-drumstick-bite"></i> Non-Veg</Link>
+          <div className="app-features">
+            <div className="feature">
+              <i className="fas fa-utensils"></i>
+              <span>100+ Restaurants</span>
+            </div>
+            <div className="feature">
+              <i className="fas fa-clock"></i>
+              <span>30-min Delivery</span>
+            </div>
+            <div className="feature">
+              <i className="fas fa-shield-alt"></i>
+              <span>Secure Payments</span>
+            </div>
+            <div className="feature">
+              <i className="fas fa-map-marker-alt"></i>
+              <span>Real-time Tracking</span>
+            </div>
+          </div>
+          
+          <div className="hero-links">
+            <div className="quick-links">
+              <Link to="" className="quick-link"><i className="fas fa-birthday-cake"></i> Birthday Party</Link>
+              <Link to="" className="quick-link"><i className="fas fa-leaf"></i> Healthy Food</Link>
+              <Link to="" className="quick-link"><i className="fas fa-pizza-slice"></i> Veg</Link>
+              <Link to="" className="quick-link"><i className="fas fa-drumstick-bite"></i> Non-Veg</Link>
+            </div>
+            
+            <div className="legal-links">
+              <Link to="/privacy-policy" className="legal-link"><i className="fas fa-shield-alt"></i> Privacy Policy</Link>
+              <Link to="/terms" className="legal-link"><i className="fas fa-file-contract"></i> Terms of Service</Link>
+            </div>
           </div>
           
           {heroBanner?.overlayText?.buttonText && (
