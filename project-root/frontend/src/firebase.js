@@ -3,16 +3,19 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDHGwe0-KiZP8g92INeiMqnlBMXJOz0Mx8",
-  authDomain: "yhk-p2.firebaseapp.com",
-  projectId: "yhk-p2",
-  storageBucket: "yhk-p2.firebasestorage.app",
-  messagingSenderId: "516859500701",
-  appId: "1:516859500701:web:8462ccaacfb3b00e3e5c74",
-  measurementId: "G-WRWZF4X8JF"
+  apiKey: "AIzaSyA8Rk5ViCQQdjnTXv98iO9jADFmtg3LxDU",
+  authDomain: "yeswanth-s-healthy-kitchen.firebaseapp.com",
+  projectId: "yeswanth-s-healthy-kitchen",
+  storageBucket: "yeswanth-s-healthy-kitchen.firebasestorage.app",
+  messagingSenderId: "579329797638",
+  appId: "1:579329797638:web:a48a7f64634775117b1d87",
+  measurementId: "G-8B3TWW3YDZ"
 };
 
 // Initialize Firebase
