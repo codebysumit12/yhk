@@ -3,12 +3,43 @@ import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  phone: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true, minlength: 6, select: false },
-  role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
+  email: { 
+    type: String, 
+    required: function() {
+      return !this.firebaseUid; // Only required if not using Firebase
+    }, 
+    unique: true, 
+    sparse: true, // Allows multiple null values for unique constraint
+    lowercase: true, 
+    trim: true 
+  },
+  phone: { 
+    type: String, 
+    required: function() {
+      return !this.firebaseUid; // Only required if not using Firebase
+    }, 
+    unique: true, 
+    sparse: true, // Allows multiple null values for unique constraint
+    trim: true 
+  },
+  password: { 
+    type: String, 
+    required: function() {
+      return !this.firebaseUid; // Only required if not using Firebase
+    }, 
+    minlength: 6, 
+    select: false 
+  },
+  firebaseUid: {
+    type: String,
+    unique: true,
+    sparse: true // Allows null values
+  },
+  role: { type: String, enum: ['customer', 'admin', 'delivery'], default: 'customer' },
   isActive: { type: Boolean, default: true },
   isVerified: { type: Boolean, default: false },
+  isEmailVerified: { type: Boolean, default: false },
+  isPhoneVerified: { type: Boolean, default: false },
   avatar: { type: String, default: '' },
   addresses: [{
     type: { type: String, enum: ['home', 'work', 'other'], default: 'home' },
@@ -25,6 +56,8 @@ const userSchema = new mongoose.Schema({
     spiceLevel: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' }
   },
   createdAt: { type: Date, default: Date.now }
+}, {
+  timestamps: true
 });
 
 userSchema.pre('save', async function (next) {
