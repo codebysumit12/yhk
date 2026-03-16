@@ -60,7 +60,7 @@ const Auth = () => {
           if (data.user.isAdmin || data.user.role === 'admin') {
             window.location.href = '/admin';
           } else {
-            window.location.href = '/customer';
+            window.location.href = '/menu';
           }
         }, 1500);
       } else {
@@ -126,6 +126,17 @@ const Auth = () => {
     setOtpSent(false);
     setConfirmationResult(null);
     setOtp('');
+    
+    // ✅ Cleanup reCAPTCHA when switching modes
+    if (recaptchaVerifierRef.current) {
+      try {
+        recaptchaVerifierRef.current.clear();
+      } catch (err) {
+        console.log('reCAPTCHA cleanup error:', err);
+      }
+      recaptchaVerifierRef.current = null;
+    }
+    
     setFormData({
       name: '',
       email: '',
@@ -135,28 +146,58 @@ const Auth = () => {
     });
   };
 
-  // Initialize reCAPTCHA
+  // ✅ FIXED: Initialize reCAPTCHA properly
   useEffect(() => {
+    // Only initialize if phone auth is enabled and recaptcha container exists
     if (usePhoneAuth && !recaptchaVerifierRef.current) {
-      try {
-        // ✅ FIXED: Use new Firebase v9+ syntax
-        recaptchaVerifierRef.current = new RecaptchaVerifier(
-          'recaptcha-container',
-          {
-            size: 'invisible',
-            callback: (response) => {
-              console.log('✅ reCAPTCHA solved');
-            },
-            'expired-callback': () => {
-              console.log('⚠️ reCAPTCHA expired');
+      // Wait a tick to ensure DOM is ready
+      const timer = setTimeout(() => {
+        try {
+          const recaptchaContainer = document.getElementById('recaptcha-container');
+          
+          if (!recaptchaContainer) {
+            console.error('❌ reCAPTCHA container not found');
+            return;
+          }
+
+          // ✅ Clear any existing reCAPTCHA widgets
+          recaptchaContainer.innerHTML = '';
+
+          // ✅ Create new RecaptchaVerifier with correct Firebase v9+ syntax
+          recaptchaVerifierRef.current = new RecaptchaVerifier(
+            auth,  // ✅ auth instance FIRST
+            'recaptcha-container',  // ✅ element ID SECOND
+            {
+              size: 'invisible',
+              callback: (response) => {
+                console.log('✅ reCAPTCHA solved');
+              },
+              'expired-callback': () => {
+                console.log('⚠️ reCAPTCHA expired');
+              }
             }
-          },
-          auth  // ✅ Pass auth as third parameter
-        );
-      } catch (error) {
-        console.error('❌ reCAPTCHA init error:', error);
-      }
+          );
+
+          console.log('✅ reCAPTCHA initialized successfully');
+        } catch (error) {
+          console.error('❌ reCAPTCHA init error:', error);
+          setError('Failed to initialize phone verification. Please try email login.');
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (err) {
+          console.log('reCAPTCHA cleanup error:', err);
+        }
+      }
+    };
   }, [usePhoneAuth]);
 
   // Send OTP
@@ -172,14 +213,47 @@ const Auth = () => {
     }
 
     try {
+      // ✅ Make sure reCAPTCHA is initialized
+      if (!recaptchaVerifierRef.current) {
+        throw new Error('reCAPTCHA not initialized. Please refresh and try again.');
+      }
+
       const phoneNumber = `+91${formData.phone}`;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifierRef.current);
+      console.log('📱 Sending OTP to:', phoneNumber);
+      
+      const confirmation = await signInWithPhoneNumber(
+        auth, 
+        phoneNumber, 
+        recaptchaVerifierRef.current
+      );
+      
       setConfirmationResult(confirmation);
       setOtpSent(true);
       setSuccess('OTP sent to your phone!');
+      console.log('✅ OTP sent successfully');
     } catch (error) {
-      setError('Failed to send OTP. Please try again.');
-      console.error('OTP send error:', error);
+      console.error('❌ OTP send error:', error);
+      
+      // ✅ Better error messages
+      if (error.code === 'auth/invalid-phone-number') {
+        setError('Invalid phone number format');
+      } else if (error.code === 'auth/too-many-requests') {
+        setError('Too many attempts. Please try again later.');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        setError('Phone authentication is not enabled. Please use email login.');
+      } else {
+        setError('Failed to send OTP. Please try email login instead.');
+      }
+      
+      // Reset reCAPTCHA on error
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
+        } catch (err) {
+          console.log('reCAPTCHA reset error:', err);
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -225,15 +299,15 @@ const Auth = () => {
           if (data.user.isAdmin || data.user.role === 'admin') {
             window.location.href = '/admin';
           } else {
-            window.location.href = '/customer';
+            window.location.href = '/menu';
           }
         }, 1500);
       } else {
         setError(data.message || 'Login failed');
       }
     } catch (error) {
+      console.error('❌ OTP verification error:', error);
       setError('Invalid OTP. Please try again.');
-      console.error('OTP verification error:', error);
     } finally {
       setLoading(false);
     }
@@ -267,7 +341,7 @@ const Auth = () => {
               <span className="highlight">Healthy Kitchen</span>
             </h1>
             <p className="brand-tagline">
-              Your Complete Food Ordering & Delivery Platform �️
+              Your Complete Food Ordering & Delivery Platform 🍽️
             </p>
             
             <div className="brand-description">
@@ -462,7 +536,10 @@ const Auth = () => {
                 {/* Forgot Password Link (Login Only) */}
                 {isLogin && (
                   <div className="form-extras">
-                    <button type="button" className="forgot-link" onClick={(e) => { e.preventDefault(); /* Add forgot password logic */ }}>
+                    <button type="button" className="forgot-link" onClick={(e) => { 
+                      e.preventDefault(); 
+                      setError('Password reset feature coming soon!');
+                    }}>
                       Forgot Password? 🤔
                     </button>
                   </div>
