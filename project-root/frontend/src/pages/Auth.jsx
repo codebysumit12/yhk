@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { auth } from '../firebase';
-import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
+import { API_CONFIG } from '../config/api';
 import './Auth.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = API_CONFIG.API_URL;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
