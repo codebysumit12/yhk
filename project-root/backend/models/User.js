@@ -2,45 +2,68 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  email: { 
-    type: String, 
-    required: function() {
-      return !this.firebaseUid; // Only required if not using Firebase
-    }, 
-    unique: true, 
-    sparse: true, // Allows multiple null values for unique constraint
-    lowercase: true, 
-    trim: true 
+  name: {
+    type: String,
+    required: true,
+    trim: true
   },
-  phone: { 
-    type: String, 
+  email: {
+    type: String,
     required: function() {
       return !this.firebaseUid; // Only required if not using Firebase
-    }, 
-    unique: true, 
-    sparse: true, // Allows multiple null values for unique constraint
-    trim: true 
+    },
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    trim: true
   },
-  password: { 
-    type: String, 
+  phone: {
+    type: String,
+    required: function() {
+      return !this.email; // Required if no email
+    },
+    unique: true,
+    sparse: true,
+    trim: true
+  },
+  password: {
+    type: String,
     required: function() {
       return !this.firebaseUid; // Only required if not using Firebase
-    }, 
-    minlength: 6, 
-    select: false 
+    },
+    minlength: 6,
+    select: false
   },
   firebaseUid: {
     type: String,
     unique: true,
-    sparse: true // Allows null values
+    sparse: true
   },
-  role: { type: String, enum: ['customer', 'admin', 'delivery'], default: 'customer' },
-  isActive: { type: Boolean, default: true },
-  isVerified: { type: Boolean, default: false },
-  isEmailVerified: { type: Boolean, default: false },
-  isPhoneVerified: { type: Boolean, default: false },
-  avatar: { type: String, default: '' },
+  role: {
+    type: String,
+    enum: ['customer', 'admin', 'delivery'],
+    default: 'customer'
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  isPhoneVerified: {
+    type: Boolean,
+    default: false
+  },
+  avatar: {
+    type: String,
+    default: ''
+  },
   addresses: [{
     type: { type: String, enum: ['home', 'work', 'other'], default: 'home' },
     street: String,
@@ -55,13 +78,18 @@ const userSchema = new mongoose.Schema({
     allergies: [String],
     spiceLevel: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' }
   },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 }, {
   timestamps: true
 });
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+// Hash password before saving (only if password exists)
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password') || !this.password) return next();
+  
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();

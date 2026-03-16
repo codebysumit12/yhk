@@ -122,6 +122,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'API is running', timestamp: new Date().toISOString() });
 });
 
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend is working!' });
+});
+
 // Serve frontend for all non-API routes (MUST be last)
 app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, '../../frontend/build/index.html');
