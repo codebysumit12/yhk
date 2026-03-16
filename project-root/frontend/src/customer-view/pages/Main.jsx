@@ -93,45 +93,6 @@ const Main = ({ restaurants }) => {
         <div className="hero-content">
           {/* Clear app name and purpose */}
           <h1>Yeswanth's Healthy Kitchen</h1>
-          <h2 style={{ 
-            fontSize: '1.5rem', 
-            marginTop: '1rem', 
-            marginBottom: '1.5rem',
-            color: '#22c55e',
-            fontWeight: '600'
-          }}>
-            Your Complete Food Ordering & Delivery Platform
-          </h2>
-          
-          <p style={{ 
-            fontSize: '1.1rem', 
-            lineHeight: '1.8',
-            maxWidth: '800px',
-            margin: '0 auto 2rem'
-          }}>
-            <strong>Yeswanth's Healthy Kitchen</strong> is a comprehensive food ordering and delivery platform 
-            that connects you with delicious, healthy meals from local kitchens. We make ordering food simple, 
-            convenient, and reliable with real-time order tracking, secure payments, and fast delivery to your doorstep.
-          </p>
-
-          <div className="app-features">
-            <div className="feature">
-              <i className="fas fa-utensils"></i>
-              <span>Fresh & Healthy Meals</span>
-            </div>
-            <div className="feature">
-              <i className="fas fa-clock"></i>
-              <span>30-min Delivery</span>
-            </div>
-            <div className="feature">
-              <i className="fas fa-shield-alt"></i>
-              <span>Secure Payments</span>
-            </div>
-            <div className="feature">
-              <i className="fas fa-map-marker-alt"></i>
-              <span>Real-time Tracking</span>
-            </div>
-          </div>
           
           <div className="hero-links">
             <div className="quick-links">
