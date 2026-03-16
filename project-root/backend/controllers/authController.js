@@ -275,3 +275,61 @@ export const logout = async (req, res) => {
     });
   }
 };
+
+// @desc    Firebase phone authentication
+// @route   POST /api/auth/firebase-login
+// @access  Public
+export const firebaseLogin = async (req, res) => {
+  try {
+    const { phone, uid, email, name } = req.body;
+
+    // Validation
+    if (!phone || !uid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number and UID are required'
+      });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ phone });
+
+    if (!user) {
+      // Create new user for Firebase phone auth
+      user = await User.create({
+        name: name || 'User',
+        email: email || `${phone}@firebase.user`,
+        phone,
+        firebaseUid: uid,
+        role: 'customer',
+        isPhoneVerified: true
+      });
+    } else {
+      // Update existing user with Firebase UID
+      user.firebaseUid = uid;
+      user.isPhoneVerified = true;
+      await user.save();
+    }
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isPhoneVerified: user.isPhoneVerified
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
