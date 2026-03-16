@@ -9,6 +9,13 @@ const Main = ({ restaurants }) => {
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
+  // Auth check - redirect to /auth if not logged in
+  useEffect(() => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      navigate('/auth');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     // Filter logic can be added here if needed

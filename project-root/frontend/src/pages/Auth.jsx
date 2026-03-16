@@ -60,7 +60,7 @@ const Auth = () => {
           if (data.user.isAdmin || data.user.role === 'admin') {
             window.location.href = '/admin';
           } else {
-            window.location.href = '/menu';
+            window.location.href = '/'; // Go to Main page first
           }
         }, 1500);
       } else {
@@ -299,7 +299,7 @@ const Auth = () => {
           if (data.user.isAdmin || data.user.role === 'admin') {
             window.location.href = '/admin';
           } else {
-            window.location.href = '/menu';
+            window.location.href = '/'; // Go to Main page first
           }
         }, 1500);
       } else {
