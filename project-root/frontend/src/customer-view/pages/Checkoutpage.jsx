@@ -4,7 +4,6 @@ import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth
 import { auth } from '../../firebase';
 // import { API_CONFIG } from '../../config/api';
 import { API_CONFIG } from '../../config/api';
-import Razorpay from 'razorpay';
 import './Checkout.css';
 
 const Checkoutpage = () => {
@@ -327,7 +326,7 @@ const Checkoutpage = () => {
     setAddressForm({ ...addressForm, [field]: value });
   };
 
-  // Payment handler - Real Razorpay Integration
+  // Payment handler - Real Razorpay Integration (CDN)
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
       alert('Your cart is empty. Please add items first.');
@@ -389,6 +388,26 @@ const Checkoutpage = () => {
 
       const orderResult = await orderResponse.json();
       const orderId = orderResult.data._id;
+
+      // Load Razorpay from CDN
+      const loadRazorpay = () => {
+        return new Promise((resolve) => {
+          if (window.Razorpay) {
+            resolve(window.Razorpay);
+            return;
+          }
+
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.async = true;
+          script.onload = () => {
+            resolve(window.Razorpay);
+          };
+          document.body.appendChild(script);
+        });
+      };
+
+      const Razorpay = await loadRazorpay();
 
       // Initialize Razorpay payment
       const options = {
