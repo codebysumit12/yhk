@@ -109,68 +109,7 @@ const Main = ({ restaurants }) => {
                 <i className="fas fa-drumstick-bite"></i> Non-Veg
               </Link>
             </div>
-            
-            {/* Clear privacy policy and terms links */}
-            <div className="legal-links" style={{ 
-              marginTop: '2rem',
-              padding: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '10px',
-              backdropFilter: 'blur(10px)'
-            }}>
-              <h3 style={{ 
-                color: 'white', 
-                marginBottom: '1rem',
-                fontSize: '1.2rem'
-              }}>
-                Important Links
-              </h3>
-              <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Link to="/privacy-policy" className="legal-link" style={{
-                  color: '#22c55e',
-                  fontSize: '1.1rem',
-                  fontWeight: '600',
-                  textDecoration: 'none',
-                  padding: '0.5rem 1rem',
-                  border: '2px solid #22c55e',
-                  borderRadius: '8px',
-                  transition: 'all 0.3s'
-                }}>
-                  <i className="fas fa-shield-alt"></i> Privacy Policy
-                </Link>
-                <Link to="/terms" className="legal-link" style={{
-                  color: '#22c55e',
-                  fontSize: '1.1rem',
-                  fontWeight: '600',
-                  textDecoration: 'none',
-                  padding: '0.5rem 1rem',
-                  border: '2px solid #22c55e',
-                  borderRadius: '8px',
-                  transition: 'all 0.3s'
-                }}>
-                  <i className="fas fa-file-contract"></i> Terms of Service
-                </Link>
-              </div>
             </div>
-          </div>
-          
-          {/* Login/Order button */}
-          <div className="hero-cta" style={{ marginTop: '2rem' }}>
-            <Link to="/auth" className="hero-btn" style={{
-              display: 'inline-block',
-              padding: '1rem 2.5rem',
-              background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-              color: 'white',
-              fontSize: '1.2rem',
-              fontWeight: '700',
-              borderRadius: '12px',
-              textDecoration: 'none',
-              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.4)',
-              transition: 'all 0.3s'
-            }}>
-              Start Ordering Now
-            </Link>
-          </div>
         </div>
       </section>
 

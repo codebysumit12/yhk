@@ -343,8 +343,8 @@
   color: #16a34a;
 }
 
-/* Submit Button */
-.submit-btn {
+/* Submit Button - Fixed class name */
+.auth-submit-btn, .submit-btn {
   padding: 16px 32px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
@@ -360,14 +360,15 @@
   gap: 10px;
   box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4);
   margin-top: 8px;
+  text-decoration: none;
 }
 
-.submit-btn:hover:not(:disabled) {
+.auth-submit-btn:hover:not(:disabled), .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
 }
 
-.submit-btn:disabled {
+.auth-submit-btn:disabled, .submit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -389,33 +390,41 @@
   to { transform: rotate(360deg); }
 }
 
-/* Toggle Auth */
-.toggle-auth {
+/* Auth Toggle - Improved */
+.auth-toggle {
   text-align: center;
   margin-top: 24px;
-  padding-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid #e8f5eb;
 }
 
-.toggle-auth p {
+.auth-toggle p {
   font-size: 14px;
-  color: #6b8f74;
+  color: #64748b;
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .toggle-btn {
-  background: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   border: none;
-  color: #22c55e;
+  color: white;
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  margin-left: 6px;
-  transition: color 0.2s;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+  margin-left: 8px;
 }
 
 .toggle-btn:hover {
-  color: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
 }
 
 /* Quick Info */
@@ -479,26 +488,44 @@
   }
 }
 
-/* Privacy Policy Link Styles */
+/* Privacy Policy Link Styles - Improved */
 .footer-links {
   margin-top: 15px;
   text-align: center;
 }
 
 .privacy-link {
-  color: #6366f1;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  padding: 5px 10px;
-  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px 0;
+  font-size: 13px;
+  color: #64748b;
+  background: rgba(34, 197, 94, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.1);
 }
 
-.privacy-link:hover {
-  color: #4f46e5;
-  background-color: rgba(99, 102, 241, 0.1);
-  text-decoration: underline;
+.privacy-link a {
+  color: #22c55e;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.privacy-link a:hover {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.separator {
+  color: #cbd5e1;
+  margin: 0 8px;
+  font-weight: 400;
 }
 
 .link-separator {
