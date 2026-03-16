@@ -414,8 +414,8 @@ const Auth = () => {
               </div>
             )}
 
-            {/* Auth Method Toggle */}
-            <div className="auth-method-toggle">
+            {/* Auth Method Toggle - Temporarily Disabled until Firebase is configured */}
+            <div className="auth-method-toggle" style={{ display: 'none' }}>
               <button 
                 type="button" 
                 className={`auth-method-btn ${!usePhoneAuth ? 'active' : ''}`}
