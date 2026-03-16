@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth } from "firebase/auth";
+import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { auth } from '../../firebase';
 // import { API_CONFIG } from '../../config/api';
 import { API_CONFIG } from '../../config/api';
@@ -47,6 +47,9 @@ const Checkoutpage = () => {
   const [otpError, setOtpError] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [orderNumber] = useState(`ORD-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const recaptchaVerifierRef = useRef(null);
   
   // Address state
   const [addressStep, setAddressStep] = useState('location'); // location, manual, saved
@@ -83,7 +86,55 @@ const Checkoutpage = () => {
     }
   }, [resendTimer]);
 
-  // Phone/OTP handlers - Mock OTP for development
+  // Initialize reCAPTCHA for checkout phone verification
+  useEffect(() => {
+    if (phoneStep === 'input' && !recaptchaVerifierRef.current) {
+      const timer = setTimeout(() => {
+        try {
+          const recaptchaContainer = document.getElementById('checkout-recaptcha-container');
+          
+          if (!recaptchaContainer) {
+            console.error('❌ Checkout reCAPTCHA container not found');
+            return;
+          }
+
+          recaptchaContainer.innerHTML = '';
+
+          recaptchaVerifierRef.current = new RecaptchaVerifier(
+            auth,
+            'checkout-recaptcha-container',
+            {
+              size: 'invisible',
+              callback: (response) => {
+                console.log('✅ Checkout reCAPTCHA solved');
+              },
+              'expired-callback': () => {
+                console.log('⚠️ Checkout reCAPTCHA expired');
+              }
+            }
+          );
+
+          console.log('✅ Checkout reCAPTCHA initialized successfully');
+        } catch (error) {
+          console.error('❌ Checkout reCAPTCHA init error:', error);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (err) {
+          console.log('Checkout reCAPTCHA cleanup error:', err);
+        }
+      }
+    };
+  }, [phoneStep]);
+
+  // Phone/OTP handlers - Real Firebase OTP
   const handleSendOTP = async () => {
     if (!/^\d{10}$/.test(phoneNumber)) {
       setPhoneError(true);
@@ -91,24 +142,55 @@ const Checkoutpage = () => {
     }
     
     setPhoneError(false);
+    setIsSendingOTP(true);
     
     try {
-      // Mock OTP sending - simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!recaptchaVerifierRef.current) {
+        throw new Error('reCAPTCHA not initialized. Please refresh and try again.');
+      }
+
+      const phoneNumberWithCode = `+91${phoneNumber}`;
+      console.log('📱 Sending checkout OTP to:', phoneNumberWithCode);
       
-      // For development, use a fixed OTP: 123456
-      console.log(`Mock OTP sent to +91${phoneNumber}: 123456`);
+      const confirmation = await signInWithPhoneNumber(
+        auth, 
+        phoneNumberWithCode, 
+        recaptchaVerifierRef.current
+      );
       
-      // Set phone step to OTP verification
+      setConfirmationResult(confirmation);
       setPhoneStep('otp');
       setResendTimer(30);
       
-      // Show success message
-      alert('OTP sent successfully! For testing, use: 123456');
+      console.log('✅ Checkout OTP sent successfully');
     } catch (error) {
-      console.error('Error sending OTP:', error);
-      setPhoneError(true);
-      alert('Failed to send OTP. Please try again.');
+      console.error('❌ Checkout OTP send error:', error);
+      
+      if (error.code === 'auth/invalid-phone-number') {
+        setPhoneError(true);
+        alert('Invalid phone number format');
+      } else if (error.code === 'auth/too-many-requests') {
+        setPhoneError(true);
+        alert('Too many attempts. Please try again later.');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        setPhoneError(true);
+        alert('Phone authentication is not enabled. Please use email login.');
+      } else {
+        setPhoneError(true);
+        alert('Failed to send OTP. Please try again.');
+      }
+      
+      // Reset reCAPTCHA on error
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
+        } catch (err) {
+          console.log('reCAPTCHA reset error:', err);
+        }
+      }
+    } finally {
+      setIsSendingOTP(false);
     }
   };
 
@@ -137,7 +219,7 @@ const Checkoutpage = () => {
     }
   };
 
-  // Verify OTP using Mock System
+  // Verify OTP using Firebase
   const handleVerifyOTP = async () => {
     const otpValue = otp.join('');
     if (otpValue.length < 6) {
@@ -145,27 +227,33 @@ const Checkoutpage = () => {
       return;
     }
     
-    
-    
     try {
-      // Mock verification - simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // For development, accept only the fixed OTP: 123456
-      if (otpValue === '123456') {
-        setOtpError(false);
-        setPhoneStep('verified');
-        console.log('Phone number verified successfully!');
-      } else {
-        setOtpError(true);
-        alert('Invalid OTP. For testing, use: 123456');
+      if (!confirmationResult) {
+        throw new Error('No confirmation result found. Please request OTP again.');
       }
-    } catch (error) {
-      console.error('Error verifying OTP:', error);
-      setOtpError(true);
-      alert('Invalid OTP. Please try again.');
-    } finally {
+
+      const result = await confirmationResult.confirm(otpValue);
+      const user = result.user;
       
+      setOtpError(false);
+      setPhoneStep('verified');
+      console.log('✅ Checkout phone number verified successfully!', user.phoneNumber);
+      
+      // Optional: You can store the verified phone number or user info
+      localStorage.setItem('verifiedPhone', user.phoneNumber);
+      
+    } catch (error) {
+      console.error('❌ Checkout OTP verification error:', error);
+      setOtpError(true);
+      
+      if (error.code === 'auth/invalid-verification-code') {
+        alert('Invalid OTP. Please check and try again.');
+      } else if (error.code === 'auth/code-expired') {
+        alert('OTP has expired. Please request a new OTP.');
+        setPhoneStep('input');
+      } else {
+        alert('Invalid OTP. Please try again.');
+      }
     }
   };
 
@@ -175,7 +263,7 @@ const Checkoutpage = () => {
     setOtp(['', '', '', '', '', '']);
   };
 
-  // Resend OTP using Mock System
+  // Resend OTP using Firebase
   const handleResendOTP = async () => {
     if (!/^\d{10}$/.test(phoneNumber)) {
       setPhoneError(true);
@@ -183,21 +271,26 @@ const Checkoutpage = () => {
     }
     
     try {
-      // Mock OTP sending - simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Reset reCAPTCHA and send new OTP
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (err) {
+          console.log('reCAPTCHA reset error:', err);
+        }
+        recaptchaVerifierRef.current = null;
+      }
       
-      // For development, use a fixed OTP: 123456
-      console.log(`Mock OTP resent to +91${phoneNumber}: 123456`);
+      // Re-initialize reCAPTCHA and send OTP
+      await handleSendOTP();
       
-      // Reset OTP inputs and timer
+      // Reset OTP inputs
       setOtp(['', '', '', '', '', '']);
-      setResendTimer(30);
       setOtpError(false);
       
-      // Show success message
-      alert('OTP resent successfully! For testing, use: 123456');
+      console.log('✅ Checkout OTP resent successfully');
     } catch (error) {
-      console.error('Error resending OTP:', error);
+      console.error('❌ Error resending OTP:', error);
       alert('Failed to resend OTP. Please try again.');
     }
   };
@@ -565,6 +658,9 @@ const Checkoutpage = () => {
                   {/* Phone input */}
                   {phoneStep === 'input' && (
                     <div id="phoneInputStep">
+                      {/* reCAPTCHA Container */}
+                      <div id="checkout-recaptcha-container"></div>
+                      
                       <div className="input-group">
                         <label>Mobile Number</label>
                         <div className="send-otp-row">
@@ -581,11 +677,12 @@ const Checkoutpage = () => {
                             className="btn btn-primary" 
                             style={{width: 'auto', padding: '0 20px'}}
                             onClick={handleSendOTP}
+                            disabled={isSendingOTP}
                           >
-                            Send OTP
+                            {isSendingOTP ? 'Sending...' : 'Send OTP'}
                           </button>
                         </div>
-                        <div className="hint">📱 You'll receive a 6-digit OTP via SMS (Testing: Use 123456)</div>
+                        <div className="hint">📱 You'll receive a 6-digit OTP via SMS for verification</div>
                         <div className={`error-text ${phoneError ? 'show' : ''}`}>
                           Please enter a valid 10-digit mobile number.
                         </div>
