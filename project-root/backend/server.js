@@ -47,15 +47,26 @@ dotenv.config();
 const uploadsDir = path.join(__dirname, '..', 'uploads', 'temp');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('✅ Created uploads/temp directory');
+  console.log(' Created uploads/temp directory');
 }
 
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001', 'https://yhk-66ta.onrender.com', /^https:\/\/.*\.netlify\.app$/],
-  credentials: true
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000', 
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'https://yhk-66ta.onrender.com',
+    'https://sumitweb.xyz',
+    'https://www.sumitweb.xyz',
+    /^https:\/\/.*\.netlify\.app$/
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
