@@ -138,12 +138,24 @@ const Auth = () => {
   // Initialize reCAPTCHA
   useEffect(() => {
     if (usePhoneAuth && !recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: (response) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        }
-      });
+      try {
+        // ✅ FIXED: Use new Firebase v9+ syntax
+        recaptchaVerifierRef.current = new RecaptchaVerifier(
+          'recaptcha-container',
+          {
+            size: 'invisible',
+            callback: (response) => {
+              console.log('✅ reCAPTCHA solved');
+            },
+            'expired-callback': () => {
+              console.log('⚠️ reCAPTCHA expired');
+            }
+          },
+          auth  // ✅ Pass auth as third parameter
+        );
+      } catch (error) {
+        console.error('❌ reCAPTCHA init error:', error);
+      }
     }
   }, [usePhoneAuth]);
 
@@ -328,8 +340,8 @@ const Auth = () => {
               </div>
             )}
 
-            {/* Auth Method Toggle */}
-            <div className="auth-method-toggle">
+            {/* Auth Method Toggle - Temporarily Disabled */}
+            <div className="auth-method-toggle" style={{ display: 'none' }}>
               <button 
                 type="button" 
                 className={`auth-method-btn ${!usePhoneAuth ? 'active' : ''}`}
