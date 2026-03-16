@@ -4,6 +4,7 @@ import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth
 import { auth } from '../../firebase';
 // import { API_CONFIG } from '../../config/api';
 import { API_CONFIG } from '../../config/api';
+import Razorpay from 'razorpay';
 import './Checkout.css';
 
 const Checkoutpage = () => {
@@ -326,11 +327,16 @@ const Checkoutpage = () => {
     setAddressForm({ ...addressForm, [field]: value });
   };
 
-  // Payment handler - Simulated payment for development
+  // Payment handler - Real Razorpay Integration
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
       alert('Your cart is empty. Please add items first.');
       navigate('/');
+      return;
+    }
+
+    if (phoneStep !== 'verified') {
+      alert('Please verify your phone number first.');
       return;
     }
 
@@ -384,157 +390,16 @@ const Checkoutpage = () => {
       const orderResult = await orderResponse.json();
       const orderId = orderResult.data._id;
 
-      // Initialize custom payment modal (replaces Razorpay)
-      showCustomPaymentModal();
-
-      function showCustomPaymentModal() {
-        // Create payment modal HTML
-        const modalHtml = `
-          <div id="paymentModal" style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-          ">
-            <div style="
-              background: white;
-              padding: 30px;
-              border-radius: 10px;
-              max-width: 400px;
-              width: 90%;
-              text-align: center;
-            ">
-              <h3 style="margin-bottom: 20px; color: #333;">Yeswanth's Healthy Kitchen</h3>
-              <div style="margin-bottom: 20px;">
-                <p style="margin: 5px 0; color: #666;">Order #${orderId}</p>
-                <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #22c55e;">₹${total}</p>
-              </div>
-              <div style="margin-bottom: 20px;">
-                <p style="color: #666; font-size: 14px;">Choose Payment Method</p>
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
-                  <button id="cardPayment" style="
-                    padding: 12px;
-                    border: 1px solid #ddd;
-                    background: #f9f9f9;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 14px;
-                  ">💳 Credit/Debit Card</button>
-                  <button id="upiPayment" style="
-                    padding: 12px;
-                    border: 1px solid #ddd;
-                    background: #f9f9f9;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 14px;
-                  ">📱 UPI</button>
-                  <button id="netbankingPayment" style="
-                    padding: 12px;
-                    border: 1px solid #ddd;
-                    background: #f9f9f9;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 14px;
-                  ">🏦 Net Banking</button>
-                </div>
-              </div>
-              <button id="cancelPayment" style="
-                padding: 10px 20px;
-                background: #ef4444;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-              ">Cancel</button>
-            </div>
-          </div>
-        `;
-
-        // Add modal to body
-        const modalDiv = document.createElement('div');
-        modalDiv.innerHTML = modalHtml;
-        document.body.appendChild(modalDiv);
-
-        // Handle payment method selection
-        document.getElementById('cardPayment').onclick = () => processPayment('Card');
-        document.getElementById('upiPayment').onclick = () => processPayment('UPI');
-        document.getElementById('netbankingPayment').onclick = () => processPayment('Net Banking');
-        document.getElementById('cancelPayment').onclick = () => {
-          document.body.removeChild(modalDiv);
-          setIsProcessing(false);
-        };
-      }
-
-      function processPayment(method) {
-        // Remove payment modal safely
-        const modal = document.getElementById('paymentModal');
-        if (modal && modal.parentNode) {
-          modal.parentNode.removeChild(modal);
-        }
-
-        // Show processing modal
-        const processingHtml = `
-          <div id="processingModal" style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-          ">
-            <div style="
-              background: white;
-              padding: 30px;
-              border-radius: 10px;
-              max-width: 400px;
-              width: 90%;
-              text-align: center;
-            ">
-              <div style="
-                width: 40px;
-                height: 40px;
-                border: 3px solid #f3f3f3;
-                border-top: 3px solid #22c55e;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
-              "></div>
-              <h3 style="margin-bottom: 10px; color: #333;">Processing Payment</h3>
-              <p style="color: #666; margin-bottom: 10px;">Paying with ${method}</p>
-              <p style="color: #999; font-size: 14px;">Amount: ₹${total}</p>
-              <style>
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
-              </style>
-            </div>
-          </div>
-        `;
-
-        const processingDiv = document.createElement('div');
-        processingDiv.innerHTML = processingHtml;
-        document.body.appendChild(processingDiv);
-
-        // Simulate payment processing
-        setTimeout(async () => {
-          // Remove processing modal safely
-          const processingModal = document.getElementById('processingModal');
-          if (processingModal && processingModal.parentNode) {
-            processingModal.parentNode.removeChild(processingModal);
-          }
-
-          // Save payment record
+      // Initialize Razorpay payment
+      const options = {
+        key: 'rzp_test_1DP5mmOlF5GhT', // Test key - replace with your live key
+        amount: total * 100, // Razorpay expects amount in paise (INR * 100)
+        currency: 'INR',
+        name: 'Yeswanth\'s Healthy Kitchen',
+        description: `Order #${orderNumber}`,
+        order_id: orderId,
+        handler: async function (response) {
+          // Payment successful
           try {
             const paymentResponse = await fetch(`${API_CONFIG.API_URL}/payments`, {
               method: 'POST',
@@ -545,9 +410,11 @@ const Checkoutpage = () => {
               body: JSON.stringify({
                 orderId: orderId,
                 amount: total,
-                paymentMethod: method.toLowerCase().replace(' ', '_'),
-                transactionId: 'txn_' + Date.now(),
-                paymentStatus: 'completed'
+                paymentMethod: 'razorpay',
+                transactionId: response.razorpay_payment_id,
+                paymentStatus: 'completed',
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature
               })
             });
 
@@ -566,8 +433,26 @@ const Checkoutpage = () => {
             setShowSuccessModal(true);
           }
           setIsProcessing(false);
-        }, 3000); // 3 second processing time
-      }
+        },
+        modal: {
+          ondismiss: function() {
+            setIsProcessing(false);
+            alert('Payment cancelled. Please try again.');
+          }
+        },
+        prefill: {
+          name: addressForm.fullName || 'Customer',
+          email: 'customer@example.com',
+          contact: phoneNumber
+        },
+        theme: {
+          color: '#22c55e' // Your brand color
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+
     } catch (error) {
       console.error('Payment error:', error);
       alert('Payment failed. Please try again.');
