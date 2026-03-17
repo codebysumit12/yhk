@@ -82,6 +82,7 @@ const Main = ({ restaurants }) => {
       <Nav onOpenCart={() => {}} />
 
       {/* Hero Section */}
+      {console.log('Main.jsx heroBanner:', heroBanner, 'mediaType:', heroBanner?.mediaType)}
       {heroBanner?.mediaType === 'video' ? (
         <section className="hero hero-video">
           <video 

@@ -601,6 +601,7 @@ return (
   <>
     <Nav onOpenCart={() => setShowCart(true)} />
     <div className="related-page">
+    {console.log('Menu.jsx heroBanner:', heroBanner, 'mediaType:', heroBanner?.mediaType)}
     {heroBanner?.mediaType === 'video' ? (
     <section className="related-hero related-hero-video">
       <video 
