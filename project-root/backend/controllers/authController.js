@@ -281,38 +281,45 @@ export const logout = async (req, res) => {
 // @access  Public
 export const firebaseLogin = async (req, res) => {
   try {
-    const { phone, uid, email, name } = req.body;
+    const { uid, phone, name, email } = req.body;
 
     // Validation
-    if (!phone || !uid) {
+    if (!uid || !phone) {
       return res.status(400).json({
         success: false,
-        message: 'Phone number and UID are required'
+        message: 'UID and phone number are required'
       });
     }
 
-    // Check if user exists
-    let user = await User.findOne({ phone });
+    // Check if user exists with this Firebase UID
+    let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
-      // Create new user for Firebase phone auth
-      user = await User.create({
-        name: name || 'User',
-        email: email || `${phone}@firebase.user`,
-        phone,
+      // Create new user
+      user = new User({
         firebaseUid: uid,
+        phone: phone,
+        name: name || 'User',
+        email: email || `${uid}@firebase-phone.com`, // Placeholder email
         role: 'customer',
-        isPhoneVerified: true
+        isPhoneVerified: true, // Phone is verified via Firebase
+        isEmailVerified: true
       });
+      await user.save();
     } else {
-      // Update existing user with Firebase UID
-      user.firebaseUid = uid;
-      user.isPhoneVerified = true;
+      // Update existing user if needed
+      if (name && user.name !== name) user.name = name;
+      if (email && user.email !== email) user.email = email;
+      user.isPhoneVerified = true; // Ensure phone is marked as verified
       await user.save();
     }
 
-    // Generate token
-    const token = generateToken(user._id);
+    // Generate JWT token with consistent structure
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'yhk_secret_key_2024',
+      { expiresIn: '7d' }
+    );
 
     res.json({
       success: true,
@@ -323,13 +330,15 @@ export const firebaseLogin = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        isAdmin: user.role === 'admin',
         isPhoneVerified: user.isPhoneVerified
       }
     });
   } catch (error) {
+    console.error('Firebase login error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Server error during login'
     });
   }
 };

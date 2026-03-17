@@ -1,5 +1,42 @@
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
+import razorpay from '../config/razorpay.js';
+
+// @desc    Create Razorpay order
+// @route   POST /api/payments/create-razorpay-order
+// @access  Private
+export const createRazorpayOrder = async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid amount'
+      });
+    }
+
+    const options = {
+      amount: amount * 100, // Razorpay expects amount in paise
+      currency: 'INR',
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: 1
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    res.json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error('Razorpay order creation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create Razorpay order: ' + error.message
+    });
+  }
+};
 
 // @desc    Save payment record after successful payment
 // @route   POST /api/payments

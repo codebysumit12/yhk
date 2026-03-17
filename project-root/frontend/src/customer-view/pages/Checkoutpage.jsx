@@ -389,6 +389,23 @@ const Checkoutpage = () => {
       const orderResult = await orderResponse.json();
       const orderId = orderResult.data._id;
 
+      // Create Razorpay order via backend
+      const razorpayOrderResponse = await fetch(`${API_CONFIG.API_URL}/payments/create-razorpay-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify({ amount: total })
+      });
+
+      if (!razorpayOrderResponse.ok) {
+        throw new Error('Failed to create Razorpay order');
+      }
+
+      const razorpayOrderResult = await razorpayOrderResponse.json();
+      const razorpayOrderId = razorpayOrderResult.data.id;
+
       // Load Razorpay from CDN
       const loadRazorpay = () => {
         return new Promise((resolve) => {
@@ -411,12 +428,12 @@ const Checkoutpage = () => {
 
       // Initialize Razorpay payment
       const options = {
-        key: 'rzp_test_1DP5mmOlF5GhT', // Test key - replace with your live key
+        key: 'rzp_live_SSKxoURQgSmXB7', // Live key
         amount: total * 100, // Razorpay expects amount in paise (INR * 100)
         currency: 'INR',
         name: 'Yeswanth\'s Healthy Kitchen',
         description: `Order #${orderNumber}`,
-        order_id: orderId,
+        order_id: razorpayOrderId,
         handler: async function (response) {
           // Payment successful
           try {

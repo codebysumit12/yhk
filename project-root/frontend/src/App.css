@@ -516,12 +516,14 @@ i, .fas, .far, .fab, .fa {
     font-weight: 600;
     margin-bottom: 8px;
     color: var(--zomato-dark);
+    text-align: left; /* ← ADDED: Force left alignment */
 }
 
 .restaurant-cuisine {
     font-size: 13px;
     color: var(--zomato-gray);
     margin-bottom: 10px;
+      text-align: left; /* ← ADDED: Force left alignment */
 }
 
 .restaurant-details {
