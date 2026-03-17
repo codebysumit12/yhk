@@ -229,10 +229,18 @@ const Menu = () => {
   // ========================================
   if (selectedItem) {
     const selectedCategoryId = typeof selectedItem.category === 'object' ? selectedItem.category._id : selectedItem.category;
+    console.log('🎯 Selected item:', selectedItem.name);
+    console.log('🎯 Selected item category:', selectedItem.category);
+    console.log('🎯 Selected category ID:', selectedCategoryId);
+    
     const relatedItems = items.filter(item => {
       const itemCategoryId = typeof item.category === 'object' ? item.category._id : item.category;
-      return itemCategoryId === selectedCategoryId && item._id !== selectedItem._id;
+      const isMatch = itemCategoryId === selectedCategoryId && item._id !== selectedItem._id;
+      console.log('🔍 Item:', item.name, 'Category:', item.category, 'Category ID:', itemCategoryId, 'Match:', isMatch);
+      return isMatch;
     }).slice(0, 4);
+    
+    console.log('📋 Related items found:', relatedItems.map(i => i.name));
     
     const primaryImage = selectedItem.images?.[0]?.url || 
                         selectedItem.image || 
