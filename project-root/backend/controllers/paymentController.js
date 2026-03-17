@@ -1,5 +1,7 @@
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 // @desc    Create Razorpay order
 // @route   POST /api/payments/create-razorpay-order
@@ -60,7 +62,7 @@ export const createRazorpayOrder = async (req, res) => {
 
 // @desc    Save payment record after successful payment
 // @route   POST /api/payments
-// @access  Private (users are already authenticated) or guest with valid order
+// @access  Public (handles auth internally)
 export const savePayment = async (req, res) => {
   try {
     const {
@@ -73,6 +75,19 @@ export const savePayment = async (req, res) => {
       razorpaySignature
     } = req.body;
 
+    // Try to get user from token if provided
+    let user = null;
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'yhk_secret_key_2024');
+        user = await User.findById(decoded.id).select('-password');
+      } catch (authError) {
+        // Invalid token - continue as guest
+        console.log('Invalid token, proceeding as guest');
+      }
+    }
+
     // Verify the order exists
     const order = await Order.findById(orderId);
 
@@ -83,36 +98,36 @@ export const savePayment = async (req, res) => {
       });
     }
 
-    console.log('Order found:', {
+    console.log('Payment attempt:', {
       orderId: order._id,
       orderUserId: order.userId,
-      hasReqUser: !!req.user,
-      reqUserId: req.user?._id
+      hasUser: !!user,
+      userId: user?._id
     });
 
     // Determine userId based on order and authentication
     let paymentUserId = null;
     
-    // If order has a userId, verify ownership for authenticated users
+    // If order has a userId, verify ownership
     if (order.userId) {
-      if (!req.user) {
+      if (!user) {
         return res.status(401).json({
           success: false,
           error: 'Authentication required for this order'
         });
       }
       
-      if (order.userId.toString() !== req.user._id.toString()) {
+      if (order.userId.toString() !== user._id.toString()) {
         return res.status(403).json({
           success: false,
           error: 'Not authorized to make payment for this order'
         });
       }
       
-      paymentUserId = req.user._id;
+      paymentUserId = user._id;
     } else {
-      // Guest order - use null userId or authenticated user if available
-      paymentUserId = req.user ? req.user._id : null;
+      // Guest order - use null userId
+      paymentUserId = null;
     }
 
     // Create payment record
