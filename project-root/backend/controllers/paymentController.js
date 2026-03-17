@@ -83,6 +83,13 @@ export const savePayment = async (req, res) => {
       });
     }
 
+    console.log('Order found:', {
+      orderId: order._id,
+      orderUserId: order.userId,
+      hasReqUser: !!req.user,
+      reqUserId: req.user?._id
+    });
+
     // Determine userId based on order and authentication
     let paymentUserId = null;
     
