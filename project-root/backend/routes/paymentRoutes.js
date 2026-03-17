@@ -9,9 +9,9 @@ import {
 
 const router = express.Router();
 
-// Protected routes - all require authentication (users are already logged in)
+// Protected routes - require authentication for most operations
 router.post('/create-razorpay-order', protect, createRazorpayOrder); // POST /api/payments/create-razorpay-order - Create Razorpay order
-router.post('/', protect, savePayment); // POST /api/payments - Save payment
+router.post('/', savePayment); // POST /api/payments - Save payment (allows guest orders)
 router.get('/', protect, getPayments); // GET /api/payments - Get user's payments
 router.get('/order/:orderId', protect, getPaymentByOrderId); // GET /api/payments/order/:orderId - Get payment by order ID
 

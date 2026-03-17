@@ -39,6 +39,7 @@ export const createRazorpayOrder = async (req, res) => {
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('Razorpay API error:', errorData);
       throw new Error(errorData.error?.description || 'Razorpay API error');
     }
 
@@ -59,7 +60,7 @@ export const createRazorpayOrder = async (req, res) => {
 
 // @desc    Save payment record after successful payment
 // @route   POST /api/payments
-// @access  Private (users are already authenticated)
+// @access  Private (users are already authenticated) or guest with valid order
 export const savePayment = async (req, res) => {
   try {
     const {
@@ -82,18 +83,34 @@ export const savePayment = async (req, res) => {
       });
     }
 
-    // For orders with userId, verify ownership
-    // For guest orders (without userId), allow payment
-    if (order.userId && order.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to make payment for this order'
-      });
+    // Determine userId based on order and authentication
+    let paymentUserId = null;
+    
+    // If order has a userId, verify ownership for authenticated users
+    if (order.userId) {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required for this order'
+        });
+      }
+      
+      if (order.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to make payment for this order'
+        });
+      }
+      
+      paymentUserId = req.user._id;
+    } else {
+      // Guest order - use null userId or authenticated user if available
+      paymentUserId = req.user ? req.user._id : null;
     }
 
     // Create payment record
     const payment = await Payment.create({
-      userId: req.user._id, // Use authenticated user ID
+      userId: paymentUserId,
       orderId,
       amount,
       paymentMethod: paymentMethod || 'online',
