@@ -74,6 +74,16 @@ export const savePayment = async (req, res) => {
       razorpaySignature
     } = req.body;
 
+    console.log('Payment request received:', {
+      orderId,
+      amount,
+      paymentMethod,
+      transactionId,
+      paymentStatus,
+      razorpayOrderId,
+      razorpaySignature
+    });
+
     // Verify the order exists
     try {
       if (!mongoose.Types.ObjectId.isValid(orderId)) {
