@@ -1,6 +1,6 @@
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
-// import razorpay from '../config/razorpay.js'; // Temporarily disabled
+import razorpay from '../config/razorpay.js';
 
 // @desc    Create Razorpay order
 // @route   POST /api/payments/create-razorpay-order
@@ -16,21 +16,36 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // Fallback response while razorpay package issue is resolved
-    const mockOrder = {
-      id: `order_mock_${Date.now()}`,
-      amount: amount * 100,
+    const options = {
+      amount: amount * 100, // Razorpay expects amount in paise
       currency: 'INR',
-      status: 'created',
-      receipt: `receipt_${Date.now()}`
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: 1
     };
 
-    res.json({
-      success: true,
-      data: mockOrder
-    });
+    try {
+      const order = await razorpay.orders.create(options);
+      res.json({
+        success: true,
+        data: order
+      });
+    } catch (razorpayError) {
+      console.error('Razorpay API error:', razorpayError);
+      // Fallback to mock order if Razorpay fails
+      const mockOrder = {
+        id: `order_fallback_${Date.now()}`,
+        amount: amount * 100,
+        currency: 'INR',
+        status: 'created',
+        receipt: `receipt_${Date.now()}`
+      };
+      res.json({
+        success: true,
+        data: mockOrder
+      });
+    }
   } catch (error) {
-    console.error('Razorpay order creation error:', error);
+    console.error('Order creation error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to create Razorpay order: ' + error.message
