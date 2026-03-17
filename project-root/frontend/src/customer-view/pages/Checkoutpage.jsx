@@ -35,7 +35,7 @@ const Checkoutpage = () => {
   }, 0);
   const discount = Math.round(subtotal * 0.20);
   const deliveryFee = 0; // Free delivery
-  const packaging = cartItems.length > 0 ? 20 : 0;
+  const packaging = cartItems.length > 0 ? 0 : 0;
   const gst = Math.round((subtotal - discount) * 0.05);
   const total = subtotal - discount + deliveryFee + packaging + gst;
 
@@ -437,6 +437,7 @@ const Checkoutpage = () => {
         handler: async function (response) {
           // Payment successful
           try {
+            // First save payment record
             const paymentResponse = await fetch(`${API_CONFIG.API_URL}/payments`, {
               method: 'POST',
               headers: {
@@ -455,17 +456,18 @@ const Checkoutpage = () => {
             });
 
             if (paymentResponse.ok) {
-              // Clear cart and show success
+              // Clear cart and show success (backend already updated order status)
               localStorage.removeItem('checkoutCart');
               setShowSuccessModal(true);
+              console.log('✅ Order and payment saved successfully');
             } else {
               console.error('Payment save failed');
-              alert('Payment successful but failed to save record. Please contact support.');
+              alert('Payment successful but failed to save payment record. Please contact support with order ID: ' + orderId);
               setShowSuccessModal(true);
             }
           } catch (saveError) {
             console.error('Error saving payment:', saveError);
-            alert('Payment successful but failed to save record. Please contact support.');
+            alert('Payment successful but failed to save record. Please contact support with order ID: ' + orderId);
             setShowSuccessModal(true);
           }
           setIsProcessing(false);

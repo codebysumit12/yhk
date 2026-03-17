@@ -4,6 +4,7 @@ import {
   getMyOrders,
   getOrderById,
   createOrder,
+  updateOrder,
   updateOrderStatus,
   deleteOrder,
   trackOrder,
@@ -21,6 +22,7 @@ router.get('/track', trackOrder);
 router.post('/', protect, createOrder);
 router.get('/my-orders', protect, getMyOrders);
 router.get('/:id', protect, getOrderById);
+router.patch('/:id', protect, updateOrder);
 router.put('/:id/cancel', protect, cancelOrder);
 router.post('/:id/rate', protect, rateOrder);
 

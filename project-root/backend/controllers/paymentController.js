@@ -67,7 +67,9 @@ export const savePayment = async (req, res) => {
       amount,
       paymentMethod,
       transactionId,
-      paymentStatus
+      paymentStatus,
+      razorpayOrderId,
+      razorpaySignature
     } = req.body;
 
     // Verify the order exists
@@ -96,12 +98,15 @@ export const savePayment = async (req, res) => {
       amount,
       paymentMethod: paymentMethod || 'online',
       paymentStatus: paymentStatus || 'completed',
-      transactionId
+      transactionId,
+      razorpayOrderId,
+      razorpaySignature
     });
 
     // Update order payment status
     order.paymentStatus = 'paid';
     order.status = 'confirmed'; // Move to confirmed status after payment
+    order.paidAt = new Date(); // Set payment timestamp
     await order.save();
 
     res.status(201).json({

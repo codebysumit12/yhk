@@ -106,6 +106,7 @@ const orderSchema = new mongoose.Schema({
     default: 'pending'
   },
   transactionId: String,
+  paidAt: Date,
 
   // ── Pricing ───────────────────────────────────────────────────────────────
   pricing: {

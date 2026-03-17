@@ -34,6 +34,9 @@ const paymentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  // Razorpay specific fields
+  razorpayOrderId: String,
+  razorpaySignature: String,
   cardLastFour: {
     type: String
   },
