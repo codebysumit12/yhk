@@ -168,6 +168,9 @@ const seedAdminUser = async () => {
 
 const PORT = process.env.PORT || 5001;
 
+// Add deployment timestamp
+console.log('🚀 Server started at:', new Date().toISOString());
+
 app.listen(PORT, async () => {
   console.log(` Server running on port ${PORT}`);
   await seedAdminUser();
