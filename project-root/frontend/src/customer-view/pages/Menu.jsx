@@ -228,19 +228,33 @@ const Menu = () => {
   // ITEM DETAIL VIEW
   // ========================================
   if (selectedItem) {
-    const selectedCategoryId = typeof selectedItem.category === 'object' ? selectedItem.category._id : selectedItem.category;
-    console.log('🎯 Selected item:', selectedItem.name);
-    console.log('🎯 Selected item category:', selectedItem.category);
-    console.log('🎯 Selected category ID:', selectedCategoryId);
-    
-    const relatedItems = items.filter(item => {
-      const itemCategoryId = typeof item.category === 'object' ? item.category._id : item.category;
-      const isMatch = itemCategoryId === selectedCategoryId && item._id !== selectedItem._id;
-      console.log('🔍 Item:', item.name, 'Category:', item.category, 'Category ID:', itemCategoryId, 'Match:', isMatch);
-      return isMatch;
-    }).slice(0, 4);
-    
-    console.log('📋 Related items found:', relatedItems.map(i => i.name));
+  // ✅ Helper function to extract category ID
+  const getCategoryId = (item) => {
+    if (item.categoryId) {
+      return typeof item.categoryId === 'object' && item.categoryId !== null
+        ? item.categoryId._id
+        : item.categoryId;
+    } else if (item.category) {
+      return typeof item.category === 'object' && item.category !== null
+        ? item.category._id
+        : item.category;
+    }
+    return null;
+  };
+
+  const selectedCategoryId = getCategoryId(selectedItem);
+  console.log('🎯 Selected item:', selectedItem.name);
+  console.log('🎯 Selected item category:', selectedItem.category || selectedItem.categoryId);
+  console.log('🎯 Selected category ID:', selectedCategoryId);
+  
+  const relatedItems = items.filter(item => {
+    const itemCategoryId = getCategoryId(item);
+    const isMatch = String(itemCategoryId) === String(selectedCategoryId) && item._id !== selectedItem._id;
+    console.log('🔍 Item:', item.name, 'Category:', item.category || item.categoryId, 'Category ID:', itemCategoryId, 'Match:', isMatch);
+    return isMatch;
+  }).slice(0, 4);
+  
+  console.log('📋 Related items found:', relatedItems.map(i => i.name));
     
     const primaryImage = selectedItem.images?.[0]?.url || 
                         selectedItem.image || 
