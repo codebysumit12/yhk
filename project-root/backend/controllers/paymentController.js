@@ -75,7 +75,15 @@ export const savePayment = async (req, res) => {
     } = req.body;
 
     // Verify the order exists
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid order ID format'
+        });
+      }
+    } catch (error) {
+      console.error('ObjectId validation error:', error);
       return res.status(400).json({
         success: false,
         error: 'Invalid order ID format'
