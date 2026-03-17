@@ -1,6 +1,5 @@
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
-import razorpay from '../config/razorpay.js';
 
 // @desc    Create Razorpay order
 // @route   POST /api/payments/create-razorpay-order
@@ -24,14 +23,23 @@ export const createRazorpayOrder = async (req, res) => {
     };
 
     try {
+      // Dynamic import to avoid deployment issues
+      const razorpayModule = await import('razorpay');
+      const Razorpay = razorpayModule.default;
+      
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_SSKxoURQgSmXB7',
+        key_secret: process.env.RAZORPAY_KEY_SECRET || '8M12SAay68hrhYWILxwTJQVI'
+      });
+
       const order = await razorpay.orders.create(options);
       res.json({
         success: true,
         data: order
       });
     } catch (razorpayError) {
-      console.error('Razorpay API error:', razorpayError);
-      // Fallback to mock order if Razorpay fails
+      console.error('Razorpay error (using fallback):', razorpayError);
+      // Fallback to mock order
       const mockOrder = {
         id: `order_fallback_${Date.now()}`,
         amount: amount * 100,
