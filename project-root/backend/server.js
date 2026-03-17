@@ -98,7 +98,7 @@ app.use(express.static(path.join(__dirname, '../../frontend/build')));
 // Connect to MongoDB
 connectDB();
 
-// ROUTES (Use each route ONCE only)
+// ROUTES (Use each route ONCE only) - Updated with Razorpay
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);        
