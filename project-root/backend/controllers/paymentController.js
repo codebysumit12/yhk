@@ -1,6 +1,5 @@
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
-import razorpay from '../config/razorpay.js';
 
 // @desc    Create Razorpay order
 // @route   POST /api/payments/create-razorpay-order
@@ -16,14 +15,34 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    const options = {
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_live_SSKxoURQgSmXB7';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || '8M12SAay68hrhYWILxwTJQVI';
+    
+    // Create order using Razorpay API directly
+    const orderData = {
       amount: amount * 100, // Razorpay expects amount in paise
       currency: 'INR',
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1
     };
 
-    const order = await razorpay.orders.create(options);
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+
+    const response = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.description || 'Razorpay API error');
+    }
+
+    const order = await response.json();
 
     res.json({
       success: true,
