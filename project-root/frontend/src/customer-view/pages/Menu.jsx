@@ -211,7 +211,7 @@ const Menu = () => {
   
   // Get hero banner from backend
   const heroBanner = banners.find(banner => banner.position === 'hero');
-  const bannerImage = heroBanner?.image?.url || heroBanner?.imageUrl || 'https://media.istockphoto.com/id/893041924/photo/masala-oats-upma-is-a-healthy-breakfast-menu-from-india.jpg?s=170667a&w=0&k=20&c=pZ-W1UxhHrV7bHRmLgs7eeNGvaMmvL8ymjxYPob2Kig=';
+  const bannerImage = heroBanner?.mediaUrl || 'https://media.istockphoto.com/id/893041924/photo/masala-oats-upma-is-a-healthy-breakfast-menu-from-india.jpg?s=170667a&w=0&k=20&c=pZ-W1UxhHrV7bHRmLgs7eeNGvaMmvL8ymjxYPob2Kig=';
 
   if (loading) {
     return (
@@ -601,6 +601,38 @@ return (
   <>
     <Nav onOpenCart={() => setShowCart(true)} />
     <div className="related-page">
+    {heroBanner?.mediaType === 'video' ? (
+    <section className="related-hero related-hero-video">
+      <video 
+        autoPlay 
+        muted 
+        loop 
+        playsInline
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: '-1'
+        }}
+      >
+        <source src={bannerImage} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <div className="related-hero-overlay"></div>
+      <div className="related-hero-content">
+      <button className="back-btn" onClick={() => navigate('/customer')}>
+        <i className="fas fa-arrow-left"></i> Back to Menu
+      </button>
+      <h1>
+        {categories.find(cat => cat._id === activeCategory)?.name || 'Our Menu'}
+      </h1>
+      <p>Explore our delicious range of dishes</p>
+    </div>
+    </section>
+    ) : (
     <section 
       className="related-hero"
       style={{
@@ -619,8 +651,8 @@ return (
       </h1>
       <p>Explore our delicious range of dishes</p>
     </div>
-
     </section>
+    )}
 
     <div className="filters-container">
     {/* Filters Bar */}

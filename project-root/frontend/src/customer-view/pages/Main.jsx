@@ -82,15 +82,28 @@ const Main = ({ restaurants }) => {
       <Nav onOpenCart={() => {}} />
 
       {/* Hero Section */}
-      <section className="hero" style={{
-        background: heroBanner ? 
-          `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('${heroBanner.mediaUrl}')` :
-          `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}>
-        <div className="hero-content">
+      {heroBanner?.mediaType === 'video' ? (
+        <section className="hero hero-video">
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: '-1'
+            }}
+          >
+            <source src={heroBanner.mediaUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="hero-overlay"></div>
+          <div className="hero-content">
           {/* Clear app name and purpose */}
           <h1>Yeswanth's Healthy Kitchen</h1>
           
@@ -112,6 +125,38 @@ const Main = ({ restaurants }) => {
             </div>
         </div>
       </section>
+      ) : (
+        <section className="hero" style={{
+          background: heroBanner ? 
+            `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('${heroBanner.mediaUrl}')` :
+            `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}>
+          <div className="hero-content">
+          {/* Clear app name and purpose */}
+          <h1>Yeswanth's Healthy Kitchen</h1>
+          
+          <div className="hero-links">
+            <div className="quick-links">
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-birthday-cake"></i> Birthday Party
+              </Link>
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-leaf"></i> Healthy Food
+              </Link>
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-pizza-slice"></i> Veg
+              </Link>
+              <Link to="/menu" className="quick-link">
+                <i className="fas fa-drumstick-bite"></i> Non-Veg
+              </Link>
+            </div>
+            </div>
+        </div>
+      </section>
+      )}
 
       {/* Main Content */}
       <main className="main-content">
