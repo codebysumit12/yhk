@@ -16,6 +16,18 @@ export const createOrder = async (req, res) => {
       specialInstructions
     } = req.body;
 
+    console.log('Order creation request:', {
+      customer,
+      orderItems: orderItems?.length,
+      deliveryAddress,
+      orderType,
+      paymentMethod,
+      delivery,
+      specialInstructions,
+      hasUser: !!req.user,
+      userId: req.user?._id
+    });
+
     // Validate items and calculate pricing
     const validatedItems = [];
     let subtotal = 0;
