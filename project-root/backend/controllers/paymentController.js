@@ -1,7 +1,6 @@
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 // @desc    Create Razorpay order
 // @route   POST /api/payments/create-razorpay-order
@@ -76,6 +75,13 @@ export const savePayment = async (req, res) => {
     } = req.body;
 
     // Verify the order exists
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid order ID format'
+      });
+    }
+
     const order = await Order.findById(orderId);
 
     if (!order) {
