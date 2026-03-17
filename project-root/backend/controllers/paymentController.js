@@ -88,12 +88,20 @@ export const savePayment = async (req, res) => {
     console.log('Payment attempt:', {
       orderId: order._id,
       orderUserId: order.userId,
-      hasUserId: !!order.userId
+      hasUserId: !!order.userId,
+      paymentData: {
+        amount,
+        paymentMethod,
+        transactionId,
+        paymentStatus
+      }
     });
 
     // For now, always allow payment for guest orders
     // TODO: Add proper auth verification later if needed
     let paymentUserId = order.userId || null;
+
+    console.log('Creating payment with userId:', paymentUserId);
 
     // Create payment record
     const payment = await Payment.create({
@@ -107,11 +115,15 @@ export const savePayment = async (req, res) => {
       razorpaySignature
     });
 
+    console.log('Payment created successfully:', payment._id);
+
     // Update order payment status
     order.paymentStatus = 'paid';
     order.status = 'confirmed'; // Move to confirmed status after payment
     order.paidAt = new Date(); // Set payment timestamp
     await order.save();
+
+    console.log('Order updated successfully');
 
     res.status(201).json({
       success: true,
