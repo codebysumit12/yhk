@@ -75,7 +75,7 @@ const Menu = () => {
           }
         }
 
-        const itemsResponse = await fetch(`${API_URL}/items?isAvailable=true`);
+        const itemsResponse = await fetch(`${API_URL}/items?isAvailable=true&populate=category`);
         const itemsData = await itemsResponse.json();
         
         if (itemsData.success) {
