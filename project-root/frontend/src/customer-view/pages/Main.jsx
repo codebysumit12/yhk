@@ -90,6 +90,10 @@ const Main = ({ restaurants }) => {
             muted 
             loop 
             playsInline
+            controls
+            onError={(e) => console.error('Video error:', e)}
+            onLoadStart={() => console.log('Video loading started')}
+            onCanPlay={() => console.log('Video can play')}
             style={{
               position: 'absolute',
               top: 0,
@@ -97,7 +101,8 @@ const Main = ({ restaurants }) => {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              zIndex: '-1'
+              zIndex: '-1',
+              display: 'block'
             }}
           >
             <source src={heroBanner.mediaUrl} type="video/mp4" />

@@ -609,6 +609,10 @@ return (
         muted 
         loop 
         playsInline
+        controls
+        onError={(e) => console.error('Menu video error:', e)}
+        onLoadStart={() => console.log('Menu video loading started')}
+        onCanPlay={() => console.log('Menu video can play')}
         style={{
           position: 'absolute',
           top: 0,
@@ -616,10 +620,11 @@ return (
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          zIndex: '-1'
+          zIndex: '-1',
+          display: 'block'
         }}
       >
-        <source src={bannerImage} type="video/mp4" />
+        <source src={heroBanner.mediaUrl} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       <div className="related-hero-overlay"></div>
