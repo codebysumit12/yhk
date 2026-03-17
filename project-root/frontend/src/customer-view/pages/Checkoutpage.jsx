@@ -376,18 +376,21 @@ const Checkoutpage = () => {
       const orderResponse = await fetch(`${API_CONFIG.API_URL}/orders`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(orderData)
       });
 
       if (!orderResponse.ok) {
-        throw new Error('Failed to create order');
+        const errorData = await orderResponse.json();
+        console.error('Order creation failed:', errorData);
+        throw new Error(errorData.message || 'Failed to create order');
       }
 
       const orderResult = await orderResponse.json();
       const orderId = orderResult.data._id;
+      
+      console.log('✅ Order created successfully:', orderId);
 
       // Create Razorpay order via backend
       const razorpayOrderResponse = await fetch(`${API_CONFIG.API_URL}/payments/create-razorpay-order`, {
