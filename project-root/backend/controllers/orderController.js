@@ -51,7 +51,7 @@ export const createOrder = async (req, res) => {
     const total       = parseFloat((subtotal + deliveryFee + tax - discount).toFixed(2));
 
     const order = await Order.create({
-      userId: req.user?.id || null,
+      userId: req.user?._id || null,
       customer,
       orderItems: validatedItems,
       deliveryAddress,
@@ -204,9 +204,18 @@ export const getOrderById = async (req, res) => {
 // @access  Private
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user.id })
-      .sort({ createdAt: -1 })
-      .populate('orderItems.menuItem', 'name images');
+    // Get orders for authenticated users OR guest orders by phone/email
+    let orders = [];
+    
+    if (req.user) {
+      // Authenticated user - get orders by userId
+      orders = await Order.find({ userId: req.user._id })
+        .sort({ createdAt: -1 })
+        .populate('orderItems.menuItem', 'name images');
+    } else {
+      // Guest user - return empty array or implement phone/email lookup
+      orders = [];
+    }
 
     res.json({
       success: true,
@@ -318,8 +327,8 @@ export const updateOrder = async (req, res) => {
     }
 
     // For orders with userId, verify ownership or admin
-    if (order.userId && order.userId.toString() !== req.user.id && req.user?.role !== 'admin') {
-      return res.status(403).json({
+    if (order.userId && order.userId.toString() !== req.user._id && req.user?.role !== 'admin') {
+      return res.status(401).json({
         success: false,
         message: 'Not authorized to update this order'
       });
