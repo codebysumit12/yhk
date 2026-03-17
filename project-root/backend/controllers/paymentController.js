@@ -128,18 +128,32 @@ export const savePayment = async (req, res) => {
     console.log('Creating payment with userId:', paymentUserId);
 
     // Create payment record
-    const payment = await Payment.create({
-      userId: paymentUserId,
-      orderId,
-      amount,
-      paymentMethod: paymentMethod || 'online',
-      paymentStatus: paymentStatus || 'completed',
-      transactionId,
-      razorpayOrderId,
-      razorpaySignature
-    });
+    try {
+      const payment = await Payment.create({
+        userId: paymentUserId,
+        orderId,
+        amount,
+        paymentMethod: paymentMethod || 'online',
+        paymentStatus: paymentStatus || 'completed',
+        transactionId,
+        razorpayOrderId,
+        razorpaySignature
+      });
 
-    console.log('Payment created successfully:', payment._id);
+      console.log('Payment created successfully:', payment._id);
+    } catch (paymentError) {
+      console.error('Payment creation error:', paymentError);
+      
+      // Check for duplicate transaction ID error
+      if (paymentError.code === 11000 && paymentError.keyPattern?.transactionId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Duplicate transaction ID. Payment already processed.'
+        });
+      }
+      
+      throw paymentError;
+    }
 
     // Update order payment status
     order.paymentStatus = 'paid';
