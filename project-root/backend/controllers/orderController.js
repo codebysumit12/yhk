@@ -301,6 +301,51 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+// @desc    Update order (PATCH) - for payment status updates
+// @route   PATCH /api/orders/:id
+// @access  Private
+export const updateOrder = async (req, res) => {
+  try {
+    const { status, paymentStatus, paidAt } = req.body;
+
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // For orders with userId, verify ownership or admin
+    if (order.userId && order.userId.toString() !== req.user.id && req.user?.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this order'
+      });
+    }
+
+    // Update fields if provided
+    if (status) order.status = status;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
+    if (paidAt) order.paidAt = new Date(paidAt);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'Order updated successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Update order error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Cancel order
 // @route   PUT /api/orders/:id/cancel
 // @access  Public
