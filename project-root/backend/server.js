@@ -169,7 +169,8 @@ const seedAdminUser = async () => {
 const PORT = process.env.PORT || 5001;
 
 // Add deployment timestamp
-console.log('🚀 Server started at:', new Date().toISOString());
+console.log(' Server started at:', new Date().toISOString());
+console.log(' Payment fixes deployed: v2.0');
 
 app.listen(PORT, async () => {
   console.log(` Server running on port ${PORT}`);
