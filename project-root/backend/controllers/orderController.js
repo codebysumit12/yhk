@@ -16,16 +16,15 @@ export const createOrder = async (req, res) => {
       specialInstructions
     } = req.body;
 
-    console.log('Order creation request:', {
-      customer,
+    // Get userId - try both _id and id
+    const userId = req.user?._id || req.user?.id || null;
+
+    console.log(' Order creation request:', {
+      customer: customer?.name,
       orderItems: orderItems?.length,
-      deliveryAddress,
-      orderType,
-      paymentMethod,
-      delivery,
-      specialInstructions,
       hasUser: !!req.user,
-      userId: req.user?._id
+      userId: userId,
+      userObject: req.user
     });
 
     // Validate items and calculate pricing
@@ -63,7 +62,7 @@ export const createOrder = async (req, res) => {
     const total       = parseFloat((subtotal + deliveryFee + tax - discount).toFixed(2));
 
     const order = await Order.create({
-      userId: req.user?._id || null,
+      userId: userId, // Fixed - use the computed userId
       customer,
       orderItems: validatedItems,
       deliveryAddress,
@@ -77,6 +76,12 @@ export const createOrder = async (req, res) => {
       },
       specialInstructions,
       status: 'pending'
+    });
+
+    console.log(' Order created:', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      userId: order.userId
     });
 
     res.status(201).json({
@@ -216,18 +221,27 @@ export const getOrderById = async (req, res) => {
 // @access  Private
 export const getMyOrders = async (req, res) => {
   try {
-    // Get orders for authenticated users OR guest orders by phone/email
-    let orders = [];
-    
-    if (req.user) {
-      // Authenticated user - get orders by userId
-      orders = await Order.find({ userId: req.user._id })
-        .sort({ createdAt: -1 })
-        .populate('orderItems.menuItem', 'name images');
-    } else {
-      // Guest user - return empty array or implement phone/email lookup
-      orders = [];
+    // Get userId - try both _id and id
+    const userId = req.user?._id || req.user?.id;
+
+    console.log(' getMyOrders called:', {
+      userId: userId,
+      hasUser: !!req.user,
+      userKeys: req.user ? Object.keys(req.user) : []
+    });
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
     }
+
+    const orders = await Order.find({ userId })
+      .sort({ createdAt: -1 })
+      .populate('orderItems.menuItem', 'name images');
+
+    console.log(' Found orders:', orders.length);
 
     res.json({
       success: true,
@@ -235,7 +249,7 @@ export const getMyOrders = async (req, res) => {
       data: orders
     });
   } catch (error) {
-    console.error('Get my orders error:', error);
+    console.error(' Get my orders error:', error);
     res.status(500).json({
       success: false,
       message: error.message

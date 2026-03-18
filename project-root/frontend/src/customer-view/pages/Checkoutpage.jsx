@@ -241,9 +241,13 @@ const Checkoutpage = () => {
 
       if (!orderResponse.ok) {
         const err = await orderResponse.json();
+        console.error('❌ Order creation failed:', err);
         throw new Error(err.message || 'Failed to create order');
       }
       const orderResult = await orderResponse.json();
+      console.log('✅ Order created:', orderResult.data);
+      console.log('✅ Order ID:', orderResult.data._id);
+      console.log('✅ Order userId:', orderResult.data.userId); // ⚠️ CHECK THIS!
       const orderId = orderResult.data._id;
       console.log('✅ Order created:', orderId);
 
