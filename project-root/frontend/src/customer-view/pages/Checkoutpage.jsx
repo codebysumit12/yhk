@@ -43,7 +43,7 @@ const Checkoutpage = () => {
   const [phoneError, setPhoneError]             = useState(false);
   const [otpError, setOtpError]                 = useState(false);
   const [resendTimer, setResendTimer]           = useState(0);
-  const [otpExpiryTimer, setOtpExpiryTimer]     = useState(60);
+  const [otpExpiryTimer, setOtpExpiryTimer]     = useState(90);
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [isSendingOTP, setIsSendingOTP]         = useState(false);
   const [otpExpired, setOtpExpired]             = useState(false);
@@ -135,7 +135,7 @@ const Checkoutpage = () => {
       setConfirmationResult(confirmation);
       setPhoneStep('otp');
       setResendTimer(45); // Increased from 30 to 45 seconds
-      setOtpExpiryTimer(60); // Reset OTP expiry to 60 seconds
+      setOtpExpiryTimer(90); // Reset OTP expiry to 90 seconds
       setOtpExpired(false); // Reset expired state
       setOtpError(false); // Reset error state
       console.log('✅ OTP sent');
@@ -208,7 +208,7 @@ const Checkoutpage = () => {
     setOtp(['', '', '', '', '', '']);
     setOtpError(false);
     setOtpExpired(false);
-    setOtpExpiryTimer(60);
+    setOtpExpiryTimer(90);
     setResendTimer(0);
   };
 
