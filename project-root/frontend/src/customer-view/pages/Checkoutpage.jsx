@@ -127,8 +127,9 @@ const Checkoutpage = () => {
       if (recaptchaVerifierRef.current) {
         try {
           recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null; // ← add this so it doesn't re-clear
         } catch (err) {
-          console.log('Checkout reCAPTCHA cleanup error:', err);
+          // Silently ignore — Firebase throws internal-error on already-cleared verifiers
         }
       }
     };

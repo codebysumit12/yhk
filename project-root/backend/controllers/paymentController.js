@@ -128,9 +128,12 @@ export const savePayment = async (req, res) => {
 
     console.log('Creating payment with userId:', paymentUserId);
 
+    // Declare payment variable outside try block for proper scoping
+    let payment;
+
     // Create payment record
     try {
-      const payment = await Payment.create({
+      payment = await Payment.create({
         userId: paymentUserId,
         orderId,
         amount,
@@ -150,7 +153,7 @@ export const savePayment = async (req, res) => {
       if (paymentError.code === 11000 && paymentError.keyPattern?.transactionId) {
         return res.status(400).json({
           success: false,
-          error: 'Duplicate transaction ID. Payment already processed.'
+          error: 'Duplicate transaction. Payment already processed.'
         });
       }
       
