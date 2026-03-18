@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 // Routes
-router.post('/create-razorpay-order', protect, createRazorpayOrder); // POST /api/payments/create-razorpay-order - Create Razorpay order
+router.post('/create-razorpay-order', createRazorpayOrder); // POST /api/payments/create-razorpay-order - Create Razorpay order (public for guest checkout)
 router.post('/', savePayment); // POST /api/payments - Save payment (public endpoint)
 router.get('/', protect, getPayments); // GET /api/payments - Get user's payments
 router.get('/order/:orderId', protect, getPaymentByOrderId); // GET /api/payments/order/:orderId - Get payment by order ID

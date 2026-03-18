@@ -71,7 +71,8 @@ export const savePayment = async (req, res) => {
       transactionId,
       paymentStatus,
       razorpayOrderId,
-      razorpaySignature
+      razorpaySignature,
+      razorpayPaymentId  // ✅ add this
     } = req.body;
 
     console.log('Payment request received:', {
@@ -135,9 +136,10 @@ export const savePayment = async (req, res) => {
         amount,
         paymentMethod: paymentMethod || 'online',
         paymentStatus: paymentStatus || 'completed',
-        transactionId,
+        transactionId: razorpayPaymentId || transactionId, // ✅ use Razorpay payment ID as txn ID
         razorpayOrderId,
-        razorpaySignature
+        razorpaySignature,
+        razorpayPaymentId
       });
 
       console.log('Payment created successfully:', payment._id);

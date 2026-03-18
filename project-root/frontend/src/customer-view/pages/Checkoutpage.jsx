@@ -541,6 +541,9 @@ const Checkoutpage = () => {
     <div className="checkout-page">
       {/* Hidden reCAPTCHA container for Firebase */}
       <div id="recaptcha-container"></div>
+      
+      {/* Always render checkout reCAPTCHA container (never conditionally hidden) */}
+      <div id="checkout-recaptcha-container" style={{display: 'none'}}></div>
 
       {/* TOP NAV */}
       <nav className="checkout-topnav">
@@ -584,8 +587,7 @@ const Checkoutpage = () => {
                   {/* Phone input */}
                   {phoneStep === 'input' && (
                     <div id="phoneInputStep">
-                      {/* reCAPTCHA Container */}
-                      <div id="checkout-recaptcha-container"></div>
+                      {/* reCAPTCHA Container - removed since it's always rendered above */}
                       
                       <div className="input-group">
                         <label>Mobile Number</label>
