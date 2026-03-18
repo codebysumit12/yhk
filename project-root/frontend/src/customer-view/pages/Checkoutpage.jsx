@@ -39,14 +39,17 @@ const Checkoutpage = () => {
   // ── Phone / OTP state ─────────────────────────────────────────────────────
   const [phoneStep, setPhoneStep]               = useState('input'); // input | otp | verified
   const [phoneNumber, setPhoneNumber]           = useState('');
-  const [otp, setOtp]                           = useState(['', '', '', '', '', '']);
+  const [otp, setOtp]                           = useState(['', '', '', '', '', '', '']);
   const [phoneError, setPhoneError]             = useState(false);
   const [otpError, setOtpError]                 = useState(false);
   const [resendTimer, setResendTimer]           = useState(0);
+  const [otpExpiryTimer, setOtpExpiryTimer]     = useState(60);
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [isSendingOTP, setIsSendingOTP]         = useState(false);
+  const [otpExpired, setOtpExpired]             = useState(false);
   const recaptchaVerifierRef                    = useRef(null);
   const otpInputsRef                            = useRef([]);
+  const otpExpiryTimeoutRef                     = useRef(null);
 
   // ── Address state ─────────────────────────────────────────────────────────
   const [addressStep, setAddressStep]       = useState('location'); // location | manual | saved
@@ -72,6 +75,26 @@ const Checkoutpage = () => {
       return () => clearTimeout(t);
     }
   }, [resendTimer]);
+
+  // ── OTP expiry timer ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (phoneStep === 'otp' && otpExpiryTimer > 0) {
+      const t = setTimeout(() => setOtpExpiryTimer(v => v - 1), 1000);
+      return () => clearTimeout(t);
+    } else if (otpExpiryTimer === 0 && phoneStep === 'otp') {
+      setOtpExpired(true);
+      setOtpError(true);
+    }
+  }, [otpExpiryTimer, phoneStep]);
+
+  // Cleanup OTP expiry timeout when component unmounts or phone step changes
+  useEffect(() => {
+    return () => {
+      if (otpExpiryTimeoutRef.current) {
+        clearTimeout(otpExpiryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // ── reCAPTCHA init ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -111,7 +134,10 @@ const Checkoutpage = () => {
       const confirmation = await signInWithPhoneNumber(auth, `+91${phoneNumber}`, recaptchaVerifierRef.current);
       setConfirmationResult(confirmation);
       setPhoneStep('otp');
-      setResendTimer(30);
+      setResendTimer(45); // Increased from 30 to 45 seconds
+      setOtpExpiryTimer(60); // Reset OTP expiry to 60 seconds
+      setOtpExpired(false); // Reset expired state
+      setOtpError(false); // Reset error state
       console.log('✅ OTP sent');
     } catch (error) {
       console.error('❌ OTP send error:', error);
@@ -145,6 +171,11 @@ const Checkoutpage = () => {
   const handleVerifyOTP = async (otpOverride) => {
     const otpValue = otpOverride || otp.join('');
     if (otpValue.length < 6) { setOtpError(true); return; }
+    if (otpExpired) {
+      alert('OTP has expired. Please request a new one.');
+      setPhoneStep('input');
+      return;
+    }
     try {
       if (!confirmationResult) throw new Error('No confirmation result. Request OTP again.');
       const result = await confirmationResult.confirm(otpValue);
@@ -155,8 +186,18 @@ const Checkoutpage = () => {
     } catch (error) {
       console.error('❌ OTP verify error:', error);
       setOtpError(true);
-      if (error.code === 'auth/invalid-verification-code') alert('Invalid OTP. Please try again.');
-      else if (error.code === 'auth/code-expired') { alert('OTP expired. Request a new one.'); setPhoneStep('input'); }
+      if (error.code === 'auth/invalid-verification-code') {
+        if (otpExpired) {
+          alert('OTP has expired. Please request a new one.');
+          setPhoneStep('input');
+        } else {
+          alert('Invalid OTP. Please try again.');
+        }
+      }
+      else if (error.code === 'auth/code-expired') { 
+        alert('OTP expired. Request a new one.'); 
+        setPhoneStep('input'); 
+      }
       else alert('Invalid OTP. Please try again.');
     }
   };
@@ -165,6 +206,10 @@ const Checkoutpage = () => {
     setPhoneStep('input');
     setPhoneNumber('');
     setOtp(['', '', '', '', '', '']);
+    setOtpError(false);
+    setOtpExpired(false);
+    setOtpExpiryTimer(60);
+    setResendTimer(0);
   };
 
   const handleResendOTP = async () => {
@@ -484,9 +529,23 @@ const Checkoutpage = () => {
                           ))}
                         </div>
                         <div className="otp-resend">
-                          Didn't receive it?{' '}
-                          <a onClick={handleResendOTP} style={{ cursor: 'pointer' }}>Resend OTP</a>
-                          {resendTimer > 0 && <span> ({resendTimer}s)</span>}
+                          <div style={{ marginBottom: '8px', fontSize: '12px', color: otpExpired ? '#ef4444' : '#6b7280' }}>
+                            {otpExpired ? '⏰ OTP expired' : `⏱️ Valid for ${otpExpiryTimer}s`}
+                          </div>
+                          <div>
+                            Didn't receive it?{' '}
+                            <a 
+                              onClick={handleResendOTP} 
+                              style={{ 
+                                cursor: 'pointer', 
+                                color: resendTimer > 0 ? '#9ca3af' : '#22c55e',
+                                textDecoration: resendTimer > 0 ? 'none' : 'underline'
+                              }} 
+                            >
+                              Resend OTP
+                            </a>
+                            {resendTimer > 0 && <span style={{ color: '#6b7280', marginLeft: '4px' }}> ({resendTimer}s)</span>}
+                          </div>
                         </div>
                         <div className={`error-text ${otpError ? 'show' : ''}`}>
                           Invalid OTP. Please try again.
