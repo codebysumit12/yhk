@@ -164,7 +164,7 @@ export const savePayment = async (req, res) => {
     success: false,
     error: 'Payment record creation failed: ' + paymentError.message
   });
-}
+    }
 
     // Update order payment status
     order.paymentStatus = 'paid';
