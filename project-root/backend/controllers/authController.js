@@ -296,22 +296,36 @@ export const firebaseLogin = async (req, res) => {
     // Normalize phone number (remove all non-digits)
     const normalizedPhone = phone.replace(/\D/g, '');
     
+    // Generate possible phone number variations to check for conflicts
+    const phoneVariations = [
+      normalizedPhone, // Full number with country code (e.g., 918106961510)
+      normalizedPhone.replace(/^91/, ''), // Without country code (e.g., 8106961510)
+      normalizedPhone.length === 10 ? `91${normalizedPhone}` : null // With country code added (e.g., 918106961510)
+    ].filter(Boolean);
+    
     // Check if user exists with this Firebase UID
     let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
-      // Check if user exists with this phone number (without Firebase UID)
-      user = await User.findOne({ phone: normalizedPhone });
+      // Check for existing user with any phone variation
+      for (const phoneVar of phoneVariations) {
+        user = await User.findOne({ phone: phoneVar });
+        if (user) {
+          console.log(`Found existing user with phone variation: ${phoneVar} (original: ${user.phone})`);
+          break;
+        }
+      }
       
       if (user) {
-        // Update existing user with Firebase UID
+        // Update existing user with Firebase UID and normalize phone
         user.firebaseUid = uid;
+        user.phone = normalizedPhone; // Normalize to consistent format
         if (name && user.name !== name) user.name = name;
         if (email && user.email !== email) user.email = email;
         user.isPhoneVerified = true;
-        user.isEmailVerified = true;
+        user.isEmailVerified = email ? true : user.isEmailVerified;
         await user.save();
-        console.log('Updated existing user with Firebase UID:', user._id);
+        console.log('Updated existing user with Firebase UID and normalized phone:', user._id);
       } else {
         // Create new user
         try {
@@ -319,7 +333,7 @@ export const firebaseLogin = async (req, res) => {
             firebaseUid: uid,
             phone: normalizedPhone,
             name: name || 'User',
-            email: email || `${uid}@firebase.user`, // Better temporary email format
+            email: email || `${uid}@firebase.user`,
             role: 'customer',
             isPhoneVerified: true,
             isEmailVerified: email ? true : false,
