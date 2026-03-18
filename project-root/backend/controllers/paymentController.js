@@ -63,6 +63,8 @@ export const createRazorpayOrder = async (req, res) => {
 // @route   POST /api/payments
 // @access  Public (handles auth internally)
 export const savePayment = async (req, res) => {
+  console.log('💳 savePayment called — body keys:', Object.keys(req.body));
+  console.log('💳 razorpayPaymentId received:', req.body.razorpayPaymentId); // ← add these two lines
   try {
     const {
       orderId,
@@ -147,18 +149,22 @@ export const savePayment = async (req, res) => {
 
       console.log('Payment created successfully:', payment._id);
     } catch (paymentError) {
-      console.error('Payment creation error:', paymentError);
-      
-      // Check for duplicate transaction ID error
-      if (paymentError.code === 11000 && paymentError.keyPattern?.transactionId) {
-        return res.status(400).json({
-          success: false,
-          error: 'Duplicate transaction. Payment already processed.'
-        });
-      }
-      
-      throw paymentError;
-    }
+    console.error('Payment creation error details:', paymentError.code, paymentError.message);
+  
+  if (paymentError.code === 11000) {
+    // Any duplicate key — transactionId, orderId, etc.
+    return res.status(400).json({
+      success: false,
+      error: 'Duplicate payment detected. This order may already be paid.'
+    });
+  }
+  
+  // Instead of throw, return a proper error response
+  return res.status(500).json({
+    success: false,
+    error: 'Payment record creation failed: ' + paymentError.message
+  });
+}
 
     // Update order payment status
     order.paymentStatus = 'paid';

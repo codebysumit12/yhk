@@ -459,22 +459,6 @@ const Checkoutpage = () => {
               })
             });
 
-            if (paymentResponse.ok) {
-              // Clear cart and show success (backend already updated order status)
-              localStorage.removeItem('checkoutCart');
-              setShowSuccessModal(true);
-              console.log('✅ Order and payment saved successfully');
-            } else {
-              console.error('Payment save failed');
-              alert('Payment successful but failed to save payment record. Please contact support with order ID: ' + orderId);
-              setShowSuccessModal(true);
-            }
-          } catch (saveError) {
-            console.error('Error saving payment:', saveError);
-            alert('Payment successful but failed to save record. Please contact support with order ID: ' + orderId);
-            setShowSuccessModal(true);
-          }
-          setIsProcessing(false);
         },
         modal: {
           ondismiss: function() {
