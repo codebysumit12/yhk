@@ -19,19 +19,31 @@ const MyOrders = () => {
   // Fetch user's orders
   const fetchMyOrders = useCallback(async () => {
     setLoading(true);
+    console.log('🔍 Fetching orders - Token exists:', !!token);
+    console.log('🔍 Token length:', token?.length);
+    console.log('🔍 API URL:', API_URL);
+    
     try {
       const response = await fetch(`${API_URL}/orders/my-orders`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
+      console.log('🔍 Response status:', response.status);
+      console.log('🔍 Response ok:', response.ok);
+      
       const data = await response.json();
+      console.log('🔍 Response data:', data);
       
       if (data.success) {
         setOrders(data.data);
+        console.log('✅ Orders loaded:', data.data.length);
+      } else {
+        console.error('❌ API returned error:', data);
       }
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('❌ Error fetching orders:', error);
     } finally {
       setLoading(false);
     }
@@ -102,6 +114,9 @@ const MyOrders = () => {
             <h1>📦 My Orders</h1>
             <p>View and track all your orders</p>
           </div>
+          <button className="refresh-btn" onClick={fetchMyOrders} disabled={loading}>
+            🔄 {loading ? 'Loading...' : 'Refresh'}
+          </button>
         </div>
 
         {/* Filter Tabs */}
