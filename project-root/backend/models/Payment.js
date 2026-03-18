@@ -37,6 +37,7 @@ const paymentSchema = new mongoose.Schema({
   // Razorpay specific fields
   razorpayOrderId: String,
   razorpaySignature: String,
+  razorpayPaymentId: String, // Store Razorpay payment ID separately
   cardLastFour: {
     type: String
   },

@@ -451,10 +451,10 @@ const Checkoutpage = () => {
                 orderId: orderId,
                 amount: total,
                 paymentMethod: 'razorpay',
-                transactionId: response.razorpay_payment_id,
                 paymentStatus: 'completed',
                 razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature
+                razorpaySignature: response.razorpay_signature,
+                razorpayPaymentId: response.razorpay_payment_id // Store separately
               })
             });
 
