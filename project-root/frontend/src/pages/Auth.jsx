@@ -285,7 +285,7 @@ const Auth = () => {
         },
         body: JSON.stringify({
           uid: user.uid,
-          phone: user.phoneNumber,
+          phone: user.phoneNumber || formData.phone, // Use Firebase phone number or fallback
           name: formData.name || 'User'
         })
       });

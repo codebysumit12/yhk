@@ -287,31 +287,76 @@ export const firebaseLogin = async (req, res) => {
     if (!uid || !phone) {
       return res.status(400).json({
         success: false,
-        message: 'UID and phone number are required'
+        message: 'Firebase UID and phone number are required'
       });
     }
 
+    console.log('Firebase login attempt:', { uid, phone: phone.replace(/\D/g, ''), name });
+
+    // Normalize phone number (remove all non-digits)
+    const normalizedPhone = phone.replace(/\D/g, '');
+    
     // Check if user exists with this Firebase UID
     let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
-      // Create new user
-      user = new User({
-        firebaseUid: uid,
-        phone: phone,
-        name: name || 'User',
-        email: email || `${uid}@firebase-phone.com`, // Placeholder email
-        role: 'customer',
-        isPhoneVerified: true, // Phone is verified via Firebase
-        isEmailVerified: true
-      });
-      await user.save();
+      // Check if user exists with this phone number (without Firebase UID)
+      user = await User.findOne({ phone: normalizedPhone });
+      
+      if (user) {
+        // Update existing user with Firebase UID
+        user.firebaseUid = uid;
+        if (name && user.name !== name) user.name = name;
+        if (email && user.email !== email) user.email = email;
+        user.isPhoneVerified = true;
+        user.isEmailVerified = true;
+        await user.save();
+        console.log('Updated existing user with Firebase UID:', user._id);
+      } else {
+        // Create new user
+        try {
+          user = new User({
+            firebaseUid: uid,
+            phone: normalizedPhone,
+            name: name || 'User',
+            email: email || `${uid}@firebase.user`, // Better temporary email format
+            role: 'customer',
+            isPhoneVerified: true,
+            isEmailVerified: email ? true : false,
+            isActive: true
+          });
+          
+          await user.save();
+          console.log('New Firebase user created successfully:', user._id);
+        } catch (saveError) {
+          console.error('User creation failed:', saveError);
+          return res.status(500).json({
+            success: false,
+            message: 'User creation failed: ' + saveError.message,
+            error: saveError.message
+          });
+        }
+      }
     } else {
-      // Update existing user if needed
-      if (name && user.name !== name) user.name = name;
-      if (email && user.email !== email) user.email = email;
-      user.isPhoneVerified = true; // Ensure phone is marked as verified
-      await user.save();
+      // Update existing Firebase user if needed
+      let needsUpdate = false;
+      if (name && user.name !== name) {
+        user.name = name;
+        needsUpdate = true;
+      }
+      if (email && user.email !== email) {
+        user.email = email;
+        needsUpdate = true;
+      }
+      if (user.phone !== normalizedPhone) {
+        user.phone = normalizedPhone;
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
+        await user.save();
+        console.log('Updated existing Firebase user:', user._id);
+      }
     }
 
     // Generate JWT token with consistent structure
@@ -321,8 +366,11 @@ export const firebaseLogin = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    console.log('Firebase login successful for user:', user._id);
+
     res.json({
       success: true,
+      message: 'Login successful',
       token,
       user: {
         _id: user._id,
@@ -331,14 +379,16 @@ export const firebaseLogin = async (req, res) => {
         phone: user.phone,
         role: user.role,
         isAdmin: user.role === 'admin',
-        isPhoneVerified: user.isPhoneVerified
+        isPhoneVerified: user.isPhoneVerified,
+        isEmailVerified: user.isEmailVerified
       }
     });
   } catch (error) {
     console.error('Firebase login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during login'
+      message: 'Server error during login',
+      error: error.message
     });
   }
 };
