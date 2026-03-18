@@ -324,172 +324,105 @@ const Checkoutpage = () => {
   };
 
   const handleAddressFormChange = (field, value) => {
-    setAddressForm({ ...addressForm, [field]: value });
-  };
 
-  // Payment handler - Real Razorpay Integration (CDN)
-  const handlePlaceOrder = async () => {
-    if (cartItems.length === 0) {
-      alert('Your cart is empty. Please add items first.');
-      navigate('/');
-      return;
-    }
+try {
+if (!confirmationResult) {
+throw new Error('No confirmation result found. Please request OTP again.');
+}
 
-    if (phoneStep !== 'verified') {
-      alert('Please verify your phone number first.');
-      return;
-    }
+const result = await confirmationResult.confirm(otpValue);
+const user = result.user;
 
-    setIsProcessing(true);
-    
-    try {
-      // First create order
-      const orderData = {
-        customer: {
-          name: addressForm.fullName || 'Customer',
-          phone: phoneNumber,
-          email: 'customer@example.com'
-        },
-        orderItems: cartItems.map(item => ({
-          menuItem: item.id || item._id,
-          name: item.name,
-          price: item.finalPrice || item.price,
-          quantity: item.quantity || 1,
-          subtotal: (item.finalPrice || item.price) * (item.quantity || 1)
-        })),
-        deliveryAddress: {
-          street: addressForm.addressLine1 || 'Default Address',
-          city: addressForm.city,
-          state: addressForm.state,
-          zipCode: addressForm.pinCode,
-          apartment: addressForm.flatNo,
-          landmark: addressForm.landmark,
-          instructions: deliveryNote
-        },
-        orderType: 'delivery',
-        paymentMethod: 'online',
-        delivery: {
-          type: 'standard'
-        },
-        specialInstructions: deliveryNote
-      };
+setOtpError(false);
+setPhoneStep('verified');
+console.log(' Checkout phone number verified successfully!', user.phoneNumber);
 
-      const orderResponse = await fetch(`${API_CONFIG.API_URL}/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(orderData)
-      });
+// Optional: You can store the verified phone number or user info
+localStorage.setItem('verifiedPhone', user.phoneNumber);
 
-      if (!orderResponse.ok) {
-        const errorData = await orderResponse.json();
-        console.error('Order creation failed:', errorData);
-        throw new Error(errorData.message || 'Failed to create order');
-      }
+} catch (error) {
+console.error(' Checkout OTP verification error:', error);
+setOtpError(true);
 
-      const orderResult = await orderResponse.json();
-      const orderId = orderResult.data._id;
-      
-      console.log('✅ Order created successfully:', orderId);
+if (error.code === 'auth/invalid-verification-code') {
+alert('Invalid OTP. Please check and try again.');
+} else if (error.code === 'auth/code-expired') {
+alert('OTP has expired. Please request a new OTP.');
+setPhoneStep('input');
+} else {
+alert('Invalid OTP. Please try again.');
+}
+}
+};
 
-      // Create Razorpay order via backend
-      const razorpayOrderResponse = await fetch(`${API_CONFIG.API_URL}/payments/create-razorpay-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        },
-        body: JSON.stringify({ amount: total })
-      });
+const handleChangePhone = () => {
+setPhoneStep('input');
+setPhoneNumber('');
+setOtp(['', '', '', '', '', '']);
+};
 
-      if (!razorpayOrderResponse.ok) {
-        throw new Error('Failed to create Razorpay order');
-      }
+// Resend OTP using Firebase
+const handleResendOTP = async () => {
+if (!/^\d{10}$/.test(phoneNumber)) {
+setPhoneError(true);
+return;
+}
 
-      const razorpayOrderResult = await razorpayOrderResponse.json();
-      const razorpayOrderId = razorpayOrderResult.data.id;
+try {
+// Reset reCAPTCHA and send new OTP
+if (recaptchaVerifierRef.current) {
+try {
+recaptchaVerifierRef.current.clear();
+} catch (err) {
+console.log('reCAPTCHA reset error:', err);
+}
+recaptchaVerifierRef.current = null;
+}
 
-      // Load Razorpay from CDN
-      const loadRazorpay = () => {
-        return new Promise((resolve) => {
-          if (window.Razorpay) {
-            resolve(window.Razorpay);
-            return;
-          }
+// Re-initialize reCAPTCHA and send OTP
+await handleSendOTP();
 
-          const script = document.createElement('script');
-          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          script.async = true;
-          script.onload = () => {
-            resolve(window.Razorpay);
-          };
-          document.body.appendChild(script);
-        });
-      };
+// Reset OTP inputs
+setOtp(['', '', '', '', '', '']);
+setOtpError(false);
 
-      const Razorpay = await loadRazorpay();
+console.log(' Checkout OTP resent successfully');
+} catch (error) {
+console.error(' Error resending OTP:', error);
+alert('Failed to resend OTP. Please try again.');
+}
+};
 
-      // Initialize Razorpay payment
-      const options = {
-        key: 'rzp_live_SSKxoURQgSmXB7', // Live key
-        amount: total * 100, // Razorpay expects amount in paise (INR * 100)
-        currency: 'INR',
-        name: 'Yeswanth\'s Healthy Kitchen',
-        description: `Order #${orderNumber}`,
-        order_id: razorpayOrderId,
-        handler: async function (response) {
-          // Payment successful
-          try {
-            // First save payment record
-            const paymentResponse = await fetch(`${API_CONFIG.API_URL}/payments`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-              },
-              body: JSON.stringify({
-                orderId: orderId,
-                amount: total,
-                paymentMethod: 'razorpay',
-                paymentStatus: 'completed',
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature,
-                razorpayPaymentId: response.razorpay_payment_id // Store separately
-              })
-            });
+// Address handlers
+const handleDetectLocation = () => {
+// Simulate location detection
+setTimeout(() => {
+setDetectedAddress({
+area: 'Sector 14, Pimpri-Chinchwad',
+city: 'Pune, Maharashtra 411018'
+});
+}, 1400);
+};
 
-        },
-        modal: {
-          ondismiss: function() {
-            setIsProcessing(false);
-            alert('Payment cancelled. Please try again.');
-          }
-        },
-        prefill: {
-          name: addressForm.fullName || 'Customer',
-          email: 'customer@example.com',
-          contact: phoneNumber
-        },
-        theme: {
-          color: '#22c55e' // Your brand color
-        }
-      };
+const handleConfirmAddress = () => {
+setInstructionsStep(true);
+// Scroll to instructions section
+setTimeout(() => {
+document.getElementById('instructionsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}, 100);
+};
 
-      const rzp = new Razorpay(options);
-      rzp.open();
+const handleAddressTab = (tab) => {
+setAddressStep(tab);
+};
 
-    } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
-      setIsProcessing(false);
-    }
-  };
+const handleAddressSelect = (index) => {
+setSelectedAddress(index);
+};
 
-  const handleCloseModal = () => {
-    setShowSuccessModal(false);
-    // Clear cart data
-    localStorage.removeItem('checkoutCart');
+const handleAddressFormChange = (field, value) => {
+setAddressForm({ ...addressForm, [field]: value });
+};
     navigate('/track-order');
   };
 
