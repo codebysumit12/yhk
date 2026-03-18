@@ -206,7 +206,10 @@ const Checkoutpage = () => {
       // Step 1: Create order
       const orderResponse = await fetch(`${API_CONFIG.API_URL}/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        },
         body: JSON.stringify({
           customer: {
             name: addressForm.fullName || 'Customer',
