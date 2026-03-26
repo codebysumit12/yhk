@@ -331,6 +331,8 @@ const Menu = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('🔘 Item detail Add + clicked!', selectedItem);
+                    console.log('🔘 Selected item data:', selectedItem);
                     handleAddToCart(selectedItem);
                   }}
                 >
@@ -347,13 +349,13 @@ const Menu = () => {
                       <span className="prep-value">{selectedItem.preparationTime} min</span>
                     </div>
                   )}
-                  {selectedItem.ratings && (selectedItem.ratings.count > 0) ? (
+                  {selectedItem.ratings && selectedItem.ratings.count > 0 ? (
                     <div className="prep-item">
                       <i className="fas fa-star"></i>
                       <span className="prep-label">Rating</span>
                       <span className="prep-value">
-                        {'★'.repeat(Math.round(selectedItem.ratings.average))}{'☆'.repeat(5 - Math.round(selectedItem.ratings.average))}
-                        ({selectedItem.ratings.average.toFixed(1)}/5)
+                        {'★'.repeat(Math.round(selectedItem.ratings.average || 0))}{'☆'.repeat(5 - Math.round(selectedItem.ratings.average || 0))}
+                        ({(selectedItem.ratings.average || 0).toFixed(1)}/5)
                         <span className="rating-count">({selectedItem.ratings.count} {selectedItem.ratings.count === 1 ? 'rating' : 'ratings'})</span>
                       </span>
                     </div>
