@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import Nav from './Nav';
 import CartSidebar from './CartSidebar';
-import { API_CONFIG } from '../../config/api';
+import { API_CONFIG, fetchWithCacheBust } from '../../config/api';
 import './Menu.css';
 import './ItemsCard.css';
 
@@ -13,7 +13,11 @@ const Menu = () => {
   const navigate = useNavigate();
   const { categorySlug } = useParams(); // Get category slug from URL params
   const [activeCategory, setActiveCategory] = useState(null);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    // Initialize cart from localStorage
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
   const [showCart, setShowCart] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [items, setItems] = useState([]);
@@ -22,6 +26,11 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('popular');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Fetch ratings when component mounts - remove order-based calculation
+  // useEffect(() => {
+  //   fetchItemRatings();
+  // }, []);
 
   // Fetch categories, items and banners
   useEffect(() => {
@@ -75,7 +84,13 @@ const Menu = () => {
           }
         }
 
-        const itemsResponse = await fetch(`${API_URL}/items?isAvailable=true&populate=category`);
+        // Build API URL with categoryId filter if active
+        let itemsUrl = `${API_URL}/items?isAvailable=true`;
+        if (activeCategory) {
+          itemsUrl += `&categoryId=${activeCategory}`;
+        }
+        
+        const itemsResponse = await fetchWithCacheBust(itemsUrl);
         const itemsData = await itemsResponse.json();
         
         if (itemsData.success) {
@@ -107,36 +122,39 @@ const Menu = () => {
   }, [searchParams, items]);
 
   const getFilteredItems = () => {
-  console.log('🔍 Filtering items for category:', activeCategory);
-  
   let filtered = items.filter(item => {
-    // ✅ FIXED: Handle both object and string category formats
+    // If no active category, show all items
+    if (!activeCategory) {
+      return true;
+    }
+    
+    // Handle both categoryId and category fields
     let itemCategoryId;
     
     if (item.categoryId) {
-      // If categoryId exists, check if it's an object or string
+      // If categoryId is an object, extract the _id
       if (typeof item.categoryId === 'object' && item.categoryId !== null) {
-        itemCategoryId = item.categoryId._id; // ✅ Extract _id from populated object
+        itemCategoryId = item.categoryId._id;
       } else {
-        itemCategoryId = item.categoryId; // ✅ Use string directly
+        itemCategoryId = item.categoryId;
       }
     } else if (item.category) {
-      // Fallback to category field
-      if (typeof item.category === 'object' && item.category !== null) {
-        itemCategoryId = item.category._id;
-      } else {
-        itemCategoryId = item.category;
-      }
+      // For menuitems collection, map category string to ObjectId
+      const categoryMap = {
+        'beverage': '69b13b978ffe7b66b415b8c5', // Beverages
+        'appetizer': '69b13b978ffe7b66b415b8c6', // Appetizers
+        'main_course': '69a5ca29bf3eb97a6daa4f22', // Pizza Category Updated (as main course)
+        // Alternative mappings for your actual food categories:
+        // 'pizza': '69a5ca29bf3eb97a6daa4f22',  // Pizza Category Updated
+        // 'sweets': '69a7a24e8ed14f1c9b1cb01f',  // Sweets
+        // 'kaju katli': '69a7f292a7ac46d7d19ba645', // kaju katli
+      };
+      itemCategoryId = categoryMap[item.category];
     }
     
-    const matches = String(itemCategoryId) === String(activeCategory);
-    
-    console.log(`   ${item.name}: categoryId=${itemCategoryId} vs activeCategory=${activeCategory} = ${matches}`);
-    
-    return matches;
+    // Only show items that match the active category
+    return itemCategoryId && String(itemCategoryId) === String(activeCategory);
   });
-  
-  console.log(`✅ Filtered ${filtered.length} items for category ${activeCategory}`);
   
   // Apply search filter
   if (searchTerm) {
@@ -147,31 +165,34 @@ const Menu = () => {
   }
   
   // Apply sorting
-  switch (sortBy) {
-    case 'price-low':
-      filtered = [...filtered].sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
-      break;
-    case 'price-high':
-      filtered = [...filtered].sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
-      break;
-    case 'discount':
-      filtered = [...filtered].sort((a, b) => {
-        const aDiscount = a.discountPrice ? (1 - a.discountPrice/a.price) * 100 : 0;
-        const bDiscount = b.discountPrice ? (1 - b.discountPrice/b.price) * 100 : 0;
-        return bDiscount - aDiscount;
-      });
-      break;
-    default:
-      // Keep original order (popularity)
-      break;
+  if (sortBy === 'price-low') {
+    filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+  } else if (sortBy === 'price-high') {
+    filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+  } else if (sortBy === 'discount') {
+    filtered.sort((a, b) => {
+      const aDiscount = a.discountPrice ? (1 - a.discountPrice/a.price) * 100 : 0;
+      const bDiscount = b.discountPrice ? (1 - b.discountPrice/b.price) * 100 : 0;
+      return bDiscount - aDiscount;
+    });
+  } else if (sortBy === 'popular') {
+    filtered.sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0));
   }
   
   return filtered;
 };
 
   const handleAddToCart = (item) => {
+    if (!item || !item._id) {
+      console.error('❌ Invalid item:', item);
+      return;
+    }
+    
     const price = item.discountPrice || item.price;
-    setCart([...cart, { ...item, cartId: Date.now(), finalPrice: price }]);
+    const newCart = [...cart, { ...item, cartId: Date.now(), finalPrice: price, quantity: 1 }];
+    
+    setCart(newCart);
+    setShowCart(true); // Show cart sidebar automatically
   };
 
   const handleRemoveFromCart = (cartId) => {
@@ -261,6 +282,10 @@ const Menu = () => {
                         selectedItem.imageUrl || 
                         'https://via.placeholder.com/1200x400.png?text=No+Image';
     
+    // Debug: Check if selectedItem exists
+    console.log('🔍 Debug - selectedItem:', selectedItem);
+    console.log('🔍 Debug - selectedItem.ratings:', selectedItem?.ratings);
+    
     return (
       <>
         <Nav onOpenCart={() => setShowCart(true)} />
@@ -301,12 +326,19 @@ const Menu = () => {
                     <span className="price-original">₹{selectedItem.price}</span>
                   )}
                 </div>
-                <button className="add-btn" onClick={() => handleAddToCart(selectedItem)}>
-                  Add to Cart
+                <button 
+                  className="add-btn" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddToCart(selectedItem);
+                  }}
+                >
+                  Add +
                 </button>
               </div>
 
-              {(selectedItem.preparationTime || selectedItem.calories || selectedItem.servingSize) && (
+              {(selectedItem.preparationTime || selectedItem.ratings || selectedItem.servingSize) && (
                 <div className="prep-info">
                   {selectedItem.preparationTime && (
                     <div className="prep-item">
@@ -315,11 +347,24 @@ const Menu = () => {
                       <span className="prep-value">{selectedItem.preparationTime} min</span>
                     </div>
                   )}
-                  {selectedItem.calories && (
+                  {selectedItem.ratings && (selectedItem.ratings.count > 0) ? (
                     <div className="prep-item">
-                      <i className="fas fa-fire"></i>
-                      <span className="prep-label">Calories</span>
-                      <span className="prep-value">{selectedItem.calories} cal</span>
+                      <i className="fas fa-star"></i>
+                      <span className="prep-label">Rating</span>
+                      <span className="prep-value">
+                        {'★'.repeat(Math.round(selectedItem.ratings.average))}{'☆'.repeat(5 - Math.round(selectedItem.ratings.average))}
+                        ({selectedItem.ratings.average.toFixed(1)}/5)
+                        <span className="rating-count">({selectedItem.ratings.count} {selectedItem.ratings.count === 1 ? 'rating' : 'ratings'})</span>
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="prep-item">
+                      <i className="fas fa-star"></i>
+                      <span className="prep-label">Rating</span>
+                      <span className="prep-value">
+                        ☆☆☆☆☆ (0.0/5)
+                        <span className="rating-count">(No ratings yet)</span>
+                      </span>
                     </div>
                   )}
                   {selectedItem.servingSize && (
@@ -331,16 +376,6 @@ const Menu = () => {
                   )}
                 </div>
               )}
-
-         {/* ⭐ RATING DISPLAY 
-              {selectedItem.rating && (
-                <div className="recipe-section" style={{ background: '#fef3c7', border: '2px solid #f59e0b' }}>
-                  <h3><i className="fas fa-star"></i> Rating</h3>
-                  <div className="hero-rating">
-                    {'★'.repeat(Math.floor(selectedItem.rating))}{'☆'.repeat(5 - Math.floor(selectedItem.rating))}
-                  </div>
-                </div>
-              )}   */}
 
               {/* ⭐ BADGES SECTION */}
               <div className="recipe-section">
@@ -564,6 +599,7 @@ const Menu = () => {
                             <button 
                               className="add-btn-small"
                               onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 handleAddToCart(item);
                               }}
@@ -765,6 +801,7 @@ return (
                 <button 
                   className="add-btn"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     handleAddToCart(item);
                   }}
@@ -780,13 +817,23 @@ return (
   )}
 </main>
 
+      {/* Floating Cart Button */}
+      {cart.length > 0 && (
+        <button 
+          className="floating-cart"
+          onClick={() => setShowCart(true)}
+        >
+          <i className="fas fa-shopping-cart"></i>
+          {cart.length > 0 && (
+            <span className="cart-count-badge">{cart.reduce((total, item) => total + (item.quantity || 1), 0)}</span>
+          )}
+        </button>
+      )}
+
       <CartSidebar
-        showCart={showCart}
-        setShowCart={setShowCart}
+        isOpen={showCart}
+        onClose={() => setShowCart(false)}
         cart={cart}
-        onRemoveFromCart={handleRemoveFromCart}
-        onCheckout={handleCheckout}
-        getCartTotal={getCartTotal}
       />
   </div>
   </>

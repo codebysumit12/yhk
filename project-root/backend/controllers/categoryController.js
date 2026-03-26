@@ -1,5 +1,5 @@
 import Category from '../models/Category.js';
-import Item from '../models/Item.js';
+import MenuItem from '../models/MenuItem.js';
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
 
@@ -26,8 +26,8 @@ const uploadToCloudinary = async (file) => {
 const calculateCategoryStats = async (categoryId) => {
   try {
     // Find all available items in this category
-    const items = await Item.find({ 
-      category: categoryId, 
+    const items = await MenuItem.find({ 
+      categoryId: categoryId, 
       isAvailable: true 
     });
     

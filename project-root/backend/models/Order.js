@@ -67,11 +67,24 @@ const orderSchema = new mongoose.Schema({
   // ── Items ─────────────────────────────────────────────────────────────────
   orderItems: [orderItemSchema],
 
-  // ── Order Type ────────────────────────────────────────────────────────────
+  // ── Order Type ────────────────────────────────────────────────────
   orderType: {
     type: String,
     enum: ['dine_in', 'takeaway', 'delivery'],
     required: true
+  },
+
+  // ── Delivery Information ──────────────────────────────────────────────
+  delivery: {
+    type: { type: String, default: 'standard' },
+    estimatedTime: { type: Date, default: null },
+    actualTime: { type: Date, default: null },
+    deliveryPerson: {
+      id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+      name: { type: String, default: null },
+      phone: { type: String, default: null },
+      vehicleNumber: { type: String, default: null }
+    }
   },
 
   // ── Delivery Address ──────────────────────────────────────────────────────
@@ -117,22 +130,6 @@ const orderSchema = new mongoose.Schema({
     total:       { type: Number, required: true, min: 0 }
   },
 
-  // ── Delivery Details ──────────────────────────────────────────────────────
-  delivery: {
-    type: {
-      type: String,
-      enum: ['standard', 'express', 'pickup'],
-      default: 'standard'
-    },
-    estimatedTime: Date,
-    actualTime:    Date,
-    deliveryPerson: {
-      name:          String,
-      phone:         String,
-      vehicleNumber: String
-    }
-  },
-
   // ── Restaurant/Branch ─────────────────────────────────────────────────────
   restaurant: {
     type: mongoose.Schema.Types.ObjectId,
@@ -143,13 +140,14 @@ const orderSchema = new mongoose.Schema({
   specialInstructions: String,
 
   // ── Ratings & Feedback ────────────────────────────────────────────────────
-  rating: {
-    food:     Number,
-    delivery: Number,
-    overall:  Number,
-    review:   String,
-    ratedAt:  Date
-  },
+ 
+
+
+   rating: {
+      stars:   { type: Number, min: 1, max: 5, default: null },
+      comment: { type: String, trim: true, maxlength: 500, default: '' },
+      ratedAt: { type: Date, default: null },
+    },
 
   // ── Cancellation ──────────────────────────────────────────────────────────
   cancellation: {
@@ -222,6 +220,41 @@ orderSchema.index({ 'customer.email': 1 });
 orderSchema.index({ 'customer.phone': 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
+
+// ─── Middleware to update item ratings when order is rated ─────────────────────────────────────────────────────────────────
+
+orderSchema.post('save', async function() {
+  // Only update ratings if rating has changed and order is delivered
+  if (this.isModified('rating.stars') && this.status === 'delivered' && this.rating.stars) {
+    try {
+      const MenuItem = mongoose.model('MenuItem');
+      
+      // Update ratings for each item in the order
+      for (const orderItem of this.orderItems) {
+        // Find all delivered orders with ratings for this item
+        const ratedOrders = await mongoose.model('Order').find({
+          'orderItems.menuItem': orderItem.menuItem,
+          'rating.stars': { $exists: true, $ne: null },
+          status: 'delivered'
+        });
+        
+        if (ratedOrders.length > 0) {
+          // Calculate new average rating
+          const totalRatings = ratedOrders.reduce((sum, order) => sum + order.rating.stars, 0);
+          const averageRating = totalRatings / ratedOrders.length;
+          
+          // Update item with new ratings
+          await MenuItem.findByIdAndUpdate(orderItem.menuItem, {
+            'ratings.average': averageRating,
+            'ratings.count': ratedOrders.length
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error updating item ratings:', error);
+    }
+  }
+});
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 

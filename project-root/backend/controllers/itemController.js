@@ -1,4 +1,4 @@
-import Item from '../models/Item.js';
+import MenuItem from '../models/MenuItem.js';
 import Category from '../models/Category.js';
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
@@ -34,6 +34,7 @@ export const getItems = async (req, res) => {
     
     const { 
       category, 
+      categoryId,
       type, 
       isAvailable, 
       isFeatured, 
@@ -48,7 +49,11 @@ export const getItems = async (req, res) => {
     
     const filter = {};
     
-    if (category) filter.categoryId = category; // Use categoryId instead of category
+    if (categoryId) {
+      filter.categoryId = categoryId;
+    } else if (category) {
+      filter.category = category;
+    }
     if (type) filter.type = type;
     if (isAvailable !== undefined) filter.isAvailable = isAvailable === 'true';
     if (isFeatured !== undefined) filter.isFeatured = isFeatured === 'true';
@@ -66,17 +71,12 @@ export const getItems = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const items = await Item.find(filter)
+    const items = await MenuItem.find(filter)
       .sort(sort)
       .limit(Number(limit))
-      .skip(skip)
-      .populate({
-        path: 'categoryId',
-        select: 'name slug icon color'
-      })
-      .populate('createdBy', 'name email');
+      .skip(skip);
 
-    const total = await Item.countDocuments(filter);
+    const total = await MenuItem.countDocuments(filter);
 
     res.json({
       success: true,
@@ -101,7 +101,7 @@ export const getItems = async (req, res) => {
 // @access  Public
 export const getItemById = async (req, res) => {
   try {
-    const item = await Item.findById(req.params.id)
+    const item = await MenuItem.findById(req.params.id)
       .populate('categoryId', 'name slug icon color')
       .populate('createdBy', 'name email');
 
@@ -129,7 +129,7 @@ export const getItemById = async (req, res) => {
 // @access  Public
 export const getItemBySlug = async (req, res) => {
   try {
-    const item = await Item.findOne({ slug: req.params.slug })
+    const item = await MenuItem.findOne({ slug: req.params.slug })
       .populate('categoryId', 'name slug icon color')
       .populate('createdBy', 'name email');
 
@@ -158,12 +158,17 @@ export const getItemBySlug = async (req, res) => {
 export const getItemsByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { isAvailable = true } = req.query;
+    const { isAvailable } = req.query;
 
-    const items = await Item.find({ 
-      categoryId: categoryId,
-      isAvailable: isAvailable === 'true'
-    })
+    // Build filter
+    const filter = { categoryId: categoryId };
+    
+    // Only add isAvailable filter if explicitly provided
+    if (isAvailable !== undefined) {
+      filter.isAvailable = isAvailable === 'true';
+    }
+
+    const items = await MenuItem.find(filter)
       .sort({ displayOrder: 1, createdAt: -1 })
       .populate('categoryId', 'name slug icon color');
 
@@ -185,6 +190,10 @@ export const getItemsByCategory = async (req, res) => {
 // @access  Private/Admin
 export const createItem = async (req, res) => {
   try {
+    console.log('🔍 Request body keys:', Object.keys(req.body));
+    console.log('🔍 Request body:', req.body);
+    console.log('🔍 Name from body:', req.body.name);
+    
     const {
       name,
       description,
@@ -201,29 +210,31 @@ export const createItem = async (req, res) => {
       tags,
       displayOrder,
       nutritionInfo,
-      rating, healthBenefits, preparationSteps,
+      healthBenefits, preparationSteps,
       isAvailable, isFeatured, isPopular,
     } = req.body;
 
     console.log('📝 Creating item:', name);
     console.log('📁 Files received:', req.files?.length || 0);
 
-    // Check if category exists
-    const categoryExists = await Category.findById(categoryId);
-    if (!categoryExists) {
-      // Clean up uploaded files
-      if (req.files) {
-        req.files.forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
+    // Check if category exists (only if categoryId provided)
+    if (categoryId && categoryId !== '') {
+      const categoryExists = await Category.findById(categoryId);
+      if (!categoryExists) {
+        // Clean up uploaded files
+        if (req.files) {
+          req.files.forEach(file => {
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+            }
+          });
+        }
+        
+        return res.status(404).json({
+          success: false,
+          message: 'Category not found'
         });
       }
-      
-      return res.status(404).json({
-        success: false,
-        message: 'Category not found'
-      });
     }
 
     // Upload images
@@ -257,6 +268,28 @@ export const createItem = async (req, res) => {
       }
     }
 
+    // Validate required fields
+    if (!name || name.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Item name is required'
+      });
+    }
+    
+    if (!description || description.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Description is required'
+      });
+    }
+    
+    if (!price || price === '' || isNaN(Number(price))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid price is required'
+      });
+    }
+
     // Parse arrays if they're strings
     const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients;
     const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens) : allergens;
@@ -266,10 +299,10 @@ export const createItem = async (req, res) => {
     const parsedPreparationSteps = typeof preparationSteps === 'string' ? JSON.parse(preparationSteps) : preparationSteps;
 
     // Create item
-    const item = await Item.create({
+    const item = await MenuItem.create({
       name,
       description,
-      categoryId,
+      categoryId: categoryId && categoryId !== '' ? categoryId : null,
       price: Number(price),
       discountPrice: discountPrice ? Number(discountPrice) : undefined,
       images,
@@ -291,12 +324,11 @@ export const createItem = async (req, res) => {
         sugar:    parsedNutrition?.sugar    ?? null,  // ← new
         sodium:   parsedNutrition?.sodium   ?? null,  // ← new
       },
-       rating:           rating        ?? 4.5,
       healthBenefits:   parsedHealthBenefits   || [],
       preparationSteps: parsedPreparationSteps || [],
-      isAvailable:      isAvailable  ?? true,
-      isFeatured:       isFeatured   ?? false,
-      isPopular:        isPopular    ?? false,
+      isAvailable:      isAvailable === 'true' || isAvailable === true,
+      isFeatured:       isFeatured === 'true' || isFeatured === true,
+      isPopular:        isPopular === 'true' || isPopular === true,
       
       createdBy: req.user._id,
      
@@ -335,7 +367,7 @@ export const createItem = async (req, res) => {
 // @access  Private/Admin
 export const updateItem = async (req, res) => {
   try {
-    const item = await Item.findById(req.params.id);
+    const item = await MenuItem.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({
@@ -382,7 +414,6 @@ export const updateItem = async (req, res) => {
       isPopular,
       displayOrder,
       nutritionInfo,
-      rating, 
       healthBenefits,
      preparationSteps,
   
@@ -398,7 +429,7 @@ export const updateItem = async (req, res) => {
           message: 'Category not found'
         });
       }
-      item.category = category;
+      item.categoryId = category;
     }
     if (price !== undefined) item.price = Number(price);
     if (discountPrice !== undefined) item.discountPrice = discountPrice ? Number(discountPrice) : null;
@@ -410,25 +441,25 @@ export const updateItem = async (req, res) => {
     if (ingredients) item.ingredients = typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients;
     if (allergens) item.allergens = typeof allergens === 'string' ? JSON.parse(allergens) : allergens;
     if (tags) item.tags = typeof tags === 'string' ? JSON.parse(tags) : tags;
-    if (isAvailable !== undefined) item.isAvailable = isAvailable;
-    if (isFeatured !== undefined) item.isFeatured = isFeatured;
-    if (isPopular !== undefined) item.isPopular = isPopular;
+    if (isAvailable !== undefined) item.isAvailable = isAvailable === 'true' || isAvailable === true;
+    if (isFeatured !== undefined) item.isFeatured = isFeatured === 'true' || isFeatured === true;
+    if (isPopular !== undefined) item.isPopular = isPopular === 'true' || isPopular === true;
     if (displayOrder !== undefined) item.displayOrder = Number(displayOrder);
-    if (nutritionInfo) { const parsed = typeof nutritionInfo === 'string' ? JSON.parse(nutritionInfo) : nutritionInfo;
-  item.nutritionInfo = {
-    protein:  parsed.protein  ?? item.nutritionInfo?.protein,
-    carbs:    parsed.carbs    ?? item.nutritionInfo?.carbs,
-    fat:      parsed.fat      ?? item.nutritionInfo?.fat,
-    fiber:    parsed.fiber    ?? item.nutritionInfo?.fiber,
-    calories: parsed.calories ?? item.nutritionInfo?.calories,
-    sugar:    parsed.sugar    ?? item.nutritionInfo?.sugar,
-    sodium:   parsed.sodium   ?? item.nutritionInfo?.sodium,
-  };
+    if (nutritionInfo) { 
+      const parsed = typeof nutritionInfo === 'string' ? JSON.parse(nutritionInfo) : nutritionInfo;
+      item.nutritionInfo = {
+        protein:  parsed.protein  ?? item.nutritionInfo?.protein,
+        carbs:    parsed.carbs    ?? item.nutritionInfo?.carbs,
+        fat:      parsed.fat      ?? item.nutritionInfo?.fat,
+        fiber:    parsed.fiber    ?? item.nutritionInfo?.fiber,
+        calories: parsed.calories ?? item.nutritionInfo?.calories,
+        sugar:    parsed.sugar    ?? item.nutritionInfo?.sugar,
+        sodium:   parsed.sodium   ?? item.nutritionInfo?.sodium,
+      };
+    }
 
-  if (rating !== undefined) item.rating = Number(rating);
-  if (healthBenefits !== undefined) item.healthBenefits = typeof healthBenefits === 'string' ? JSON.parse(healthBenefits) : healthBenefits;
-  if (preparationSteps !== undefined) item.preparationSteps = typeof preparationSteps === 'string' ? JSON.parse(preparationSteps) : preparationSteps;
-}
+    if (healthBenefits !== undefined) item.healthBenefits = typeof healthBenefits === 'string' ? JSON.parse(healthBenefits) : healthBenefits;
+    if (preparationSteps !== undefined) item.preparationSteps = typeof preparationSteps === 'string' ? JSON.parse(preparationSteps) : preparationSteps;
 
     await item.save();
 
@@ -458,7 +489,7 @@ export const updateItem = async (req, res) => {
 // @access  Private/Admin
 export const deleteItem = async (req, res) => {
   try {
-    const item = await Item.findById(req.params.id);
+    const item = await MenuItem.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({
@@ -495,7 +526,7 @@ export const deleteItem = async (req, res) => {
 // @access  Private/Admin
 export const toggleItemAvailability = async (req, res) => {
   try {
-    const item = await Item.findById(req.params.id);
+    const item = await MenuItem.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({
@@ -525,7 +556,7 @@ export const toggleItemAvailability = async (req, res) => {
 // @access  Private/Admin
 export const toggleFeaturedStatus = async (req, res) => {
   try {
-    const item = await Item.findById(req.params.id);
+    const item = await MenuItem.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({
@@ -556,7 +587,7 @@ export const toggleFeaturedStatus = async (req, res) => {
 export const setPrimaryImage = async (req, res) => {
   try {
     const { imageIndex } = req.body;
-    const item = await Item.findById(req.params.id);
+    const item = await MenuItem.findById(req.params.id);
 
     if (!item) {
       return res.status(404).json({
