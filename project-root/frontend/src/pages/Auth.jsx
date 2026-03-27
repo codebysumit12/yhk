@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_CONFIG } from '../config/api';
-import YHKLoader from '../customer-view/pages/Yhkloader';
 import './Auth.css';
 
 const Auth = () => {

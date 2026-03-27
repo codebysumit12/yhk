@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG, authHeaders } from '../../config/api';
 import '../styles/AdminLayout.css';
 
@@ -17,7 +17,7 @@ const AdminDashboard = () => {
 
   const isAdmin = user.isAdmin || user.role === 'admin';
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -41,7 +41,6 @@ const AdminDashboard = () => {
 
       if (ordersData.success && itemsData.success) {
         const allOrders = ordersData.data || [];
-        const items = itemsData.data || [];
 
         const totalOrders = allOrders.length;
         const totalRevenue = allOrders.reduce((sum, order) => {
@@ -217,11 +216,11 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, isAdmin]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   if (loading) {
     return (
