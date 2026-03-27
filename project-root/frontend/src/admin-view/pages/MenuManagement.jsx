@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { API_CONFIG } from '../../config/api';
+import { API_CONFIG, authHeaders } from '../../config/api';
 import './MenuManagement.css';
 
 const MenuManagement = () => {
   const [categories, setCategories] = useState([]);
   const [items, setItems] = useState([]);
+  const [drinks, setDrinks] = useState([]);
+  const [smoothies, setSmoothies] = useState([]);
+  const [desserts, setDesserts] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [activeTab, setActiveTab] = useState('ingredients');
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -35,9 +39,22 @@ const MenuManagement = () => {
     }
   }, [activeCategory]);
 
+  // Fetch data when tab changes
+  useEffect(() => {
+    if (activeTab === 'drinks') {
+      fetchDrinks();
+    } else if (activeTab === 'smoothies') {
+      fetchSmoothies();
+    } else if (activeTab === 'desserts') {
+      fetchDesserts();
+    }
+  }, [activeTab]);
+
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${API_URL}/categories?isActive=true`);
+      const response = await fetch(`${API_URL}/categories?isActive=true`, {
+        headers: authHeaders()
+      });
       const data = await response.json();
       
       if (data.success && data.data.length > 0) {
@@ -57,7 +74,9 @@ const MenuManagement = () => {
   const fetchItemsByCategory = async (categoryId) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/items?category=${categoryId}&isAvailable=true`);
+      const response = await fetch(`${API_URL}/items?category=${categoryId}&isAvailable=true`, {
+        headers: authHeaders()
+      });
       const data = await response.json();
       
       if (data.success) {
@@ -66,6 +85,63 @@ const MenuManagement = () => {
     } catch (error) {
       console.error('Error fetching items:', error);
       setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDrinks = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/items?type=drinks&isAvailable=true`, {
+        headers: authHeaders()
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setDrinks(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching drinks:', error);
+      setDrinks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSmoothies = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/items?type=smoothies&isAvailable=true`, {
+        headers: authHeaders()
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setSmoothies(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching smoothies:', error);
+      setSmoothies([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDesserts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/items?type=desserts&isAvailable=true`, {
+        headers: authHeaders()
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setDesserts(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching desserts:', error);
+      setDesserts([]);
     } finally {
       setLoading(false);
     }
@@ -102,7 +178,10 @@ const MenuManagement = () => {
     veg: '🟢',
     'non-veg': '🔴',
     vegan: '🟢',
-    egg: '🟡'
+    egg: '🟡',
+    drinks: '🥤',
+    smoothies: '🥤',
+    desserts: '🍰'
   };
 
   return (
@@ -139,88 +218,382 @@ const MenuManagement = () => {
 
         {/* Menu Content */}
         <main className="menu-content">
-          <div className="category-header">
-            <h2>
-              <span className="category-icon">{activeCategoryData?.icon}</span>
-              {activeCategoryData?.name}
-            </h2>
-            <span className="item-total">{items.length} items</span>
+          {/* Tabs */}
+          <div className="menu-tabs">
+            <button 
+              className={`tab-btn ${activeTab === 'ingredients' ? 'active' : ''}`}
+              onClick={() => setActiveTab('ingredients')}
+            >
+              🥘 Ingredients
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'drinks' ? 'active' : ''}`}
+              onClick={() => setActiveTab('drinks')}
+            >
+              🥤 Drinks
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'smoothies' ? 'active' : ''}`}
+              onClick={() => setActiveTab('smoothies')}
+            >
+              🥤 Smoothies
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'desserts' ? 'active' : ''}`}
+              onClick={() => setActiveTab('desserts')}
+            >
+              🍰 Desserts
+            </button>
           </div>
 
-          {loading ? (
-            <div className="loading">Loading items...</div>
-          ) : items.length === 0 ? (
-            <div className="no-items">
-              <p>No items available in this category</p>
-            </div>
-          ) : (
-            <div className="menu-items-grid">
-              {items.map(item => (
-                <div key={item._id} className="menu-item-card">
-                  {/* Item Image */}
-                  <div className="menu-item-image">
-                    <img src={getItemImage(item)} alt={item.name} />
-                    <div className="type-badge" style={{
-                      background: item.type === 'veg' || item.type === 'vegan' ? '#dcfce7' : 
-                                  item.type === 'non-veg' ? '#fee2e2' : '#fef3c7'
-                    }}>
-                      {typeEmojis[item.type]}
-                    </div>
-                    {item.isFeatured && (
-                      <div className="featured-badge">⭐ Featured</div>
-                    )}
-                    {item.isPopular && (
-                      <div className="popular-badge">🔥 Popular</div>
-                    )}
-                  </div>
+          {/* Ingredients Section */}
+          {activeTab === 'ingredients' && (
+            <>
+              <div className="category-header">
+                <h2>
+                  <span className="category-icon">{activeCategoryData?.icon}</span>
+                  {activeCategoryData?.name}
+                </h2>
+                <span className="item-total">{items.length} items</span>
+              </div>
 
-                  {/* Item Info */}
-                  <div className="menu-item-info">
-                    <h4>{item.name}</h4>
-                    <p className="description">{item.description}</p>
-                    
-                    {/* Additional Info */}
-                    {(item.preparationTime || item.calories || item.spiceLevel !== 'none') && (
-                      <div className="item-meta">
-                        {item.preparationTime && (
-                          <span className="meta-item">⏱️ {item.preparationTime} min</span>
+              {loading ? (
+                <div className="loading">Loading items...</div>
+              ) : items.length === 0 ? (
+                <div className="no-items">
+                  <p>No items available in this category</p>
+                </div>
+              ) : (
+                <div className="menu-items-grid">
+                  {items.map(item => (
+                    <div key={item._id} className="menu-item-card">
+                      {/* Item Image */}
+                      <div className="menu-item-image">
+                        <img src={getItemImage(item)} alt={item.name} />
+                        <div className="type-badge" style={{
+                          background: item.type === 'veg' || item.type === 'vegan' ? '#dcfce7' : 
+                                      item.type === 'non-veg' ? '#fee2e2' : '#fef3c7'
+                        }}>
+                          {typeEmojis[item.type]}
+                        </div>
+                        {item.isFeatured && (
+                          <div className="featured-badge">⭐ Featured</div>
                         )}
-                        {item.calories && (
-                          <span className="meta-item">🔥 {item.calories} cal</span>
-                        )}
-                        {item.spiceLevel !== 'none' && (
-                          <span className="meta-item">
-                            🌶️ {item.spiceLevel.charAt(0).toUpperCase() + item.spiceLevel.slice(1)}
-                          </span>
+                        {item.isPopular && (
+                          <div className="popular-badge">🔥 Popular</div>
                         )}
                       </div>
-                    )}
-                  </div>
 
-                  {/* Item Action */}
-                  <div className="menu-item-action">
-                    <div className="price-container">
-                      {item.discountPrice ? (
-                        <>
-                          <span className="original-price">₹{item.price}</span>
-                          <span className="menu-item-price">₹{item.discountPrice}</span>
-                          <span className="discount-badge">
-                            {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
-                          </span>
-                        </>
-                      ) : (
-                        <span className="menu-item-price">₹{item.price}</span>
-                      )}
+                      {/* Item Info */}
+                      <div className="menu-item-info">
+                        <h4>{item.name}</h4>
+                        <p className="description">{item.description}</p>
+                        
+                        {/* Additional Info */}
+                        {(item.preparationTime || item.calories || item.spiceLevel !== 'none') && (
+                          <div className="item-meta">
+                            {item.preparationTime && (
+                              <span className="meta-item">⏱️ {item.preparationTime} min</span>
+                            )}
+                            {item.calories && (
+                              <span className="meta-item">🔥 {item.calories} cal</span>
+                            )}
+                            {item.spiceLevel !== 'none' && (
+                              <span className="meta-item">
+                                🌶️ {item.spiceLevel.charAt(0).toUpperCase() + item.spiceLevel.slice(1)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Item Action */}
+                      <div className="menu-item-action">
+                        <div className="price-container">
+                          {item.discountPrice ? (
+                            <>
+                              <span className="original-price">₹{item.price}</span>
+                              <span className="menu-item-price">₹{item.discountPrice}</span>
+                              <span className="discount-badge">
+                                {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
+                              </span>
+                            </>
+                          ) : (
+                            <span className="menu-item-price">₹{item.price}</span>
+                          )}
+                        </div>
+                        <button 
+                          className="add-btn"
+                          onClick={() => handleAddToCart(item)}
+                        >
+                          Add +
+                        </button>
+                      </div>
                     </div>
-                    <button 
-                      className="add-btn"
-                      onClick={() => handleAddToCart(item)}
-                    >
-                      Add +
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
+            </>
+          )}
+
+          {/* Drinks Section */}
+          {activeTab === 'drinks' && (
+            <div className="others-section">
+              <div className="category-header">
+                <h2>🥤 Drinks</h2>
+                <span className="item-total">{drinks.length} items</span>
+              </div>
+
+              {loading ? (
+                <div className="loading">Loading drinks...</div>
+              ) : drinks.length === 0 ? (
+                <div className="no-items">
+                  <p>No drinks available</p>
+                </div>
+              ) : (
+                <div className="menu-items-grid">
+                  {drinks.map(item => (
+                    <div key={item._id} className="menu-item-card">
+                      {/* Item Image */}
+                      <div className="menu-item-image">
+                        <img src={getItemImage(item)} alt={item.name} />
+                        <div className="type-badge" style={{
+                          background: '#dbeafe',
+                          color: '#0369a1'
+                        }}>
+                          🥤 DRINKS
+                        </div>
+                        {item.isFeatured && (
+                          <div className="featured-badge">⭐ Featured</div>
+                        )}
+                        {item.isPopular && (
+                          <div className="popular-badge">🔥 Popular</div>
+                        )}
+                      </div>
+
+                      {/* Item Info */}
+                      <div className="menu-item-info">
+                        <h4>{item.name}</h4>
+                        <p className="description">{item.description}</p>
+                        
+                        {/* Additional Info */}
+                        {(item.preparationTime || item.calories || item.spiceLevel !== 'none') && (
+                          <div className="item-meta">
+                            {item.preparationTime && (
+                              <span className="meta-item">⏱️ {item.preparationTime} min</span>
+                            )}
+                            {item.calories && (
+                              <span className="meta-item">🔥 {item.calories} cal</span>
+                            )}
+                            {item.spiceLevel !== 'none' && (
+                              <span className="meta-item">
+                                🌶️ {item.spiceLevel.charAt(0).toUpperCase() + item.spiceLevel.slice(1)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Item Action */}
+                      <div className="menu-item-action">
+                        <div className="price-container">
+                          {item.discountPrice ? (
+                            <>
+                              <span className="original-price">₹{item.price}</span>
+                              <span className="menu-item-price">₹{item.discountPrice}</span>
+                              <span className="discount-badge">
+                                {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
+                              </span>
+                            </>
+                          ) : (
+                            <span className="menu-item-price">₹{item.price}</span>
+                          )}
+                        </div>
+                        <button 
+                          className="add-btn"
+                          onClick={() => handleAddToCart(item)}
+                        >
+                          Add +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Smoothies Section */}
+          {activeTab === 'smoothies' && (
+            <div className="others-section">
+              <div className="category-header">
+                <h2>🥤 Smoothies</h2>
+                <span className="item-total">{smoothies.length} items</span>
+              </div>
+
+              {loading ? (
+                <div className="loading">Loading smoothies...</div>
+              ) : smoothies.length === 0 ? (
+                <div className="no-items">
+                  <p>No smoothies available</p>
+                </div>
+              ) : (
+                <div className="menu-items-grid">
+                  {smoothies.map(item => (
+                    <div key={item._id} className="menu-item-card">
+                      {/* Item Image */}
+                      <div className="menu-item-image">
+                        <img src={getItemImage(item)} alt={item.name} />
+                        <div className="type-badge" style={{
+                          background: '#dbeafe',
+                          color: '#0369a1'
+                        }}>
+                          🥤 SMOOTHIES
+                        </div>
+                        {item.isFeatured && (
+                          <div className="featured-badge">⭐ Featured</div>
+                        )}
+                        {item.isPopular && (
+                          <div className="popular-badge">🔥 Popular</div>
+                        )}
+                      </div>
+
+                      {/* Item Info */}
+                      <div className="menu-item-info">
+                        <h4>{item.name}</h4>
+                        <p className="description">{item.description}</p>
+                        
+                        {/* Additional Info */}
+                        {(item.preparationTime || item.calories || item.spiceLevel !== 'none') && (
+                          <div className="item-meta">
+                            {item.preparationTime && (
+                              <span className="meta-item">⏱️ {item.preparationTime} min</span>
+                            )}
+                            {item.calories && (
+                              <span className="meta-item">🔥 {item.calories} cal</span>
+                            )}
+                            {item.spiceLevel !== 'none' && (
+                              <span className="meta-item">
+                                🌶️ {item.spiceLevel.charAt(0).toUpperCase() + item.spiceLevel.slice(1)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Item Action */}
+                      <div className="menu-item-action">
+                        <div className="price-container">
+                          {item.discountPrice ? (
+                            <>
+                              <span className="original-price">₹{item.price}</span>
+                              <span className="menu-item-price">₹{item.discountPrice}</span>
+                              <span className="discount-badge">
+                                {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
+                              </span>
+                            </>
+                          ) : (
+                            <span className="menu-item-price">₹{item.price}</span>
+                          )}
+                        </div>
+                        <button 
+                          className="add-btn"
+                          onClick={() => handleAddToCart(item)}
+                        >
+                          Add +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Desserts Section */}
+          {activeTab === 'desserts' && (
+            <div className="others-section">
+              <div className="category-header">
+                <h2>🍰 Desserts</h2>
+                <span className="item-total">{desserts.length} items</span>
+              </div>
+
+              {loading ? (
+                <div className="loading">Loading desserts...</div>
+              ) : desserts.length === 0 ? (
+                <div className="no-items">
+                  <p>No desserts available</p>
+                </div>
+              ) : (
+                <div className="menu-items-grid">
+                  {desserts.map(item => (
+                    <div key={item._id} className="menu-item-card">
+                      {/* Item Image */}
+                      <div className="menu-item-image">
+                        <img src={getItemImage(item)} alt={item.name} />
+                        <div className="type-badge" style={{
+                          background: '#fce7f3',
+                          color: '#a21caf'
+                        }}>
+                          🍰 DESSERTS
+                        </div>
+                        {item.isFeatured && (
+                          <div className="featured-badge">⭐ Featured</div>
+                        )}
+                        {item.isPopular && (
+                          <div className="popular-badge">🔥 Popular</div>
+                        )}
+                      </div>
+
+                      {/* Item Info */}
+                      <div className="menu-item-info">
+                        <h4>{item.name}</h4>
+                        <p className="description">{item.description}</p>
+                        
+                        {/* Additional Info */}
+                        {(item.preparationTime || item.calories || item.spiceLevel !== 'none') && (
+                          <div className="item-meta">
+                            {item.preparationTime && (
+                              <span className="meta-item">⏱️ {item.preparationTime} min</span>
+                            )}
+                            {item.calories && (
+                              <span className="meta-item">🔥 {item.calories} cal</span>
+                            )}
+                            {item.spiceLevel !== 'none' && (
+                              <span className="meta-item">
+                                🌶️ {item.spiceLevel.charAt(0).toUpperCase() + item.spiceLevel.slice(1)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Item Action */}
+                      <div className="menu-item-action">
+                        <div className="price-container">
+                          {item.discountPrice ? (
+                            <>
+                              <span className="original-price">₹{item.price}</span>
+                              <span className="menu-item-price">₹{item.discountPrice}</span>
+                              <span className="discount-badge">
+                                {Math.round((1 - item.discountPrice/item.price) * 100)}% OFF
+                              </span>
+                            </>
+                          ) : (
+                            <span className="menu-item-price">₹{item.price}</span>
+                          )}
+                        </div>
+                        <button 
+                          className="add-btn"
+                          onClick={() => handleAddToCart(item)}
+                        >
+                          Add +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </main>

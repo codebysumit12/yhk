@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
+import YHKLoader from './Yhkloader';
 import { API_CONFIG } from '../../config/api';
 import './Ingredients.css';
 
@@ -68,10 +69,7 @@ const Ingredients = () => {
     return (
       <div className="ingredients-page">
         <Nav onOpenCart={() => {}} />
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading fresh ingredients...</p>
-        </div>
+        <YHKLoader message="Loading fresh ingredients..." />
       </div>
     );
   }

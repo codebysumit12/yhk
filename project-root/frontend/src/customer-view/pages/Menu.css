@@ -5,6 +5,14 @@
     margin: 0 8px;
 }
 
+/* Rating Count Styles */
+.rating-count {
+  font-size: 11px;
+  color: #666;
+  margin-left: 4px;
+  font-weight: 400;
+}
+
 /* Video Hero Styles */
 .related-hero-video {
     position: relative;

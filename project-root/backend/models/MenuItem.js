@@ -65,13 +65,13 @@ const menuItemSchema = new mongoose.Schema({
   // Food Type & Details
   type: {
     type: String,
-    enum: ['veg', 'non-veg', 'vegan', 'egg'],
+    enum: ['veg', 'non-veg', 'vegan', 'egg', 'drinks', 'beverages', 'smoothies', 'desserts'],
     default: 'veg'
   },
   
   spiceLevel: {
     type: String,
-    enum: ['mild', 'medium', 'hot', 'extra-hot'],
+    enum: ['mild', 'medium', 'hot', 'extra-hot', 'none'],
     default: 'mild'
   },
   

@@ -5,18 +5,23 @@ import CustomersPage from '../pages/Customers';
 import BannersPage from '../pages/BannersPage';
 import CategoriesPage from '../pages/CategoriesPage';
 import ItemsPage from '../pages/ItemsPage';
-import IngredientsPage from '../pages/IngredientsPage';
 import OrdersPage from '../pages/OrdersPage';
 import DeliveriesPage from '../pages/DeliveriesPage';
+import DeliveryBoyApp from '../pages/DeliveryBoyApp';
 import AdminDashboard from '../pages/AdminDashboard';
+import OthersPage from '../pages/OthersPage';
+import ReportsPage from '../pages/ReportsPage';
+import ServicePricing from '../pages/ServicePricing';
 
 // Map URL paths → header titles
 const PATH_TITLES = {
   '/admin':            'Dashboard',
   '/admin/orders':     'Orders',
   '/admin/deliveries': 'Deliveries',
+  '/admin/delivery-app': 'Delivery Boy App',
   '/admin/customers':  'Customers',
   '/admin/analytics':  'Reports',
+  '/admin/pricing':   'Pricing',
   '/admin/settings':   'Settings',
 };
 
@@ -47,13 +52,13 @@ const AdminLayout = () => {
     ]},
     { section: 'Operations', items: [
       { name: 'Deliveries',  icon: '🛵', badge: '5',  badgeType: 'green',  to: '/admin/deliveries' },
+      { name: 'Delivery App', icon: '📱', badge: null, to: '/admin/delivery-app' },
       { name: 'Customers',   icon: '👥', badge: '8',  badgeType: 'blue',   to: '/admin/customers' },
-      { name: 'Promotions',  icon: '🏷️', badge: '3',  badgeType: 'orange', to: null },
-      { name: 'Ingredients', icon: '🥬', badge: '12', badgeType: 'purple', to: null },
+      { name: 'Promotions',  icon: '🏷️', badge: '3',  badgeType: 'orange', to: '/admin/promotions' },
     ]},
     { section: 'Analytics', items: [
-      { name: 'Reports',  icon: '📊', to: '/admin/analytics' },
-      { name: 'Settings', icon: '⚙️', to: '/admin/settings' },
+      { name: 'Reports',  icon: '📊', to: '/admin/reports' },
+      { name: 'Pricing', icon: '💰', to: '/admin/pricing' },
     ]},
   ];
 
@@ -73,7 +78,7 @@ const AdminLayout = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userToken');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/auth';
   };
@@ -186,9 +191,12 @@ const AdminLayout = () => {
             <Routes>
               <Route index element={<AdminDashboard />} />
               <Route path="orders"     element={<OrdersPage />} />
+              <Route path="pricing"    element={<ServicePricing />} />
               <Route path="deliveries" element={<DeliveriesPage />} />
+              <Route path="delivery-app" element={<DeliveryBoyApp />} />
               <Route path="customers"  element={<CustomersPage />} />
-              <Route path="analytics"  element={<div className="page-placeholder">📈 Analytics Page - Coming Soon</div>} />
+               <Route path="promotions"   element={<div className="page-placeholder">⚙️ Promotions Page - Coming Soon</div>} />
+              <Route path="reports" element={<ReportsPage />} />
               <Route path="settings"   element={<div className="page-placeholder">⚙️ Settings Page - Coming Soon</div>} />
               <Route path="*"          element={<Navigate to="/admin" replace />} />
             </Routes>
@@ -220,11 +228,11 @@ const AdminLayout = () => {
                   <span className="submenu-text">Items</span>
                 </button>
                 <button
-                  className={`submenu-btn ${activeSubNav === 'Ingredients' ? 'active' : ''}`}
-                  onClick={() => setActiveSubNav('Ingredients')}
+                  className={`submenu-btn ${activeSubNav === 'Others' ? 'active' : ''}`}
+                  onClick={() => setActiveSubNav('Others')}
                 >
-                  <span className="submenu-icon">🥕</span>
-                  <span className="submenu-text">Ingredients</span>
+                  <span className="submenu-icon">🥤</span>
+                  <span className="submenu-text">Beverages & Desserts</span>
                 </button>
               </div>
 
@@ -232,7 +240,7 @@ const AdminLayout = () => {
                 {activeSubNav === 'Banners'     && <BannersPage />}
                 {activeSubNav === 'Categories'  && <CategoriesPage />}
                 {activeSubNav === 'Items'       && <ItemsPage />}
-                {activeSubNav === 'Ingredients' && <IngredientsPage />}
+                {activeSubNav === 'Others' && <OthersPage />}
               </div>
             </div>
           )}

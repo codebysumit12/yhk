@@ -1,34 +1,89 @@
 import express from 'express';
+
 import {
+
   getAllOrders,
+
   getMyOrders,
+
   getOrderById,
+
   createOrder,
+
   updateOrder,
+
   updateOrderStatus,
+
   deleteOrder,
+
   trackOrder,
+
   cancelOrder,
-  rateOrder
+
+  rateOrder,
+
+  backfillItemRatings,
+
+  assignDeliveryBoy,
+
+  getMyDeliveries,
+
+  verifyDeliveryOtp,
+
+  sendDeliveryOtp
+
 } from '../controllers/orderController.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
+
+import { protect, adminOnly, deliveryBoy } from '../middleware/authMiddleware.js';
+
+
 
 const router = express.Router();
 
+
+
 // Public routes
+
 router.get('/track', trackOrder);
 
+
+
 // Protected routes (User)
+
 router.post('/', protect, createOrder);
+
 router.get('/my-orders', protect, getMyOrders);
-router.get('/:id', protect, getOrderById);
+
+router.get('/my-deliveries', protect, deliveryBoy, getMyDeliveries);
+
+router.post('/:id/send-otp', protect, deliveryBoy, sendDeliveryOtp);
+
+router.post('/:id/verify-otp', protect, deliveryBoy, verifyDeliveryOtp);
+
 router.patch('/:id', protect, updateOrder);
+
 router.put('/:id/cancel', protect, cancelOrder);
-router.post('/:id/rate', protect, rateOrder);
+
+router.post('/:id/rating', protect, rateOrder);
+
+
 
 // Protected routes (Admin)
+
 router.get('/', protect, adminOnly, getAllOrders);
+
 router.put('/:id/status', protect, adminOnly, updateOrderStatus);
+
+router.put('/:id/assign-delivery', protect, adminOnly, assignDeliveryBoy);
+
 router.delete('/:id', protect, adminOnly, deleteOrder);
+
+
+
+// Order by ID route (must be last)
+
+router.get('/:id', protect, getOrderById);
+
+
 
 export default router;

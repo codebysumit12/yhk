@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { calculateOrderPricing } from '../services/pricingService';
 import './CartSidebar.css';
 
-const CartSidebar = ({ isOpen, onClose, cart: externalCart }) => {
+const CartSidebar = ({ isOpen, onClose, cart: externalCart, isUpdatingCart, setIsUpdatingCart }) => {
+  const [cart, setCart] = useState(externalCart || []);
   const [pricing, setPricing] = useState({
     subtotal: 0,
     discount: 0,
@@ -15,13 +16,13 @@ const CartSidebar = ({ isOpen, onClose, cart: externalCart }) => {
     breakdown: {}
   });
   const [pricingLoading, setPricingLoading] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [cartUpdating, setCartUpdating] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (externalCart) {
-      setCart(externalCart);
-    }
-  }, [isOpen, externalCart]);
+    setCart(externalCart || []);
+  }, [externalCart]);
 
   // Calculate dynamic pricing whenever cart changes
   useEffect(() => {
@@ -68,35 +69,53 @@ const CartSidebar = ({ isOpen, onClose, cart: externalCart }) => {
     calculatePricing();
   }, [cart]);
 
-  const loadCart = () => {
-    const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    setCart(savedCart);
-  };
-
   const updateCart = (updatedCart) => {
     setCart(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
     window.dispatchEvent(new Event('storage'));
   };
 
-  const increaseQuantity = (index) => {
-    const updated = [...cart];
-    updated[index].quantity += 1;
-    updateCart(updated);
+  const increaseQuantity = async (index) => {
+    if (setIsUpdatingCart) {
+      setIsUpdatingCart(true);
+    }
+    try {
+      const updated = [...cart];
+      updated[index].quantity = updated[index].quantity + 1;
+      updateCart(updated);
+    } finally {
+      if (setIsUpdatingCart) {
+        setIsUpdatingCart(false);
+      }
+    }
   };
 
-  const decreaseQuantity = (index) => {
-    const updated = [...cart];
-    if (updated[index].quantity > 1) {
+  const decreaseQuantity = async (index) => {
+    if (cart[index].quantity <= 1) return;
+    
+    if (setIsUpdatingCart) {
+      setIsUpdatingCart(true);
+    }
+    try {
+      const updated = [...cart];
       updated[index].quantity -= 1;
       updateCart(updated);
+    } finally {
+      if (setIsUpdatingCart) {
+        setIsUpdatingCart(false);
+      }
     }
   };
 
   const removeItem = (index) => updateCart(cart.filter((_, i) => i !== index));
 
   const clearCart = () => {
-    if (window.confirm('Clear all items from cart?')) updateCart([]);
+    setShowClearConfirm(true);
+  };
+
+  const handleClearCart = () => {
+    updateCart([]);
+    setShowClearConfirm(false);
   };
 
   const totalItems = cart.reduce((n, item) => n + (item.quantity || 1), 0);
@@ -251,6 +270,33 @@ const CartSidebar = ({ isOpen, onClose, cart: externalCart }) => {
         )}
 
       </div>
+
+      {/* Clear Cart Confirmation Dialog */}
+      {showClearConfirm && (
+        <div className="confirm-dialog-overlay">
+          <div className="confirm-dialog">
+            <div className="confirm-dialog-content">
+              <div className="confirm-dialog-icon">🗑️</div>
+              <h3>Clear Cart?</h3>
+              <p>Are you sure you want to remove all items from your cart? This action cannot be undone.</p>
+              <div className="confirm-dialog-actions">
+                <button 
+                  className="btn-cancel"
+                  onClick={() => setShowClearConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn-confirm-delete"
+                  onClick={handleClearCart}
+                >
+                  Clear Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

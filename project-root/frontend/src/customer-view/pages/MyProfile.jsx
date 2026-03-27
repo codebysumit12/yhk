@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from './Nav';
+import YHKLoader from './Yhkloader';
 import './MyProfile.css';
 import { API_CONFIG } from '../../config/api';
 
@@ -33,7 +34,7 @@ const MyProfile = () => {
 
   const navigate = useNavigate();
   const API_URL = API_CONFIG.API_URL;
-  const token = localStorage.getItem('userToken');
+  const token = localStorage.getItem('userToken') || localStorage.getItem('token');
 
   // Fetch user profile
   const fetchProfile = useCallback(async () => {
@@ -188,10 +189,7 @@ const MyProfile = () => {
         </div>
 
         {loading && !user ? (
-          <div className="loading-state">
-            <div className="spinner-large"></div>
-            <p>Loading profile...</p>
-          </div>
+          <YHKLoader message="Loading profile..." fullPage />
         ) : (
           <div className="profile-grid">
             {/* Personal Information */}

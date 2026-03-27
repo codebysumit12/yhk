@@ -222,9 +222,19 @@
 
 .cart-item {
   position: relative;
+  justify-content: flex-start;
+}
+
+.cart-item span {
+  flex: none;
+  margin-right: auto;
 }
 
 .cart-count-badge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   background: #22c55e;
   color: white;
   font-size: 11px;
@@ -370,16 +380,6 @@
   gap: 6px;
 }
 
-.nav a:hover {
-  background: #f8f8f8;
-  color: hwb(120 4% 11% / 0.674);
-}
-
-.nav a.active {
-  background: #b8ecc5;
-  color: white;
-}
-
 /* Track Order Button - Special Styling */
 .track-order-nav {
   background: linear-gradient(135deg, #22c55e, #16a34a) !important;
@@ -474,11 +474,69 @@
     font-size: 12px;
   }
   
-  .track-order-nav {
-    font-size: 12px !important;
-  }
-  
   .track-order-nav i {
     font-size: 14px !important;
   }
+}
+
+/* ========================================
+   ENHANCED NAVIGATION TRANSITIONS
+   ======================================== */
+
+/* CSS Custom Properties */
+:root {
+  --zomato-red: #ff4747;
+  --zomato-green: #22c55e;
+}
+
+/* Smooth active state transition */
+.nav a {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background: var(--zomato-red);
+  transform: translateX(-50%);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 3px 3px 0 0;
+}
+
+.nav a.active::after {
+  width: 100%;
+}
+
+.nav a:hover::after {
+  width: 100%;
+  background: var(--zomato-green);
+}
+
+/* Active link styles */
+.nav a.active {
+  color: var(--zomato-red);
+  font-weight: 600;
+  background: #52d1701a;
+}
+
+/* Hover state */
+.nav a:hover {
+  color: var(--zomato-green);
+  background: rgba(153, 221, 166, 0.802);
+  transform: translateY(-2px);
+}
+
+/* Icon color transition */
+.nav a i {
+  transition: transform 0.3s ease;
+}
+
+.nav a:hover i,
+.nav a.active i {
+  transform: scale(1.1);
 }

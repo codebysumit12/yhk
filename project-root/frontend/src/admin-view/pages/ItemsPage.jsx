@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { API_CONFIG } from '../../config/api';
+import { API_CONFIG, authHeaders } from '../../config/api';
 import './items-page.css';
 
 const ItemsPage = () => {
@@ -103,7 +103,7 @@ const [prepStepInput, setPrepStepInput] = useState('');
   });
   
   const API_URL = API_CONFIG.API_URL;
-  const token = localStorage.getItem('userToken');
+  const token = localStorage.getItem('userToken') || localStorage.getItem('token');
 
   const addHealthBenefit = () => {
   if (healthBenefitInput.trim()) {
@@ -129,9 +129,16 @@ const removePrepStep = (index) => {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/items`);
+      const response = await fetch(`${API_URL}/items?populate=category`, {
+        headers: authHeaders()
+      });
       const data = await response.json();
       if (data.success) {
+        // Debug: See exactly what category looks like on first item
+        console.log('📦 RAW items received:', data.data.length, 'items');
+        console.log('📦 RAW item[0].category:', JSON.stringify(data.data[0]?.category));
+        console.log('📦 RAW item[0] keys:', Object.keys(data.data[0] || {}));
+        console.log('📦 RAW item[0] full:', JSON.stringify(data.data[0], null, 2));
         setItems(data.data);
       }
     } catch (error) {
@@ -144,13 +151,20 @@ const removePrepStep = (index) => {
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/categories`);
+      console.log('🔍 Fetching categories...');
+      const response = await fetch(`${API_URL}/categories`, {
+        headers: authHeaders()
+      });
       const data = await response.json();
+      console.log('📥 Categories response:', data);
       if (data.success) {
+        console.log('✅ Setting categories:', data.data?.length || 0, 'categories');
         setCategories(data.data);
+      } else {
+        console.log('❌ Categories API failed:', data);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('❌ Error fetching categories:', error);
     }
   }, [API_URL]);
 
@@ -300,6 +314,15 @@ const removePrepStep = (index) => {
     e.preventDefault();
     setUploading(true);
 
+    console.log('🔍 Form data before submit:', formData);
+
+    // Validation
+    if (!formData.name || formData.name.trim() === '') {
+      alert('Item name is required!');
+      setUploading(false);
+      return;
+    }
+
     try {
       const formDataToSend = new FormData();
 
@@ -309,6 +332,7 @@ const removePrepStep = (index) => {
       });
 
       // Add text fields
+      console.log('🔍 Appending name:', formData.name);
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('categoryId', formData.category);
@@ -334,6 +358,12 @@ const removePrepStep = (index) => {
       formDataToSend.append('allergens', JSON.stringify(formData.allergens));
       formDataToSend.append('tags', JSON.stringify(formData.tags));
       formDataToSend.append('nutritionInfo', JSON.stringify(formData.nutritionInfo));
+
+      // Debug FormData contents
+      console.log('🔍 FormData contents:');
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`  ${key}:`, value);
+      }
 
       const url = editingItem 
         ? `${API_URL}/items/${editingItem._id}`
@@ -656,28 +686,61 @@ const removePrepStep = (index) => {
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           item.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || (item.category && item.category._id === filterCategory);
+    const itemCategoryId = item.categoryId && typeof item.categoryId === 'object' 
+      ? String(item.categoryId._id)   // populated object
+      : String(item.categoryId || '');      // raw string ID or empty string if null
+
+    const matchesCategory = filterCategory === 'all' || itemCategoryId === String(filterCategory);
     const matchesType = filterType === 'all' || (item.type || 'veg') === filterType;
     const matchesStatus = filterStatus === 'all' || 
                           (filterStatus === 'available' && item.isAvailable) ||
                           (filterStatus === 'unavailable' && !item.isAvailable);
-    return matchesSearch && matchesCategory && matchesType && matchesStatus;
+    // Exclude smoothies, drinks, and desserts from admin view only when not actively filtering for them
+    const isExcludedType = filterType === 'all' && 
+      ['smoothies', 'drinks', 'desserts'].includes(item.type);
+    
+    // Debug logging for category filtering
+    if (filterCategory !== 'all') {
+      console.log('🔍 Category filter debug:');
+      console.log('  - filterCategory:', filterCategory);
+      console.log('  - item.categoryId type:', typeof item.categoryId);
+      console.log('  - item.categoryId value:', item.categoryId);
+      console.log('  - itemCategoryId:', itemCategoryId);
+      console.log('  - matchesCategory:', matchesCategory);
+      console.log('  - itemName:', item.name);
+    }
+    
+    return matchesSearch && matchesCategory && matchesType && matchesStatus && !isExcludedType;
   });
 
   // Stats
+  const adminVisibleItems = items.filter(item => !['smoothies', 'drinks', 'desserts'].includes(item.type));
   const stats = {
-    total: items.length,
-    available: items.filter(i => i.isAvailable).length,
-    featured: items.filter(i => i.isFeatured).length,
-    veg: items.filter(i => i.type === 'veg').length
+    total: adminVisibleItems.length,
+    available: adminVisibleItems.filter(i => i.isAvailable).length,
+    featured: adminVisibleItems.filter(i => i.isFeatured).length,
+    veg: adminVisibleItems.filter(i => i.type === 'veg').length
   };
+
+  // Build category lookup map for frontend workaround
+  const categoryMap = {};
+  categories.forEach(cat => { categoryMap[cat._id] = cat; });
+
+  // Debug logging for categories and filter
+  console.log('🔍 Categories state:', categories);
+  console.log('🔍 Categories details:', categories.map(cat => ({ id: cat._id, name: cat.name })));
+  console.log('🔍 Current filterCategory:', filterCategory);
+  console.log('🔍 Filtered items count:', filteredItems.length);
 
   // Type emoji mapping
   const typeEmojis = {
     veg: '🟢',
     'non-veg': '🔴',
     vegan: '🟢',
-    egg: '🟡'
+    egg: '🟡',
+    drinks: '🥤',
+    smoothies: '🥤',
+    desserts: '🍰'
   };
 
   // Spice level emoji mapping
@@ -765,6 +828,9 @@ const removePrepStep = (index) => {
           <option value="non-veg">🔴 Non-Veg</option>
           <option value="vegan">🟢 Vegan</option>
           <option value="egg">🟡 Egg</option>
+          <option value="drinks">🥤 Drinks</option>
+          <option value="smoothies">🥤 Smoothies</option>
+          <option value="desserts">🍰 Desserts</option>
         </select>
         <select 
           className="filter-select"
@@ -842,14 +908,28 @@ const removePrepStep = (index) => {
 
       {/* Category */}
       <td>
-        {item.category && (
-          <span className="category-tag-small" style={{ 
-            background: (item.category.color || '#22c55e') + '20',
-            color: item.category.color || '#22c55e' 
-          }}>
-            {item.category.icon || '🍽️'} {item.category.name || 'Unknown'}
-          </span>
-        )}
+        {(() => {
+          if (!item.categoryId) {
+            return <span className="category-tag-small" style={{ 
+              background: '#e5e7eb',
+              color: '#6b7280' 
+            }}>
+              🍽️ No Category
+            </span>;
+          }
+          
+          const cat = typeof item.categoryId === 'object' 
+            ? item.categoryId 
+            : categoryMap[item.categoryId];
+          return cat && (
+            <span className="category-tag-small" style={{ 
+              background: (cat.color || '#22c55e') + '20',
+              color: cat.color || '#22c55e' 
+            }}>
+              {cat.icon || '🍽️'} {cat.name || 'Unknown'}
+            </span>
+          );
+        })()}
       </td>
 
       {/* Price */}
@@ -873,9 +953,13 @@ const removePrepStep = (index) => {
       <td>
         <span className="type-badge-small" style={{
           background: (item.type === 'veg' || item.type === 'vegan') ? '#dcfce7' : 
-                      item.type === 'non-veg' ? '#fee2e2' : '#fef3c7',
+                      (item.type === 'non-veg' || item.type === 'egg') ? '#fee2e2' : 
+                      (item.type === 'drinks' || item.type === 'smoothies') ? '#dbeafe' :
+                      item.type === 'desserts' ? '#fce7f3' : '#fef3c7',
           color: (item.type === 'veg' || item.type === 'vegan') ? '#15803d' : 
-                 item.type === 'non-veg' ? '#b91c1c' : '#b45309'
+                 (item.type === 'non-veg' || item.type === 'egg') ? '#b91c1c' : 
+                 (item.type === 'drinks' || item.type === 'smoothies') ? '#0369a1' :
+                 item.type === 'desserts' ? '#a21caf' : '#b45309'
         }}>
           {typeEmojis[item.type] || '🟢'} {(item.type || 'veg').toUpperCase()}
         </span>
@@ -1035,6 +1119,9 @@ const removePrepStep = (index) => {
                       <option value="non-veg">🔴 Non-Vegetarian</option>
                       <option value="vegan">🟢 Vegan</option>
                       <option value="egg">🟡 Contains Egg</option>
+                      <option value="drinks">🥤 Drinks</option>
+                      <option value="smoothies">🥤 Smoothies</option>
+                      <option value="desserts">🍰 Desserts</option>
                     </select>
                   </div>
                 </div>
@@ -1056,6 +1143,7 @@ const removePrepStep = (index) => {
                       min="0"
                       step="0.01"
                       placeholder="299"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
 
@@ -1069,6 +1157,7 @@ const removePrepStep = (index) => {
                       min="0"
                       step="0.01"
                       placeholder="249"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
                 </div>
@@ -1090,6 +1179,7 @@ const removePrepStep = (index) => {
         max="5"
         step="0.1"
         placeholder="4.5"
+        onWheel={(e) => e.target.blur()}
       />
     </div>
   </div>
@@ -1209,6 +1299,7 @@ const removePrepStep = (index) => {
                       onChange={handleInputChange}
                       min="0"
                       placeholder="20"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
 
@@ -1221,6 +1312,7 @@ const removePrepStep = (index) => {
                       onChange={handleInputChange}
                       min="0"
                       placeholder="450"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
                 </div>
@@ -1235,6 +1327,7 @@ const removePrepStep = (index) => {
                       onChange={handleInputChange}
                       min="0"
                       placeholder="0"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
                 </div>
@@ -1339,6 +1432,7 @@ const removePrepStep = (index) => {
                       min="0"
                       step="0.1"
                       placeholder="15"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
 
@@ -1352,6 +1446,7 @@ const removePrepStep = (index) => {
                       min="0"
                       step="0.1"
                       placeholder="45"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
                 </div>
@@ -1367,6 +1462,7 @@ const removePrepStep = (index) => {
                       min="0"
                       step="0.1"
                       placeholder="12"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
 
@@ -1381,6 +1477,7 @@ const removePrepStep = (index) => {
       min="0"
       step="0.1"
       placeholder="200"
+      onWheel={(e) => e.target.blur()}
     />
   </div>
   <div className="form-group">
@@ -1393,6 +1490,7 @@ const removePrepStep = (index) => {
       min="0"
       step="0.1"
       placeholder="8"
+      onWheel={(e) => e.target.blur()}
     />
   </div>
 </div>
@@ -1408,6 +1506,7 @@ const removePrepStep = (index) => {
       min="0"
       step="0.1"
       placeholder="320"
+      onWheel={(e) => e.target.blur()}
     />
   </div>
 </div>
@@ -1422,6 +1521,7 @@ const removePrepStep = (index) => {
                       min="0"
                       step="0.1"
                       placeholder="5"
+                      onWheel={(e) => e.target.blur()}
                     />
                   </div>
                 </div>
@@ -1550,6 +1650,7 @@ const removePrepStep = (index) => {
                           value={ingredientFormData.nutritionPer100g.calories} 
                           onChange={handleIngredientInputChange}
                           autoComplete="off"
+                          onWheel={(e) => e.target.blur()}
                         />
                       </div>
                       <div className="form-group">
@@ -1561,6 +1662,7 @@ const removePrepStep = (index) => {
                           value={ingredientFormData.nutritionPer100g.protein} 
                           onChange={handleIngredientInputChange}
                           autoComplete="off"
+                          onWheel={(e) => e.target.blur()}
                         />
                       </div>
                       <div className="form-group">
@@ -1572,6 +1674,7 @@ const removePrepStep = (index) => {
                           value={ingredientFormData.nutritionPer100g.carbs} 
                           onChange={handleIngredientInputChange}
                           autoComplete="off"
+                          onWheel={(e) => e.target.blur()}
                         />
                       </div>
                       <div className="form-group">
@@ -1583,6 +1686,7 @@ const removePrepStep = (index) => {
                           value={ingredientFormData.nutritionPer100g.fat} 
                           onChange={handleIngredientInputChange}
                           autoComplete="off"
+                          onWheel={(e) => e.target.blur()}
                         />
                       </div>
                     </div>

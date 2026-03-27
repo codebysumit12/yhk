@@ -14,7 +14,7 @@ const collectionValidators = {
           price: { bsonType: 'double', minimum: 0, description: 'Price must be a positive number' },
           category: {
             bsonType: 'string',
-            enum: ['appetizer', 'main_course', 'dessert', 'beverage', 'side_dish'],
+            enum: ['veg', 'non-veg', 'vegan', 'egg', 'drinks', 'smoothies', 'desserts'],
             description: 'Valid category is required'
           },
           image: { bsonType: 'string' },

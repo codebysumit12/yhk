@@ -271,6 +271,333 @@
   box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
 }
 
+/* Delivery Person Assignment Cell */
+.delivery-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dp-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.delivery-person div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.delivery-person strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.delivery-person small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.assign-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assign-select {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: white;
+  color: var(--text);
+}
+
+.assign-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
+}
+
+.btn-assign {
+  padding: 6px 12px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-assign:hover:not(:disabled) {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.btn-assign:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Order Total & Payment Badge */
+.order-total {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.payment-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.payment-badge.paid {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.payment-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.payment-badge.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* OTP Modal Specific Styles */
+.otp-modal {
+  max-width: 420px;
+}
+
+.otp-info-box {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #bae6fd;
+}
+
+.otp-info-box p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #0e7490;
+}
+
+.otp-customer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.otp-cust-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.otp-customer-row div {
+  flex: 1;
+}
+
+.otp-customer-row strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.otp-customer-row small {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.otp-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.otp-input-group {
+  margin-bottom: 20px;
+}
+
+.otp-input-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.otp-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 4px;
+  transition: all 0.3s;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+}
+
+.otp-input.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.otp-error-msg {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #ef4444;
+}
+
+.otp-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-verify {
+  flex: 1;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.btn-verify:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+.btn-verify:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Table Action Buttons - OTP Specific */
+.table-action-btn.otp {
+  background: #ede9fe; 
+  color: #7c3aed;
+  border: 1.5px solid #c4b5fd; 
+  font-size: 15px;
+}
+.table-action-btn.otp:hover { 
+  background: #c4b5fd; 
+  color: #fff;
+}
+
+/* OTP Modal */
+.otp-modal { max-width: 440px; width: 100%; }
+
+.otp-info-box {
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 20px;
+  font-size: 13.5px; color: #1e40af; line-height: 1.6;
+}
+.otp-info-box p + p { margin-top: 4px; }
+
+.otp-customer-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px; background: #f9fafb; border: 1px solid #e5e7eb;
+  border-radius: 10px; margin-bottom: 24px;
+}
+
+.otp-cust-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff; font-size: 18px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.otp-customer-row > div { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.otp-customer-row strong { font-size: 14px; color: #111827; }
+.otp-customer-row small  { font-size: 12px; color: #6b7280; }
+.otp-amount { font-size: 16px; font-weight: 700; color: #f97316; }
+
+.otp-input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.otp-input-group label { font-size: 13px; font-weight: 600; color: #374151; }
+
+.otp-input {
+  width: 100%; padding: 14px 16px;
+  font-size: 26px; font-weight: 700; letter-spacing: 12px; text-align: center;
+  border: 2px solid #e5e7eb; border-radius: 10px;
+  outline: none; color: #111827; background: #fff; box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.otp-input:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.15); }
+.otp-input.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+
+.otp-error-msg { font-size: 12.5px; color: #ef4444; font-weight: 500; }
+
+.otp-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+.btn-secondary {
+  padding: 10px 20px; background: #f3f4f6; color: #374151;
+  border: 1.5px solid #d1d5db; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.btn-secondary:hover { background: #e5e7eb; }
+
+.btn-verify {
+  padding: 10px 22px; background: #10b981; color: #fff;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background 0.2s;
+}
+.btn-verify:disabled { background: #d1d5db; cursor: not-allowed; }
+.btn-verify:not(:disabled):hover { background: #059669; }
+
+.no-delivery-person { font-size: 12px; color: #9ca3af; font-style: italic; }
+
 /* Responsive */
 @media (max-width: 1024px) {
   .deliveries-table {
@@ -293,5 +620,20 @@
 
   .form-actions {
     flex-direction: column;
+  }
+
+  .otp-modal {
+    margin: 20px;
+    max-width: none;
+  }
+
+  .otp-customer-row {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .assign-cell {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

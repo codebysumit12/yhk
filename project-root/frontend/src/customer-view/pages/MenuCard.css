@@ -1,0 +1,465 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
+
+/* ── Design tokens ── */
+:root {
+  --cream:       #f5eedc;
+  --cream-dark:  #ede2c4;
+  --cream-light: #fdf8ee;
+  --ink:         #1c1208;
+  --ink-soft:    #3d2e12;
+  --ink-muted:   #7a6040;
+  --green:       #2d5a27;
+  --green-light: #4a7c42;
+  --green-pale:  #e8f0e6;
+  --gold:        #b8860b;
+  --gold-light:  #d4a017;
+  --gold-pale:   #f9f0d8;
+  --red:         #8b1a1a;
+  --border:      #c9a84c;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Page ── */
+.menucard-page {
+  min-height: 100vh;
+  background-color: #2a1f0e;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.015) 40px,
+      rgba(255,255,255,0.015) 41px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.015) 40px,
+      rgba(255,255,255,0.015) 41px
+    );
+  padding: 32px 16px 64px;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* ── The "card" itself ── */
+.menucard-shell {
+  max-width: 860px;
+  margin: 0 auto;
+  background: var(--cream);
+  background-image:
+    /* subtle paper grain */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  border: 1px solid #b8900a;
+  box-shadow:
+    0 0 0 8px var(--cream-dark),
+    0 0 0 9px var(--border),
+    0 0 0 16px var(--cream-dark),
+    0 0 0 17px rgba(184,134,11,0.4),
+    0 30px 80px rgba(0,0,0,0.7);
+  position: relative;
+}
+
+/* ── Ornamental border inside the card ── */
+.menucard-shell::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+  z-index: 1;
+}
+.menucard-shell::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(184,134,11,0.3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Corner ornaments ── */
+.menucard-corners {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.menucard-corners span {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--gold);
+  opacity: 0.7;
+}
+.menucard-corners span:nth-child(1) { top: 8px;  left: 8px;  }
+.menucard-corners span:nth-child(2) { top: 8px;  right: 8px; transform: scaleX(-1); }
+.menucard-corners span:nth-child(3) { bottom: 8px; left: 8px;  transform: scaleY(-1); }
+.menucard-corners span:nth-child(4) { bottom: 8px; right: 8px; transform: scale(-1,-1); }
+
+/* ── Inner content wrapper ── */
+.menucard-inner {
+  padding: 48px 52px 52px;
+  position: relative;
+  z-index: 3;
+}
+
+/* ── Header ── */
+.menucard-header {
+  text-align: center;
+  padding-bottom: 32px;
+  border-bottom: none;
+  background: none;
+}
+
+.menucard-crest {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.menucard-title h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.menucard-subtitle-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0 4px;
+}
+.menucard-subtitle-line::before,
+.menucard-subtitle-line::after {
+  content: '';
+  flex: 1;
+  max-width: 100px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold));
+}
+.menucard-subtitle-line::after {
+  background: linear-gradient(to left, transparent, var(--gold));
+}
+.menucard-subtitle-line span {
+  font-family: 'IM Fell English', serif;
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.menucard-title p {
+  font-family: 'IM Fell English', serif;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--ink-muted);
+  margin-top: 4px;
+}
+
+/* ── Gold divider ornament ── */
+.menucard-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 24px 0;
+}
+.menucard-divider::before,
+.menucard-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border));
+}
+.menucard-divider::after {
+  background: linear-gradient(to left, transparent, var(--border));
+}
+.menucard-divider-gem {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+.menucard-divider-dot {
+  width: 4px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Filters ── */
+.menucard-filters {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 6px 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 0;
+  font-family: 'IM Fell English', serif;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-pill:hover {
+  background: var(--gold-pale);
+  color: var(--ink);
+}
+.filter-pill.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--cream);
+}
+
+/* ── Category section ── */
+.menucard-category {
+  margin-bottom: 48px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 0;
+  border-bottom: none;
+  margin-bottom: 0;
+  position: relative;
+}
+
+.category-header-text {
+  flex: 1;
+}
+
+.category-name-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.category-icon {
+  font-size: 36px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.category-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.category-header p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  color: var(--ink-muted);
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+.category-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 18px;
+}
+.category-rule-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.category-rule-leaf {
+  font-size: 14px;
+  color: var(--green-light);
+}
+
+/* ── Items ── */
+.menucard-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.menucard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px dashed rgba(184,134,11,0.3);
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 16px;
+}
+.menucard-item:last-child {
+  border-bottom: none;
+}
+.menucard-item:hover {
+  background: rgba(184,134,11,0.05);
+  margin: 0 -8px;
+  padding: 14px 8px;
+  border-radius: 2px;
+}
+
+/* ── Item left ── */
+.item-left {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.item-type {
+  font-size: 14px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.item-details h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  margin-bottom: 3px;
+}
+
+.item-description {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  margin-bottom: 4px;
+  max-width: 420px;
+}
+
+.spice-indicator {
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+/* ── Dotted leader line ── */
+.item-leader {
+  flex: 1;
+  border-bottom: 1px dotted rgba(122,96,64,0.35);
+  margin: 0 8px;
+  margin-bottom: 4px;
+  align-self: flex-end;
+  min-width: 20px;
+}
+
+/* ── Item right ── */
+.item-right {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
+.item-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.price-original {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.price-strike {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  color: var(--ink-muted);
+  text-decoration: line-through;
+}
+
+/* ── Footer ── */
+.menucard-footer {
+  text-align: center;
+  padding: 28px 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.menucard-footer p {
+  font-family: 'IM Fell English', serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin: 6px 0;
+}
+
+/* ── Loading / Empty ── */
+.menucard-loading,
+.menucard-empty {
+  text-align: center;
+  padding: 80px 20px;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--ink-muted);
+}
+
+/* ── Loading page wrapper ── */
+.menucard-page-loading {
+  min-height: 100vh;
+  background: #2a1f0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.menucard-page-loading .menucard-loading {
+  color: var(--cream);
+  padding: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .menucard-page { padding: 12px 6px 40px; }
+  .menucard-inner { padding: 36px 24px 36px; }
+  .menucard-title h1 { font-size: 34px; }
+  .category-header h2 { font-size: 22px; }
+  .item-leader { display: none; }
+  .menucard-item { gap: 8px; }
+}
+
+/* ── Print ── */
+@media print {
+  .menucard-page { background: white; padding: 0; }
+  .menucard-shell {
+    box-shadow: none;
+    border: 2px solid #b8900a;
+  }
+  .menucard-filters { display: none; }
+  .menucard-item { cursor: default; }
+  .menucard-item:hover { background: transparent; margin: 0; padding: 14px 0; }
+}

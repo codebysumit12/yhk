@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .error { background: #fee; color: #c00; padding: 10px; border-radius: 4px; }
+        .success { background: #efe; color: #0c0; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Checkout Page Debug Test</h1>
+    
+    <div class="debug">
+        <h2>Step 1: Testing Basic JavaScript</h2>
+        <div id="basic-test">Loading...</div>
+    </div>
+
+    <div class="debug">
+        <h2>Step 2: Testing React Component</h2>
+        <div id="react-test">Loading...</div>
+    </div>
+
+    <div class="debug">
+        <h2>Step 3: Testing Delivery Object</h2>
+        <div id="delivery-test">Loading...</div>
+    </div>
+
+    <script>
+        console.log('🔍 Starting checkout debug test in browser...\n');
+
+        // Test 1: Basic JavaScript objects
+        try {
+            const addressForm = {
+                flatNo: '',
+                landmark: '',
+                addressType: 'home',
+                fullName: '',
+                addressLine1: 'Test Address',
+                addressLine2: '',
+                city: 'Pune',
+                state: 'Maharashtra',
+                pinCode: '411018'
+            };
+
+            console.log('✅ addressForm created:', addressForm);
+
+            // Test delivery object creation (this is where the error occurs)
+            const delivery = {
+                type: 'standard',
+                estimatedTime: new Date(Date.now() + 30 * 60 * 1000),
+                actualTime: null,
+                deliveryPerson: null
+            };
+
+            console.log('✅ delivery object created:', delivery);
+
+            // Test setting deliveryPerson (the exact error scenario)
+            delivery.deliveryPerson = null;
+            console.log('✅ deliveryPerson set successfully:', delivery.deliveryPerson);
+
+            document.getElementById('basic-test').innerHTML = '<div class="success">✅ Basic JavaScript test passed!</div>';
+
+        } catch (error) {
+            console.error('❌ Basic JavaScript test failed:', error.message);
+            console.error('❌ Stack trace:', error.stack);
+            document.getElementById('basic-test').innerHTML = '<div class="error">❌ Basic JavaScript test failed: ' + error.message + '</div>';
+        }
+
+        // Test 2: Test the exact scenario from Checkoutpage
+        try {
+            console.log('📦 Testing exact checkout scenario...');
+            
+            const orderPayload = {
+                customer: {
+                    name: addressForm.fullName || 'Test Customer',
+                    phone: '+919876543210',
+                    email: 'test@example.com'
+                },
+                deliveryAddress: {
+                    street: addressForm?.addressLine1 || 'Default Address',
+                    city: addressForm?.city || '',
+                    state: addressForm?.state || '',
+                    zipCode: addressForm?.pinCode || '',
+                    apartment: addressForm?.flatNo || '',
+                    landmark: addressForm?.landmark || '',
+                    instructions: 'Test instructions'
+                },
+                orderType: 'delivery',
+                paymentMethod: 'online',
+                delivery: {
+                    type: 'standard',
+                    estimatedTime: new Date(Date.now() + 30 * 60 * 1000),
+                    actualTime: null,
+                    deliveryPerson: null
+                }
+            };
+
+            console.log('✅ Order payload created successfully');
+            
+            // This is the exact line that causes the error in Checkoutpage
+            const jsonString = JSON.stringify(orderPayload);
+            console.log('✅ JSON.stringify successful');
+
+            document.getElementById('delivery-test').innerHTML = '<div class="success">✅ Delivery object test passed!</div>';
+
+        } catch (error) {
+            console.error('❌ Delivery object test failed:', error.message);
+            console.error('❌ Stack trace:', error.stack);
+            document.getElementById('delivery-test').innerHTML = '<div class="error">❌ Delivery object test failed: ' + error.message + '</div>';
+        }
+
+        // Test 3: Test undefined scenarios
+        try {
+            console.log('📦 Testing undefined scenarios...');
+            
+            let undefinedDelivery;
+            undefinedDelivery.deliveryPerson = null; // This should cause the exact error
+            
+        } catch (error) {
+            console.error('❌ Undefined test failed (expected):', error.message);
+            document.getElementById('react-test').innerHTML = '<div class="error">❌ Undefined test failed (expected): ' + error.message + '</div>';
+        }
+
+        console.log('\n🎯 Browser debug test completed!');
+    </script>
+</body>
+</html>

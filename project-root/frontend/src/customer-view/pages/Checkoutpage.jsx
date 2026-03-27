@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_CONFIG } from '../../config/api';
+import { calculateOrderPricing } from '../services/pricingService';
+import './Checkout.css';
 import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { auth } from '../../firebase';
-import { API_CONFIG } from '../../config/api';
-import './Checkout.css';
+import Nav from './Nav';
 
 const Checkoutpage = () => {
+  const [showAdvanced, setShowAdvanced] = useState(true); // Toggle between components
   const navigate = useNavigate();
 
   // ── Cart ──────────────────────────────────────────────────────────────────
@@ -26,20 +29,77 @@ const Checkoutpage = () => {
   }, []);
 
   // ── Pricing ───────────────────────────────────────────────────────────────
+  const [pricing, setPricing] = useState({
+    subtotal: 0,
+    discount: 0,
+    deliveryFee: 0,
+    packagingFee: 0,
+    gst: 0,
+    platformFee: 0,
+    total: 0,
+    breakdown: {}
+  });
+  const [pricingLoading, setPricingLoading] = useState(false);
+
+  // Calculate subtotal
   const subtotal = cartItems.reduce((sum, item) => {
     const price = item.finalPrice || item.discountPrice || item.price || 0;
     return sum + price * (item.quantity || 1);
   }, 0);
-  const discount    = Math.round(subtotal * 0.20);
-  const deliveryFee = 0;
-  const packaging   = 0;
-  const gst         = Math.round((subtotal - discount) * 0.05);
-  const total       = subtotal - discount + deliveryFee + packaging + gst;
+
+  // Calculate dynamic pricing whenever subtotal changes
+  useEffect(() => {
+    const calculatePricing = async () => {
+      if (subtotal === 0) {
+        setPricing({
+          subtotal: 0,
+          discount: 0,
+          deliveryFee: 0,
+          packagingFee: 0,
+          gst: 0,
+          platformFee: 0,
+          total: 0,
+          breakdown: {}
+        });
+        return;
+      }
+
+      setPricingLoading(true);
+      try {
+        // Default to 5km distance for delivery calculation
+        const pricingResult = await calculateOrderPricing(subtotal, 5);
+        setPricing(pricingResult);
+      } catch (error) {
+        console.error('Error calculating pricing:', error);
+        // Fallback to simple calculation
+        const discount = Math.round(subtotal * 0.20);
+        const deliveryFee = 0;
+        const packaging = 0;
+        const gst = Math.round((subtotal - discount) * 0.05);
+        const total = subtotal - discount + deliveryFee + packaging + gst;
+        
+        setPricing({
+          subtotal,
+          discount,
+          deliveryFee,
+          packagingFee: packaging,
+          gst,
+          platformFee: 0,
+          total,
+          breakdown: {}
+        });
+      } finally {
+        setPricingLoading(false);
+      }
+    };
+
+    calculatePricing();
+  }, [subtotal]);
 
   // ── Phone / OTP state ─────────────────────────────────────────────────────
   const [phoneStep, setPhoneStep]               = useState('input'); // input | otp | verified
   const [phoneNumber, setPhoneNumber]           = useState('');
-  const [otp, setOtp]                           = useState(['', '', '', '', '', '', '']);
+  const [otp, setOtp]                           = useState(['', '', '', '', '', '']);
   const [phoneError, setPhoneError]             = useState(false);
   const [otpError, setOtpError]                 = useState(false);
   const [resendTimer, setResendTimer]           = useState(0);
@@ -55,6 +115,8 @@ const Checkoutpage = () => {
   const [addressStep, setAddressStep]       = useState('location'); // location | manual | saved
   const [detectedAddress, setDetectedAddress] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState(0);
+  const [locationLoading, setLocationLoading] = useState(false);
+
   const [addressForm, setAddressForm]       = useState({
     flatNo: '', landmark: '', addressType: 'home',
     fullName: '', addressLine1: '', addressLine2: '',
@@ -67,6 +129,9 @@ const Checkoutpage = () => {
   const [contactlessDelivery, setContactlessDelivery] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderNumber]                           = useState(`ORD-${Math.floor(1000 + Math.random() * 9000)}`);
+  
+  // ── Payment method state ───────────────────────────────────────────────────
+  const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' | 'cash'
 
   // ── Resend timer ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -98,31 +163,77 @@ const Checkoutpage = () => {
 
   // ── reCAPTCHA init ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (phoneStep === 'input' && !recaptchaVerifierRef.current) {
-      const timer = setTimeout(() => {
+    // Only initialize when on input step
+    if (phoneStep !== 'input') return;
+    
+    const timer = setTimeout(() => {
+      try {
+        const container = document.getElementById('checkout-recaptcha-container');
+        if (!container) { 
+          console.error('❌ reCAPTCHA container not found'); 
+          return; 
+        }
+        
+        // Check if container is still in DOM
+        if (!document.contains(container)) {
+          console.error('❌ reCAPTCHA container not in DOM');
+          return;
+        }
+        
+        // Clear any existing content first
         try {
-          const container = document.getElementById('checkout-recaptcha-container');
-          if (!container) { console.error('❌ reCAPTCHA container not found'); return; }
           container.innerHTML = '';
+        } catch (e) {
+          console.warn('⚠️ Container clear warning:', e);
+        }
+        
+        // Create new verifier with error handling
+        try {
           recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'checkout-recaptcha-container', {
             size: 'invisible',
-            callback: () => console.log('✅ reCAPTCHA solved'),
-            'expired-callback': () => console.log('⚠️ reCAPTCHA expired')
+            callback: () => {
+              console.log('✅ reCAPTCHA solved');
+              // Don't clear immediately after solve
+            },
+            'expired-callback': () => {
+              console.log('⚠️ reCAPTCHA expired');
+              // Clear verifier when expired
+              setTimeout(() => {
+                if (recaptchaVerifierRef.current) {
+                  try { 
+                    recaptchaVerifierRef.current.clear(); 
+                    recaptchaVerifierRef.current = null;
+                  } catch (_) {}
+                }
+              }, 100);
+            }
           });
           console.log('✅ reCAPTCHA initialized');
         } catch (err) {
           console.error('❌ reCAPTCHA init error:', err);
+          // Don't throw error, just log it
         }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-    return () => {
-      if (recaptchaVerifierRef.current) {
-        try { recaptchaVerifierRef.current.clear(); } catch (_) {}
-        recaptchaVerifierRef.current = null;
+      } catch (err) {
+        console.error('❌ reCAPTCHA setup error:', err);
       }
-    };
+    }, 500); // Increased delay to ensure DOM is ready
+    return () => clearTimeout(timer);
   }, [phoneStep]);
+
+  // Separate effect for cleanup on unmount only
+  useEffect(() => {
+    return () => {
+      // Clear reCAPTCHA on unmount with longer delay to avoid race conditions
+      setTimeout(() => {
+        if (recaptchaVerifierRef.current) {
+          try { 
+            recaptchaVerifierRef.current.clear(); 
+            recaptchaVerifierRef.current = null;
+          } catch (_) {}
+        }
+      }, 200);
+    };
+  }, []); // Empty dependency array = only runs on unmount
 
   // ── Phone / OTP handlers ──────────────────────────────────────────────────
   const handleSendOTP = async () => {
@@ -130,20 +241,43 @@ const Checkoutpage = () => {
     setPhoneError(false);
     setIsSendingOTP(true);
     try {
+      // Try to initialize reCAPTCHA if not already done
+      if (!recaptchaVerifierRef.current) {
+        const container = document.getElementById('checkout-recaptcha-container');
+        if (container) {
+          try {
+            recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'checkout-recaptcha-container', {
+              size: 'invisible',
+              callback: () => console.log('✅ reCAPTCHA solved'),
+              'expired-callback': () => {
+                console.log('⚠️ reCAPTCHA expired');
+                if (recaptchaVerifierRef.current) {
+                  try { recaptchaVerifierRef.current.clear(); } catch (_) {}
+                  recaptchaVerifierRef.current = null;
+                }
+              }
+            });
+          } catch (err) {
+            console.error('❌ reCAPTCHA init error in handleSendOTP:', err);
+          }
+        }
+      }
+      
       if (!recaptchaVerifierRef.current) throw new Error('reCAPTCHA not initialized.');
       const confirmation = await signInWithPhoneNumber(auth, `+91${phoneNumber}`, recaptchaVerifierRef.current);
       setConfirmationResult(confirmation);
       setPhoneStep('otp');
-      setResendTimer(45); // Increased from 30 to 45 seconds
-      setOtpExpiryTimer(90); // Reset OTP expiry to 90 seconds
-      setOtpExpired(false); // Reset expired state
-      setOtpError(false); // Reset error state
+      setResendTimer(45);
+      setOtpExpiryTimer(90);
+      setOtpExpired(false);
+      setOtpError(false);
       console.log('✅ OTP sent');
     } catch (error) {
       console.error('❌ OTP send error:', error);
       setPhoneError(true);
       if (error.code === 'auth/too-many-requests') alert('Too many attempts. Please try again later.');
       else if (error.code === 'auth/operation-not-allowed') alert('Phone auth not enabled.');
+      else if (error.message.includes('reCAPTCHA')) alert('reCAPTCHA error. Please refresh the page and try again.');
       else alert('Failed to send OTP. Please try again.');
       if (recaptchaVerifierRef.current) {
         try { recaptchaVerifierRef.current.clear(); } catch (_) {}
@@ -224,20 +358,149 @@ const Checkoutpage = () => {
 
   // ── Address handlers ──────────────────────────────────────────────────────
   const handleDetectLocation = () => {
-    setTimeout(() => setDetectedAddress({
-      area: 'Sector 14, Pimpri-Chinchwad',
-      city: 'Pune, Maharashtra 411018'
-    }), 1400);
+    if (!navigator.geolocation) {
+      alert('❌ Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLocationLoading(true);
+    setDetectedAddress({ loading: true });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          console.log('📍 Location detected:', { latitude, longitude });
+
+          // FREE — no API key needed, OpenStreetMap's geocoding service
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+            {
+              headers: {
+                // Nominatim requires a User-Agent identifying your app
+                'User-Agent': 'YHK-FoodApp/1.0'
+              }
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch address');
+          }
+
+          const data = await response.json();
+          console.log('📍 Nominatim response:', data);
+
+          if (data && data.address) {
+            const a = data.address;
+
+            const area = 
+              a.neighbourhood || 
+              a.suburb        || 
+              a.village       || 
+              a.town          || 
+              a.county        || 
+              '';
+
+            const streetAddress = 
+              [a.house_number, a.road].filter(Boolean).join(' ') || area;
+
+            const city    = a.city || a.town || a.village || a.county || '';
+            const state   = a.state || '';
+            const pinCode = a.postcode || '';
+
+            const detected = {
+              area,
+              city: `${city}, ${state} ${pinCode}`.trim(),
+              fullAddress: data.display_name,
+              latitude,
+              longitude,
+              loading: false
+            }
+
+            setDetectedAddress(detected);
+
+            // Populate address form with detected location
+            setAddressForm(prev => ({
+              ...prev,
+              flatNo: '',
+              landmark: '',
+              addressType: 'home',
+              fullName: '',
+              addressLine1: streetAddress || '',
+              addressLine2: area || '',
+              city: city || '',
+              state: state || '',
+              pinCode: pinCode || '',
+            }));
+
+            console.log('✅ Address detected and filled');
+          } else {
+            alert('Could not fetch address. Please enter manually.');
+            setDetectedAddress(null);
+          }
+        } catch (err) {
+          console.error('❌ Nominatim error:', err);
+          alert('Failed to fetch address. Please enter manually.');
+          setDetectedAddress(null);
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (error) => {
+        setDetectedAddress(null);
+        setLocationLoading(false);
+        
+        if (error.code === error.PERMISSION_DENIED) {
+          alert('❌ Location access denied. Please allow location access in browser settings.');
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          alert('❌ Location unavailable. Please enter address manually.');
+        } else if (error.code === error.TIMEOUT) {
+          alert('❌ Location request timed out. Please try again.');
+        } else {
+          alert('❌ Failed to get location. Please enter manually.');
+        }
+      },
+      { 
+        timeout: 15000, 
+        maximumAge: 60000, 
+        enableHighAccuracy: true 
+      }
+    );
   };
 
   const handleConfirmAddress = () => {
+    // Ensure address form is populated before proceeding
+    if (!addressForm || !addressForm.addressLine1) {
+      console.error('❌ Address form is not properly populated');
+      alert('Please ensure address is filled before continuing.');
+      return;
+    }
+    
     setInstructionsStep(true);
     setTimeout(() => {
       document.getElementById('instructionsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   };
 
-  const handleAddressTab    = (tab)   => setAddressStep(tab);
+  const handleAddressTab    = (tab)   => {
+    setAddressStep(tab);
+    
+    // When switching to manual tab, pre-populate with detected address if available
+    if (tab === 'manual' && detectedAddress && detectedAddress.area) {
+      setAddressForm({
+        flatNo: '',
+        landmark: '',
+        addressType: 'home',
+        fullName: '',
+        addressLine1: detectedAddress.area || '', // Use detected area as address line
+        addressLine2: '',
+        city: 'Pune',
+        state: 'Maharashtra',
+        pinCode: '411018'
+      });
+    }
+  };
   const handleAddressSelect = (index) => setSelectedAddress(index);
   const handleAddressFormChange = (field, value) => setAddressForm({ ...addressForm, [field]: value });
 
@@ -246,6 +509,19 @@ const Checkoutpage = () => {
     if (cartItems.length === 0) { alert('Your cart is empty.'); navigate('/'); return; }
     if (phoneStep !== 'verified') { alert('Please verify your phone number first.'); return; }
 
+    // Comprehensive validation before proceeding
+    if (!addressForm) {
+      console.error('❌ Address form is undefined');
+      alert('Please fill in your address details.');
+      return;
+    }
+
+    if (!addressForm.addressLine1 || !addressForm.city || !addressForm.state || !addressForm.pinCode) {
+      console.error('❌ Address form is incomplete');
+      alert('Please fill in all address details.');
+      return;
+    }
+
     setIsProcessing(true);
     try {
       // Step 1: Create order
@@ -253,13 +529,13 @@ const Checkoutpage = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('userToken') || localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           customer: {
-            name: addressForm.fullName || 'Customer',
+            name: addressForm.fullName || JSON.parse(localStorage.getItem('user') || '{}').name || 'Guest',
             phone: phoneNumber,
-            email: 'customer@example.com'
+            email: JSON.parse(localStorage.getItem('user') || '{}').email || 'customer@example.com'
           },
           orderItems: cartItems.map(item => ({
             menuItem: item.id || item._id,
@@ -269,17 +545,22 @@ const Checkoutpage = () => {
             subtotal: (item.finalPrice || item.price) * (item.quantity || 1)
           })),
           deliveryAddress: {
-            street: addressForm.addressLine1 || 'Default Address',
-            city: addressForm.city,
-            state: addressForm.state,
-            zipCode: addressForm.pinCode,
-            apartment: addressForm.flatNo,
-            landmark: addressForm.landmark,
-            instructions: deliveryNote
+            street: addressForm?.addressLine1 || 'Default Address',
+            city: addressForm?.city || '',
+            state: addressForm?.state || '',
+            zipCode: addressForm?.pinCode || '',
+            apartment: addressForm?.flatNo || '',
+            landmark: addressForm?.landmark || '',
+            instructions: deliveryNote || ''
           },
           orderType: 'delivery',
-          paymentMethod: 'online',
-          delivery: { type: 'standard' },
+          paymentMethod: paymentMethod === 'cash' ? 'cash' : 'online',
+          delivery: { 
+            type: 'standard',
+            estimatedTime: typeof Date !== 'undefined' ? new Date(Date.now() + 30 * 60 * 1000) : null,
+            actualTime: null,
+            deliveryPerson: null
+          },
           specialInstructions: deliveryNote
         })
       });
@@ -292,18 +573,26 @@ const Checkoutpage = () => {
       const orderResult = await orderResponse.json();
       console.log('✅ Order created:', orderResult.data);
       console.log('✅ Order ID:', orderResult.data._id);
-      console.log('✅ Order userId:', orderResult.data.userId); // ⚠️ CHECK THIS!
+      console.log('✅ Order userId:', orderResult.data.userId); // 
       const orderId = orderResult.data._id;
       console.log('✅ Order created:', orderId);
 
+      // ── COD: Skip Razorpay, mark payment as pending ──
+      if (paymentMethod === 'cash') {
+        localStorage.removeItem('checkoutCart');
+        setShowSuccessModal(true);
+        return;
+      }
+
+      // ── Online: Razorpay flow ──
       // Step 2: Create Razorpay order
       const razorpayOrderResponse = await fetch(`${API_CONFIG.API_URL}/payments/create-razorpay-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('userToken') || localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ amount: total })
+        body: JSON.stringify({ amount: pricing.total })
       });
 
       if (!razorpayOrderResponse.ok) throw new Error('Failed to create Razorpay order');
@@ -324,7 +613,7 @@ const Checkoutpage = () => {
       // Step 4: Open Razorpay checkout
       const rzp = new Razorpay({
         key: 'rzp_live_SSKxoURQgSmXB7',
-        amount: total * 100,
+        amount: pricing.total * 100,
         currency: 'INR',
         name: "Yeswanth's Healthy Kitchen",
         description: `Order #${orderNumber}`,
@@ -335,11 +624,11 @@ const Checkoutpage = () => {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                'Authorization': `Bearer ${localStorage.getItem('userToken') || localStorage.getItem('token')}`
               },
               body: JSON.stringify({
                 orderId,
-                amount: total,
+                amount: pricing.total,
                 paymentMethod: 'razorpay',
                 paymentStatus: 'completed',
                 razorpayOrderId: response.razorpay_order_id,
@@ -363,12 +652,10 @@ const Checkoutpage = () => {
             alert(`Payment captured but save failed. Order ID: ${orderId}`);
             setShowSuccessModal(true);
           } finally {
-            setIsProcessing(false);
           }
         },
         modal: {
           ondismiss: () => {
-            setIsProcessing(false);
             alert('Payment cancelled. Please try again.');
           }
         },
@@ -384,7 +671,6 @@ const Checkoutpage = () => {
     } catch (error) {
       console.error('❌ Order/payment error:', error);
       alert('Payment failed. Please try again.');
-      setIsProcessing(false);
     }
   };
 
@@ -397,6 +683,16 @@ const Checkoutpage = () => {
 
   const formatPhone = (phone) =>
     phone.length >= 10 ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : phone;
+
+  // Format currency to avoid floating-point precision issues
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(amount).replace('₹', '₹');
+  };
 
   // ── Empty cart guard ──────────────────────────────────────────────────────
   if (cartItems.length === 0) {
@@ -420,6 +716,12 @@ const Checkoutpage = () => {
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
+  // Safety check: ensure all critical variables are defined
+  if (typeof addressForm === 'undefined' || addressForm === null) {
+    console.error('❌ addressForm is not initialized');
+    return <div className="checkout-page"><div className="checkout-page-container" style={{ textAlign: 'center', paddingTop: '100px' }}><h2>Loading...</h2></div></div>;
+  }
+
   return (
     <div className="checkout-page">
       {/* reCAPTCHA containers — always rendered, never conditional */}
@@ -440,7 +742,7 @@ const Checkoutpage = () => {
           <div className="step-pill pending">3 Payment</div>
         </div>
         <div className="checkout-nav-right">
-          {cartItems.length} items · <span>₹{total}</span>
+          {cartItems.length} items · <span>{formatCurrency(pricing.total)}</span>
         </div>
       </nav>
 
@@ -467,7 +769,7 @@ const Checkoutpage = () => {
                   {phoneStep === 'input' && (
                     <div id="phoneInputStep">
                       <div className="input-group">
-                        <label>Mobile Number</label>
+                        
                         <div className="send-otp-row">
                           <div className="country-code">🇮🇳 +91</div>
                           <input
@@ -476,7 +778,15 @@ const Checkoutpage = () => {
                             placeholder="Enter 10-digit number"
                             maxLength="10"
                             value={phoneNumber}
-                            onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                            onChange={e => {
+                              const rawValue = e.target.value;
+                              const cleanValue = rawValue.replace(/\D/g, '');
+                              console.log('📱 Phone input change:', { raw: rawValue, clean: cleanValue });
+                              setPhoneNumber(cleanValue);
+                            }}
+                            onFocus={() => console.log('📱 Phone input focused')}
+                            onBlur={() => console.log('📱 Phone input blurred, current value:', phoneNumber)}
+                            onWheel={e => e.preventDefault()} // Prevent mouse wheel from changing value
                           />
                           <button
                             className="btn btn-primary"
@@ -487,7 +797,7 @@ const Checkoutpage = () => {
                             {isSendingOTP ? 'Sending...' : 'Send OTP'}
                           </button>
                         </div>
-                        <div className="hint">📱 You'll receive a 6-digit OTP via SMS</div>
+                     
                         <div className={`error-text ${phoneError ? 'show' : ''}`}>
                           Please enter a valid 10-digit mobile number.
                         </div>
@@ -574,6 +884,12 @@ const Checkoutpage = () => {
               </div>
             </div>
 
+
+
+
+
+
+
             {/* STEP 2: Delivery address */}
             <div className={`section-card ${!instructionsStep ? '' : 'disabled'}`} id="addressSection">
               <div className="section-head">
@@ -598,49 +914,45 @@ const Checkoutpage = () => {
                   ))}
                 </div>
 
-                {addressStep === 'location' && (
-                  <div id="locationTab">
-                    <div className="location-detect" onClick={handleDetectLocation}>
-                      <div className="loc-icon">📡</div>
-                      <div className="loc-info">
-                        <p>{detectedAddress ? 'Location Detected ✓' : 'Detect My Current Location'}</p>
-                        <span>Allow browser location access for accurate delivery</span>
-                      </div>
-                      <div className="loc-arrow">›</div>
+                  {/* Detect Location Button */}
+                <button 
+                  className="detect-location-btn"
+                  onClick={handleDetectLocation}
+                  disabled={locationLoading}
+                >
+                  {locationLoading ? (
+                    <>
+                      <span className="spinner"></span>
+                      Detecting location...
+                    </>
+                  ) : (
+                    <>
+                      📍 Detect My Location
+                    </>
+                  )}
+                </button>
+
+                {/* Detected Address Display */}
+                {detectedAddress && !detectedAddress.loading && (
+                  <div className="detected-address">
+                    <div className="detected-icon">✅</div>
+                    <div className="detected-info">
+                      <strong>Location Detected</strong>
+                      <p>{detectedAddress.fullAddress}</p>
+                      <small>
+                        📍 Lat: {detectedAddress.latitude?.toFixed(6)}, 
+                        Lng: {detectedAddress.longitude?.toFixed(6)}
+                      </small>
                     </div>
-                    {detectedAddress && (
-                      <div className="detected-addr">
-                        <div className="pin">📍</div>
-                        <div className="addr-text">
-                          <p>{detectedAddress.area}</p>
-                          <span>{detectedAddress.city}</span>
-                        </div>
-                        <div className="change-btn" onClick={handleDetectLocation}>Re-detect</div>
-                      </div>
-                    )}
-                    {detectedAddress && (
-                      <div className="checkout-form-grid">
-                        <div className="full input-group">
-                          <label>Flat / House No. & Building Name</label>
-                          <input type="text" className="checkout-input-field" placeholder="e.g. A-402, Greenview Apartments"
-                            value={addressForm.flatNo} onChange={e => handleAddressFormChange('flatNo', e.target.value)} />
-                        </div>
-                        <div className="input-group">
-                          <label>Landmark (Optional)</label>
-                          <input type="text" className="checkout-input-field" placeholder="e.g. Near City Mall"
-                            value={addressForm.landmark} onChange={e => handleAddressFormChange('landmark', e.target.value)} />
-                        </div>
-                        <div className="input-group">
-                          <label>Address Type</label>
-                          <select className="checkout-input-field" value={addressForm.addressType} onChange={e => handleAddressFormChange('addressType', e.target.value)}>
-                            <option>🏠 Home</option><option>💼 Work</option><option>📍 Other</option>
-                          </select>
-                        </div>
-                        <div className="full">
-                          <button className="btn btn-primary" onClick={handleConfirmAddress}>Confirm Address →</button>
-                        </div>
-                      </div>
-                    )}
+                  </div>
+                )}
+
+                {/* Confirm Address Button for Detected Location */}
+                {detectedAddress && !detectedAddress.loading && (
+                  <div className="full">
+                    <button className="btn btn-primary" onClick={handleConfirmAddress} style={{ marginTop: '15px' }}>
+                      Confirm Address →
+                    </button>
                   </div>
                 )}
 
@@ -747,12 +1059,52 @@ const Checkoutpage = () => {
                     🤝 Contactless Delivery (leave at door)
                   </label>
                 </div>
+
+                {/* ── Payment Method Selector ── */}
+                <div style={{ marginTop: '24px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.8px', display: 'block', marginBottom: '12px' }}>
+                    Payment Method
+                  </label>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div
+                      onClick={() => setPaymentMethod('online')}
+                      style={{
+                        flex: 1, padding: '14px 16px', borderRadius: '10px', cursor: 'pointer',
+                        border: `2px solid ${paymentMethod === 'online' ? 'var(--accent)' : 'var(--border)'}`,
+                        background: paymentMethod === 'online' ? 'var(--accent)10' : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <div style={{ fontSize: '20px', marginBottom: '4px' }}>💳</div>
+                      <div style={{ fontSize: '13px', fontWeight: 600 }}>Pay Online</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>UPI, Card, Net Banking</div>
+                    </div>
+                    <div
+                      onClick={() => setPaymentMethod('cash')}
+                      style={{
+                        flex: 1, padding: '14px 16px', borderRadius: '10px', cursor: 'pointer',
+                        border: `2px solid ${paymentMethod === 'cash' ? '#f59e0b' : 'var(--border)'}`,
+                        background: paymentMethod === 'cash' ? '#f59e0b10' : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <div style={{ fontSize: '20px', marginBottom: '4px' }}>💵</div>
+                      <div style={{ fontSize: '13px', fontWeight: 600 }}>Cash on Delivery</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Pay when order arrives</div>
+                    </div>
+                  </div>
+                  {paymentMethod === 'cash' && (
+                    <div style={{ marginTop: '10px', padding: '10px 14px', background: '#f59e0b15', borderRadius: '8px', fontSize: '12px', color: '#92400e' }}>
+                      💡 Please keep exact change of <strong>{formatCurrency(pricing.total)}</strong> ready for the delivery partner.
+                    </div>
+                  )}
+                </div>
+
                 <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={handlePlaceOrder} disabled={isProcessing}>
-                  {isProcessing ? 'Processing...' : 'Continue to Payment →'}
+                  {isProcessing ? 'Processing...' : paymentMethod === 'cash' ? `🛵 Place Order · ${formatCurrency(pricing.total)}` : `💳 Continue to Payment · ${formatCurrency(pricing.total)}`}
                 </button>
               </div>
             </div>
-
           </div>
 
           {/* ── RIGHT COLUMN: Order summary ───────────────────────────────── */}
@@ -773,7 +1125,7 @@ const Checkoutpage = () => {
                       <span>{item.description || 'Regular'}</span>
                     </div>
                     <div className="oi-qty">×{item.quantity || 1}</div>
-                    <div className="oi-price">₹{item.price * (item.quantity || 1)}</div>
+                    <div className="oi-price">{formatCurrency(item.price * (item.quantity || 1))}</div>
                   </div>
                 ))}
               </div>
@@ -786,16 +1138,36 @@ const Checkoutpage = () => {
               </div>
 
               <div className="order-totals">
-                <div className="total-row subtotal"><span>Subtotal ({cartItems.length} items)</span><span>₹{subtotal}</span></div>
-                <div className="total-row discount"><span>🎉 YHK20 (-20%)</span><span>−₹{discount}</span></div>
-                <div className="total-row delivery"><span>Delivery fee</span><span style={{ color: 'var(--green)', fontWeight: 600 }}>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span></div>
-                <div className="total-row delivery"><span>Packaging</span><span>₹{packaging}</span></div>
-                <div className="total-row delivery"><span>GST (5%)</span><span>₹{gst}</span></div>
-                <div className="total-row grand"><span>Total</span><span>₹{total}</span></div>
+                {pricingLoading ? (
+                  <div className="total-row"><span>Calculating...</span></div>
+                ) : (
+                  <>
+                    <div className="total-row subtotal"><span>Subtotal ({cartItems.length} items)</span><span>{formatCurrency(pricing.subtotal)}</span></div>
+                    {pricing.discount > 0 && (
+                      <div className="total-row discount"><span>Discount</span><span>−{formatCurrency(pricing.discount)}</span></div>
+                    )}
+                    <div className="total-row delivery">
+                      <span>Delivery fee</span>
+                      <span style={{ color: pricing.deliveryFee === 0 ? 'var(--green)' : 'inherit', fontWeight: 600 }}>
+                        {pricing.deliveryFee === 0 ? 'FREE' : formatCurrency(pricing.deliveryFee)}
+                      </span>
+                    </div>
+                    {pricing.packagingFee > 0 && (
+                      <div className="total-row delivery"><span>Packaging</span><span>{formatCurrency(pricing.packagingFee)}</span></div>
+                    )}
+                    {pricing.gst > 0 && (
+                      <div className="total-row delivery"><span>GST</span><span>{formatCurrency(pricing.gst)}</span></div>
+                    )}
+                    {pricing.platformFee > 0 && (
+                      <div className="total-row delivery"><span>Platform Fee</span><span>{formatCurrency(pricing.platformFee)}</span></div>
+                    )}
+                    <div className="total-row grand"><span>Total</span><span>{formatCurrency(pricing.total)}</span></div>
+                  </>
+                )}
               </div>
 
               <button className="place-order-btn" onClick={handlePlaceOrder} disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : `🛵 Place Order · ₹${total}`}
+                {isProcessing ? 'Processing...' : `🛵 Place Order · ${formatCurrency(pricing.total)}`}
               </button>
 
               <div className="secure-note">🔒 Secure checkout · 256-bit SSL encrypted</div>
@@ -824,5 +1196,6 @@ const Checkoutpage = () => {
     </div>
   );
 };
+
 
 export default Checkoutpage;

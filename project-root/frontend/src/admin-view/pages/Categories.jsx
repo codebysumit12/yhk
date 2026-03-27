@@ -21,7 +21,7 @@ const CategoriesPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
 
   const API_URL = API_CONFIG.API_URL;
-  const token = localStorage.getItem('userToken');
+  const token = localStorage.getItem('token') || localStorage.getItem('userToken');
   
   console.log('Categories component - Token from localStorage:', token);
   console.log('localStorage contents:', localStorage);

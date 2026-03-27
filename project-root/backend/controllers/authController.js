@@ -87,7 +87,8 @@ export const login = async (req, res) => {
     }
 
     // Find user with password field
-    const user = await User.findOne({ email }).select('+password');
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     if (!user) {
       return res.status(401).json({
@@ -101,6 +102,14 @@ export const login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Your account has been deactivated. Please contact support.'
+      });
+    }
+
+    // Check if user has password (Firebase users might not)
+    if (!user.password) {
+      return res.status(401).json({
+        success: false,
+        message: 'This account uses phone login. Please use OTP to sign in.'
       });
     }
 
@@ -127,7 +136,7 @@ export const login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        isAdmin: user.isAdmin,
+        isAdmin: user.role === 'admin',
         isVerified: user.isVerified,
         avatar: user.avatar
       }

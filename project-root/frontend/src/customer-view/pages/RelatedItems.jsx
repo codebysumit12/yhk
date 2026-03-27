@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import Nav from './Nav';
+import YHKLoader from './Yhkloader';
 import { API_CONFIG } from '../../config/api';
 import './Menu.css';
 
@@ -128,11 +129,7 @@ const RelatedItems = () => {
   };
 
   if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner">Loading...</div>
-      </div>
-    );
+    return <YHKLoader message="Loading items..." fullPage />;
   }
 
   return (

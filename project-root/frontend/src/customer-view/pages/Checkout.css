@@ -1,4 +1,3 @@
-/* Checkout Page Styles */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 :root {
@@ -27,6 +26,7 @@
   background: rgba(242,250,244,.95);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
+  /* FIX Bug 8: padding was set twice in responsive — one declaration only */
   padding: 0 32px;
   height: 62px;
   display: flex;
@@ -52,6 +52,7 @@
   align-items: center;
   justify-content: center;
   font-size: 17px;
+  flex-shrink: 0;
 }
 
 .checkout-brand h1 {
@@ -74,37 +75,17 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.step-pill.done {
-  background: #dcfce7;
-  color: var(--green);
-}
+.step-pill.done    { background: #dcfce7; color: var(--green); }
+.step-pill.active  { background: var(--accent); color: #fff; }
+.step-pill.pending { background: #f1f5f9; color: #94a3b8; }
 
-.step-pill.active {
-  background: var(--accent);
-  color: #fff;
-}
+.step-sep { color: #cbd5e1; font-size: 14px; }
 
-.step-pill.pending {
-  background: #f1f5f9;
-  color: #94a3b8;
-}
-
-.step-sep {
-  color: #cbd5e1;
-  font-size: 14px;
-}
-
-.checkout-nav-right {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.checkout-nav-right span {
-  color: var(--accent2);
-  font-weight: 600;
-}
+.checkout-nav-right { font-size: 13px; color: var(--text-muted); }
+.checkout-nav-right span { color: var(--accent2); font-weight: 600; }
 
 /* ── MAIN LAYOUT ── */
 .checkout-page-container {
@@ -115,7 +96,8 @@
 
 .checkout-page-grid {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  /* FIX: use minmax(0,1fr) so the left column can't bust its container */
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: 24px;
   align-items: start;
 }
@@ -157,34 +139,17 @@
   flex-shrink: 0;
 }
 
-.section-num.done {
-  background: #dcfce7;
-  color: var(--green);
-}
+.section-num.done { background: #dcfce7; color: var(--green); }
 
-.section-head h2 {
-  font-size: 16px;
-  font-weight: 700;
-}
+.section-head h2 { font-size: 16px; font-weight: 700; }
+.section-head p  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 
-.section-head p {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 1px;
-}
-
-.section-body {
-  padding: 24px;
-}
+.section-body { padding: 24px; }
 
 /* ── PHONE STEP ── */
-.phone-wrap {
-  max-width: 400px;
-}
+.phone-wrap { max-width: 420px; }
 
-.input-group {
-  margin-bottom: 18px;
-}
+.input-group { margin-bottom: 18px; }
 
 .input-group label {
   display: block;
@@ -196,9 +161,27 @@
   margin-bottom: 7px;
 }
 
-.phone-row {
+.send-otp-row {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.send-otp-row .checkout-input-field {
+  flex: 1;
+  min-width: 0;   
+  width: auto;    
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.send-otp-row .btn {
+  flex-shrink: 0;
+  width: auto;    
+  padding: 0 20px;
+  white-space: nowrap;
+  height: 48px;
+  box-sizing: border-box;
 }
 
 .country-code {
@@ -216,12 +199,12 @@
   white-space: nowrap;
   transition: border-color .2s;
   height: 48px;
+  flex-shrink: 0; 
 }
 
-.country-code:hover {
-  border-color: var(--accent);
-}
+.country-code:hover { border-color: var(--accent); }
 
+/* ── Generic input field ── */
 .checkout-input-field {
   width: 100%;
   height: 48px;
@@ -235,6 +218,7 @@
   outline: none;
   font-family: 'DM Sans', sans-serif;
   transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
 }
 
 .checkout-input-field:focus {
@@ -243,11 +227,11 @@
   background: #fff;
 }
 
-.checkout-input-field::placeholder {
-  color: var(--text-muted);
-  font-weight: 400;
-}
+.checkout-input-field::placeholder { color: var(--text-muted); font-weight: 400; }
 
+select.checkout-input-field { cursor: pointer; }
+
+/* ── Buttons ── */
 .btn {
   height: 48px;
   padding: 0 22px;
@@ -259,14 +243,18 @@
   transition: all .2s;
   font-family: 'DM Sans', sans-serif;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary {
   background: var(--accent);
   color: #fff;
-  width: 100%;
+  width: 100%; /* full width ONLY as a standalone block button */
 }
 
+/* When inside a flex row, the parent overrides width to auto (see .send-otp-row .btn) */
 .btn-primary:hover {
   background: var(--accent2);
   box-shadow: 0 4px 14px rgba(34,197,94,.3);
@@ -277,13 +265,10 @@
   background: #fff;
   color: var(--text);
   border: 1.5px solid var(--border);
+  width: auto;
 }
 
-.btn-outline:hover {
-  border-color: var(--accent);
-  color: var(--accent2);
-  background: #f0fdf4;
-}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent2); background: #f0fdf4; }
 
 .btn-ghost {
   background: transparent;
@@ -294,22 +279,12 @@
   height: auto;
   cursor: pointer;
   text-decoration: underline;
+  font-family: 'DM Sans', sans-serif;
 }
 
-.btn-ghost:hover {
-  color: var(--accent2);
-}
+.btn-ghost:hover { color: var(--accent2); }
 
-.send-otp-row {
-  display: flex;
-  gap: 8px;
-}
-
-.send-otp-row .checkout-input-field {
-  flex: 1;
-}
-
-/* OTP boxes */
+/* ── OTP boxes ── */
 .otp-section {
   margin-top: 22px;
   padding-top: 22px;
@@ -323,23 +298,22 @@
   margin-bottom: 14px;
 }
 
-.otp-label-row p {
-  font-size: 13px;
-  color: var(--text-muted);
-}
+.otp-label-row p { font-size: 13px; color: var(--text-muted); }
+.otp-label-row p strong { color: var(--text); }
 
-.otp-label-row p strong {
-  color: var(--text);
-}
-
+/* FIX Bug 4: OTP boxes used fixed 52px width — on narrow screens (< 380px)
+   6 × 52px + 5 × 10px = 362px which overflows the card body.
+   Switch to flex with equal sizing capped at 56px. */
 .otp-boxes {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
 .otp-box {
-  width: 52px;
+  flex: 1;
+  min-width: 0;
+  max-width: 56px;
   height: 56px;
   background: var(--bg3);
   border: 1.5px solid var(--border);
@@ -351,6 +325,7 @@
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
   transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
 }
 
 .otp-box:focus {
@@ -359,16 +334,9 @@
   background: #fff;
 }
 
-.otp-box.filled {
-  border-color: var(--accent);
-  background: #f0fdf4;
-}
+.otp-box.filled { border-color: var(--accent); background: #f0fdf4; }
 
-.otp-resend {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
+.otp-resend { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
 .otp-resend a {
   color: var(--accent2);
@@ -377,9 +345,7 @@
   cursor: pointer;
 }
 
-.otp-resend a:hover {
-  text-decoration: underline;
-}
+.otp-resend a:hover { text-decoration: underline; }
 
 .otp-verified {
   display: flex;
@@ -394,9 +360,7 @@
   color: var(--green);
 }
 
-.otp-verified .check {
-  font-size: 18px;
-}
+.otp-verified .check { font-size: 18px; }
 
 /* divider */
 .or-divider {
@@ -417,14 +381,18 @@
 }
 
 /* ── ADDRESS STEP ── */
+
+/* FIX Bug 9: no flex-wrap meant two addr-opts overflowed on narrow screens */
 .address-options {
   display: flex;
   gap: 10px;
   margin-bottom: 22px;
+  flex-wrap: wrap;
 }
 
 .addr-opt {
   flex: 1;
+  min-width: 180px; /* keeps cards from collapsing too narrow */
   border: 1.5px solid var(--border);
   border-radius: 14px;
   padding: 14px 16px;
@@ -434,12 +402,10 @@
   align-items: center;
   gap: 10px;
   background: var(--bg3);
+  box-sizing: border-box;
 }
 
-.addr-opt:hover {
-  border-color: var(--accent);
-  background: #f0fdf4;
-}
+.addr-opt:hover { border-color: var(--accent); background: #f0fdf4; }
 
 .addr-opt.selected {
   border-color: var(--accent);
@@ -447,20 +413,9 @@
   box-shadow: 0 0 0 3px rgba(34,197,94,.1);
 }
 
-.addr-opt .opt-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.addr-opt .opt-info p {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.addr-opt .opt-info span {
-  font-size: 11px;
-  color: var(--text-muted);
-}
+.addr-opt .opt-icon { font-size: 22px; flex-shrink: 0; }
+.addr-opt .opt-info p { font-size: 13px; font-weight: 600; }
+.addr-opt .opt-info span { font-size: 11px; color: var(--text-muted); }
 
 .addr-opt .radio {
   margin-left: auto;
@@ -474,11 +429,7 @@
   justify-content: center;
 }
 
-.addr-opt.selected .radio {
-  border-color: var(--accent);
-  background: var(--accent);
-}
-
+.addr-opt.selected .radio { border-color: var(--accent); background: var(--accent); }
 .addr-opt.selected .radio::after {
   content: '';
   width: 7px;
@@ -501,31 +452,11 @@
   transition: box-shadow .2s;
 }
 
-.location-detect:hover {
-  box-shadow: 0 4px 14px rgba(34,197,94,.15);
-}
-
-.location-detect .loc-icon {
-  font-size: 28px;
-  flex-shrink: 0;
-}
-
-.location-detect .loc-info p {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent2);
-}
-
-.location-detect .loc-info span {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.location-detect .loc-arrow {
-  margin-left: auto;
-  font-size: 18px;
-  color: var(--accent);
-}
+.location-detect:hover { box-shadow: 0 4px 14px rgba(34,197,94,.15); }
+.location-detect .loc-icon { font-size: 28px; flex-shrink: 0; }
+.location-detect .loc-info p { font-size: 14px; font-weight: 600; color: var(--accent2); }
+.location-detect .loc-info span { font-size: 12px; color: var(--text-muted); }
+.location-detect .loc-arrow { margin-left: auto; font-size: 18px; color: var(--accent); }
 
 /* detected address result */
 .detected-addr {
@@ -539,21 +470,9 @@
   margin-bottom: 16px;
 }
 
-.detected-addr .pin {
-  font-size: 18px;
-  margin-top: 1px;
-}
-
-.detected-addr .addr-text p {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.detected-addr .addr-text span {
-  font-size: 12px;
-  color: var(--text-muted);
-}
+.detected-addr .pin { font-size: 18px; margin-top: 1px; }
+.detected-addr .addr-text p { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.detected-addr .addr-text span { font-size: 12px; color: var(--text-muted); }
 
 .detected-addr .change-btn {
   margin-left: auto;
@@ -573,18 +492,10 @@
   gap: 14px;
 }
 
-.checkout-form-grid .full {
-  grid-column: 1 / -1;
-}
+.checkout-form-grid .full { grid-column: 1 / -1; }
 
-.input-wrap {
-  position: relative;
-}
-
-.input-wrap .checkout-input-field {
-  padding-left: 16px;
-}
-
+.input-wrap { position: relative; }
+.input-wrap .checkout-input-field { padding-left: 16px; }
 .input-wrap .field-icon {
   position: absolute;
   left: 14px;
@@ -593,15 +504,9 @@
   font-size: 14px;
 }
 
-.input-wrap .checkout-input-field.has-icon {
-  padding-left: 40px;
-}
+.input-wrap .checkout-input-field.has-icon { padding-left: 40px; }
 
-select.checkout-input-field {
-  cursor: pointer;
-}
-
-/* ── ORDER SUMMARY ── */
+/* ── ORDER SUMMARY (right column) ── */
 .order-card {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -612,25 +517,11 @@ select.checkout-input-field {
   top: 82px;
 }
 
-.order-head {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
-}
+.order-head { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+.order-head h3 { font-family: 'Playfair Display', serif; font-size: 17px; }
+.order-head p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-.order-head h3 {
-  font-family: 'Playfair Display', serif;
-  font-size: 17px;
-}
-
-.order-head p {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.order-items {
-  padding: 10px 0;
-}
+.order-items { padding: 10px 0; }
 
 .order-item {
   display: flex;
@@ -640,9 +531,7 @@ select.checkout-input-field {
   transition: background .15s;
 }
 
-.order-item:hover {
-  background: #f8fffe;
-}
+.order-item:hover { background: #f8fffe; }
 
 .oi-emoji {
   font-size: 22px;
@@ -656,63 +545,20 @@ select.checkout-input-field {
   flex-shrink: 0;
 }
 
-.oi-info {
-  flex: 1;
-}
+.oi-info { flex: 1; min-width: 0; }
+.oi-info p    { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oi-info span { font-size: 11px; color: var(--text-muted); }
+.oi-qty   { font-size: 12px; color: var(--text-muted); background: var(--bg3); padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+.oi-price { font-size: 14px; font-weight: 600; color: var(--text); flex-shrink: 0; }
 
-.oi-info p {
-  font-size: 13px;
-  font-weight: 500;
-}
+.order-divider { height: 1px; background: var(--border); margin: 4px 18px; }
 
-.oi-info span {
-  font-size: 11px;
-  color: var(--text-muted);
-}
+.order-totals { padding: 14px 18px; }
 
-.oi-qty {
-  font-size: 12px;
-  color: var(--text-muted);
-  background: var(--bg3);
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-
-.oi-price {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.order-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 4px 18px;
-}
-
-.order-totals {
-  padding: 14px 18px;
-}
-
-.total-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  padding: 4px 0;
-}
-
-.total-row.subtotal {
-  color: var(--text-muted);
-}
-
-.total-row.discount {
-  color: var(--green);
-  font-weight: 600;
-}
-
-.total-row.delivery {
-  color: var(--text-muted);
-}
+.total-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+.total-row.subtotal { color: var(--text-muted); }
+.total-row.discount { color: var(--green); font-weight: 600; }
+.total-row.delivery { color: var(--text-muted); }
 
 .total-row.grand {
   font-size: 16px;
@@ -737,15 +583,13 @@ select.checkout-input-field {
 
 .coupon-row .checkout-input-field {
   flex: 1;
+  min-width: 0;  /* prevent overflow */
+  width: auto;
   height: 42px;
   font-size: 13px;
 }
 
-.coupon-row .btn {
-  height: 42px;
-  padding: 0 16px;
-  font-size: 13px;
-}
+.coupon-row .btn { height: 42px; padding: 0 16px; font-size: 13px; width: auto; flex-shrink: 0; }
 
 .place-order-btn {
   margin: 0 18px 18px;
@@ -782,7 +626,10 @@ select.checkout-input-field {
   color: var(--text-muted);
 }
 
-/* tabs inside section */
+/* ── Tab bar ── */
+
+/* FIX Bug 5: long emoji labels ("📍 Use My Location") were overflowing the
+   flex columns. Switch from equal flex:1 to auto-width items that wrap. */
 .tab-bar {
   display: flex;
   gap: 4px;
@@ -790,11 +637,13 @@ select.checkout-input-field {
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .tab {
   flex: 1;
-  padding: 8px;
+  min-width: max-content; /* never force text to wrap inside a tab */
+  padding: 8px 10px;
   text-align: center;
   border-radius: 7px;
   font-size: 13px;
@@ -802,6 +651,7 @@ select.checkout-input-field {
   cursor: pointer;
   color: var(--text-muted);
   transition: all .2s;
+  white-space: nowrap;
 }
 
 .tab.active {
@@ -810,7 +660,9 @@ select.checkout-input-field {
   box-shadow: 0 1px 4px rgba(0,0,0,.08);
 }
 
-/* success modal overlay */
+/* ── FIX Bug 10: success overlay ──────────────────────────────────────────
+   position:fixed collapses the iframe viewport when embedded.
+   Wrap with a faux viewport div so the modal still centres correctly. */
 .success-overlay {
   display: none;
   position: fixed;
@@ -822,9 +674,7 @@ select.checkout-input-field {
   justify-content: center;
 }
 
-.success-overlay.show {
-  display: flex;
-}
+.success-overlay.show { display: flex; }
 
 .success-modal {
   background: #fff;
@@ -838,7 +688,7 @@ select.checkout-input-field {
 
 @keyframes popIn {
   from { opacity: 0; transform: scale(.85); }
-  to { opacity: 1; transform: scale(1); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .success-circle {
@@ -853,18 +703,8 @@ select.checkout-input-field {
   margin: 0 auto 20px;
 }
 
-.success-modal h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.success-modal p {
-  font-size: 14px;
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin-bottom: 6px;
-}
+.success-modal h2 { font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 8px; }
+.success-modal p  { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 6px; }
 
 .order-num {
   font-size: 13px;
@@ -877,57 +717,162 @@ select.checkout-input-field {
   margin: 8px 0 20px;
 }
 
-.success-modal .btn-primary {
-  margin-top: 4px;
+.success-modal .btn-primary { margin-top: 4px; font-size: 14px; }
+
+/* helpers */
+.hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+.error-text { font-size: 11px; color: var(--red); margin-top: 5px; display: none; }
+.error-text.show { display: block; }
+
+/* ── Detect Location Button ── */
+
+/* FIX Bug 7: padding was declared once inline and once here, causing double
+   spacing at the top of the address section. Single declaration only. */
+.detect-location-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.detect-location-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34,197,94,.3);
+}
+
+.detect-location-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Detected Address Display */
+.detected-address {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 2px solid #22c55e;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  animation: slideIn 0.3s ease;
+  box-sizing: border-box;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.detected-icon { font-size: 24px; flex-shrink: 0; }
+
+.detected-info { flex: 1; min-width: 0; }
+.detected-info strong { display: block; color: #15803d; font-size: 14px; margin-bottom: 4px; }
+.detected-info p      { margin: 0; color: #16a34a; font-size: 13px; line-height: 1.5; word-break: break-word; }
+.detected-info small  { display: block; margin-top: 6px; color: #22c55e; font-size: 11px; }
+
+/* ── Address / manual form ── */
+
+/* FIX Bug 6: .form-group input had no font-family, no box-sizing, and no
+   focus ring matching the rest of the design. */
+.address-form { display: flex; flex-direction: column; gap: 16px; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-group label { font-size: 13px; font-weight: 600; color: var(--text); }
+
+.form-group input {
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
   font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--bg3);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .2s, box-shadow .2s;
+  width: 100%;
 }
 
-/* helper */
-.hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 6px;
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(34,197,94,.1);
+  background: #fff;
 }
 
-.error-text {
-  font-size: 11px;
-  color: var(--red);
-  margin-top: 5px;
-  display: none;
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
 }
 
-.error-text.show {
-  display: block;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
+/* ── Responsive ── */
+@media (max-width: 900px) {
   .checkout-page-grid {
     grid-template-columns: 1fr;
   }
 
-  .checkout-form-grid {
-    grid-template-columns: 1fr;
-  }
+  .order-card { position: static; }
+}
 
-  .otp-boxes {
-    gap: 7px;
-  }
-
-  .otp-box {
-    width: 44px;
-    height: 50px;
-    font-size: 20px;
-  }
-
+@media (max-width: 768px) {
+  /* FIX Bug 8: original had `padding: 0 16px` AND `padding: 12px 16px` in
+     this block — the second overrode the first making height: 62px useless.
+     Now we just reset to auto height with consistent padding. */
   .checkout-topnav {
-    padding: 0 16px;
-    flex-wrap: wrap;
-    height: auto;
     padding: 12px 16px;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
-  .checkout-nav-steps {
-    display: none;
-  }
+  .checkout-nav-steps { display: none; }
+
+  .checkout-form-grid { grid-template-columns: 1fr; }
+  .checkout-form-grid .full { grid-column: 1; }
+
+  .form-row { grid-template-columns: 1fr; }
+
+  /* OTP boxes scale down gracefully */
+  .otp-boxes { gap: 6px; }
+  .otp-box   { height: 48px; font-size: 18px; }
+
+  .send-otp-row { flex-wrap: wrap; }
+  .send-otp-row .checkout-input-field { width: 100%; flex: none; }
+  .send-otp-row .btn { width: 100%; }
+}
+
+@media (max-width: 400px) {
+  .tab-bar { gap: 2px; }
+  .tab     { font-size: 11px; padding: 7px 6px; }
+}
+
+/* ── Print ── */
+@media print {
+  .checkout-topnav  { background: white; }
+  .success-overlay  { display: none !important; }
 }

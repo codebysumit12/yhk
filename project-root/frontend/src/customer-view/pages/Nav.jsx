@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Nav.css';
 
-const Nav = ({ onOpenCart }) => {
+const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ Get current location
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -17,14 +18,18 @@ const Nav = ({ onOpenCart }) => {
       setUser(JSON.parse(userInfo));
     }
 
-    // Get cart count from localStorage
+    // Get cart count from localStorage or from prop
     updateCartCount();
-  }, []);
+  }, [cart]);
 
   // Update cart count
   const updateCartCount = () => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    setCartCount(cart.reduce((total, item) => total + item.quantity, 0));
+    if (cart && Array.isArray(cart)) {
+      setCartCount(cart.reduce((total, item) => total + (item.quantity || 1), 0));
+    } else {
+      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartCount(cartData.reduce((total, item) => total + (item.quantity || 1), 0));
+    }
   };
 
   // Listen for storage changes (when cart is updated)
@@ -91,6 +96,14 @@ const Nav = ({ onOpenCart }) => {
       return names[0][0] + names[names.length - 1][0];
     }
     return names[0][0];
+  };
+
+  // ✅ Helper function to check if link is active
+  const isActive = (path) => {
+    if (path === '/customer') {
+      return location.pathname === '/customer' || location.pathname === '/';
+    }
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (
@@ -229,15 +242,28 @@ const Nav = ({ onOpenCart }) => {
         </div>
         
         <nav className="nav">
-          <Link to="/customer" className="active"><i className="fas fa-home"></i> Home</Link>
-          <Link to="/menu"><i className="fas fa-utensils"></i> Menu</Link>
-          <Link to="/offers"><i className="fas fa-percent"></i> Offers</Link>
-          <Link to="/food"><i className="fas fa-hamburger"></i> Food</Link>
-          <Link to="/drinks"><i className="fas fa-mug-hot"></i> Drinks</Link>
-          <Link to="/smoothies"><i className="fas fa-blender"></i> Smoothies</Link>
-          <Link to="/desserts"><i className="fas fa-birthday-cake"></i> Desserts</Link>
-          <Link to="/privacy-policy"><i className="fas fa-shield-alt"></i> Privacy</Link>
-          <Link to="/terms"><i className="fas fa-file-contract"></i> Terms</Link>
+          {/* Helper function to check if link is active */}
+          <Link to="/customer" className={isActive('/customer') ? 'active' : ''}>
+            <i className="fas fa-home"></i> Home
+          </Link>
+          <Link to="/menucard" className={isActive('/menucard') ? 'active' : ''}>
+            <i className="fas fa-utensils"></i> Menu
+          </Link>
+          <Link to="/offers" className={isActive('/offers') ? 'active' : ''}>
+            <i className="fas fa-percent"></i> Offers
+          </Link>
+          <Link to="/food" className={isActive('/food') ? 'active' : ''}>
+            <i className="fas fa-hamburger"></i> Food
+          </Link>
+          <Link to="/drinks" className={isActive('/drinks') ? 'active' : ''}>
+            <i className="fas fa-mug-hot"></i> Drinks
+          </Link>
+          <Link to="/smoothies" className={isActive('/smoothies') ? 'active' : ''}>
+            <i className="fas fa-blender"></i> Smoothies
+          </Link>
+          <Link to="/desserts" className={isActive('/desserts') ? 'active' : ''}>
+            <i className="fas fa-birthday-cake"></i> Desserts
+          </Link>
         </nav>
       </header>
     </>

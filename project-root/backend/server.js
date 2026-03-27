@@ -17,6 +17,7 @@ import itemRoutes from './routes/itemRoutes.js';
 import bannerRoutes from './routes/bannerRoutes.js';
 import ingredientRoutes from './routes/ingredientRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
 
 
 
@@ -26,7 +27,7 @@ import authRoutes from './routes/authRoutes.js';
 import User from './models/User.js';
 
 // Import cleanup script
-import { cleanupTempFiles } from './utils/cleanupTempFiles.js';
+// import { cleanupTempFiles } from './utils/cleanupTempFiles.js';
 
 // Import all models to sync with MongoDB
 import './models/MenuItem.js';
@@ -107,6 +108,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
@@ -125,20 +127,6 @@ app.get('/api/health', (req, res) => {
 // Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
-});
-
-// Serve frontend for all non-API routes (MUST be last)
-app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, '../../frontend/build/index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.log('Frontend build not found, serving API response');
-      res.status(404).json({ 
-        message: 'Frontend not built yet. API is running.',
-        status: 'API_AVAILABLE'
-      });
-    }
-  });
 });
 
 // Seed Admin User
@@ -166,7 +154,7 @@ const seedAdminUser = async () => {
   }
 };
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 50017;
 
 // Add deployment timestamp
 console.log(' Server started at:', new Date().toISOString());
@@ -175,6 +163,4 @@ console.log(' Payment fixes deployed: v2.0');
 app.listen(PORT, async () => {
   console.log(` Server running on port ${PORT}`);
   await seedAdminUser();
-  // Start cleanup timer
-  cleanupTempFiles();
 });

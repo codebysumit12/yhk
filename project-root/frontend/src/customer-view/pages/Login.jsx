@@ -54,7 +54,7 @@ const Login = () => {
       
       try {
         // Call the login API
-        const response = await fetch(`${API_CONFIG.API_URL}/users/login`, {
+        const response = await fetch(`${API_CONFIG.API_URL}/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -64,23 +64,38 @@ const Login = () => {
 
         const data = await response.json();
 
+        console.log('🔍 LOGIN RESPONSE DEBUG:');
+        console.log('📡 Response status:', response.status);
+        console.log('📦 Full response data:', data);
+        console.log('🔑 Token received:', !!data.token);
+        console.log('👤 User data received:', data.user);
+        console.log('👤 User isAdmin:', data.user?.isAdmin);
+        console.log('👤 User role:', data.user?.role);
+
         if (data.success) {
-          // Store token in localStorage
-          if (data.data.token) {
-            localStorage.setItem('token', data.data.token);
+          // Store token and user data in localStorage
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+          }
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
           }
           
-          // Check if admin login
-          if (data.data.isAdmin) {
-            // Redirect to admin panel
-            window.location.href = data.data.redirectUrl;
+          // Check user role and redirect accordingly
+          if (data.user && data.user.isAdmin) {
+            // Admin user - redirect to admin dashboard
+            navigate('/admin', { replace: true });
+          } else if (data.user && (data.user.role === 'delivery' || data.user.role === 'delivery_partner')) {
+            // Delivery boy - redirect to delivery app and store delivery boy ID
+            localStorage.setItem('deliveryBoyId', data.user._id || data.user.id);
+            navigate('/admin/delivery-app', { replace: true });
           } else {
-            // Regular user - navigate to home
-            navigate('/');
+            // Regular customer - navigate to home
+            navigate('/', { replace: true });
           }
         } else {
           // Show error
-          setErrors({ ...errors, password: data.error || 'Login failed' });
+          setErrors({ ...errors, password: data.message || 'Login failed' });
         }
       } catch (err) {
         setErrors({ ...errors, password: 'Server error. Please try again.' });
@@ -107,7 +122,7 @@ const Login = () => {
             <p>Sign in to continue to Yeswanth's Healthy Kitchen</p>
           </div>
           
-          <form className="auth-form" onSubmit={handleSubmit}>
+          <form className="auth-form" onSubmit={handleSubmit} autoComplete="on">
             <div className={`form-group ${errors.email ? 'error' : ''}`}>
               <label htmlFor="email">Email Address</label>
               <input

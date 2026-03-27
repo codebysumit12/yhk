@@ -53,7 +53,12 @@ const Menu = () => {
   }, [urlCategoryId]);
 
   const handleAddToCart = (item) => {
-    setCart([...cart, { ...item, cartId: Date.now() }]);
+    const newCart = [...cart, { ...item, cartId: Date.now(), quantity: 1 }];
+    setCart(newCart);
+    // Save to localStorage for CartSidebar
+    localStorage.setItem('cart', JSON.stringify(newCart));
+    // Trigger storage event for cart count update
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleRemoveFromCart = (cartId) => {
@@ -495,12 +500,9 @@ const Menu = () => {
         </div>
 
         <CartSidebar
-          showCart={showCart}
-          setShowCart={setShowCart}
+          isOpen={showCart}
+          onClose={() => setShowCart(false)}
           cart={cart}
-          onRemoveFromCart={handleRemoveFromCart}
-          onCheckout={handleCheckout}
-          getCartTotal={getCartTotal}
         />
       </div>
     );
@@ -584,13 +586,23 @@ const Menu = () => {
           )}
         </main>
 
+        {/* Floating Cart Button */}
+        {cart.length > 0 && (
+          <button 
+            className="floating-cart"
+            onClick={() => setShowCart(true)}
+          >
+            <i className="fas fa-shopping-cart"></i>
+            {cart.length > 0 && (
+              <span className="cart-count-badge">{cart.reduce((total, item) => total + (item.quantity || 1), 0)}</span>
+            )}
+          </button>
+        )}
+
         <CartSidebar
-          showCart={showCart}
-          setShowCart={setShowCart}
+          isOpen={showCart}
+          onClose={() => setShowCart(false)}
           cart={cart}
-          onRemoveFromCart={handleRemoveFromCart}
-          onCheckout={handleCheckout}
-          getCartTotal={getCartTotal}
         />
       </div>
     </div>

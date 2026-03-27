@@ -10,6 +10,8 @@ export const protect = async (req, res, next) => {
     try {
       // Get token from header
       token = req.headers.authorization.split(' ')[1];
+      
+      console.log('🔑 Auth token received:', token.substring(0, 20) + '...');
 
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'yhk_secret_key_2024');
@@ -44,17 +46,26 @@ export const protect = async (req, res, next) => {
 
 // @desc    Admin middleware
 // @access  Private/Admin
-export const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+export const adminOnly = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.isAdmin === true)) {
     next();
   } else {
-    res.status(403).json({
+    res.status(401).json({
       success: false,
-      error: 'Not authorized as an admin'
+      error: 'Admin access required'
     });
   }
 };
 
-// @desc    Admin only middleware (alias for admin)
-// @access  Private/Admin
-export const adminOnly = admin;
+// @desc    Delivery partner middleware
+// @access  Private/Delivery
+export const deliveryBoy = (req, res, next) => {
+  if (req.user && req.user.role === 'delivery_partner') {
+    next();
+  } else {
+    res.status(403).json({
+      success: false,
+      error: 'Not authorized as a delivery partner'
+    });
+  }
+};

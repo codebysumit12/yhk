@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: false, // Always optional for Firebase
+    required: true, // Required for admin-created users
     unique: true,
     sparse: true,
     lowercase: true,
@@ -18,13 +18,11 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: false, // Always optional for Firebase
-    unique: true,
-    sparse: true,
     trim: true
   },
   password: {
     type: String,
-    required: false, // Always optional for Firebase
+    required: function() { return !this.firebaseUid; }, // Required if not Firebase user
     minlength: 6,
     select: false
   },
@@ -35,7 +33,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['customer', 'admin', 'delivery'],
+    enum: ['customer', 'admin', 'delivery_partner'],
     default: 'customer'
   },
   isActive: {

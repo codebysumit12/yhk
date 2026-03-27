@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍹 Beverages & Desserts - Manual Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .auth-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .test-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .test-item-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .test-item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .test-item-card h4 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .test-item-card p {
+            color: #6c757d;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .results {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .result-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .result-item.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .result-item.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍹 Beverages & Desserts</h1>
+            <p>Manual Testing Interface for Drinks, Smoothies, and Desserts</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Authentication Section -->
+            <div class="auth-section">
+                <h3>🔐 Admin Authentication</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="apiUrl">API URL:</label>
+                        <input type="text" id="apiUrl" value="http://localhost:5000/api" placeholder="API URL">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminEmail">Admin Email:</label>
+                        <input type="email" id="adminEmail" value="admin@yashkitchen.com" placeholder="Admin Email">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Admin Password:</label>
+                        <input type="password" id="adminPassword" value="admin123" placeholder="Admin Password">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="authenticate()">🔑 Login</button>
+                    </div>
+                </div>
+                <div id="authStatus"></div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('drinks')">🥤 Drinks</button>
+                <button class="tab" onclick="switchTab('smoothies')">🥤 Smoothies</button>
+                <button class="tab" onclick="switchTab('desserts')">🍰 Desserts</button>
+                <button class="tab" onclick="switchTab('manual')">✏️ Manual Test</button>
+            </div>
+
+            <!-- Drinks Tab -->
+            <div id="drinks-tab" class="tab-content active">
+                <h3>🥤 Test Drinks</h3>
+                <div class="test-items">
+                    <div class="test-item-card">
+                        <h4>Fresh Orange Juice</h4>
+                        <p>Price: ₹89 | Discount: ₹79</p>
+                        <p>Calories: 120 | Size: 300ml</p>
+                        <p>Prep Time: 3 min | Featured: Yes</p>
+                        <button class="btn btn-success" onclick="testItem('drinks', 'orange-juice')">➕ Test Create</button>
+                    </div>
+                    <div class="test-item-card">
+                        <h4>Iced Coffee</h4>
+                        <p>Price: ₹120 | No Discount</p>
+                        <p>Calories: 95 | Size: 250ml</p>
+                        <p>Prep Time: 5 min | Featured: No</p>
+                        <button class="btn btn-success" onclick="testItem('drinks', 'iced-coffee')">➕ Test Create</button>
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="testAllItems('drinks')">🧪 Test All Drinks</button>
+                <button class="btn btn-primary" onclick="fetchItems('drinks')">📋 Fetch Drinks</button>
+            </div>
+
+            <!-- Smoothies Tab -->
+            <div id="smoothies-tab" class="tab-content">
+                <h3>🥤 Test Smoothies</h3>
+                <div class="test-items">
+                    <div class="test-item-card">
+                        <h4>Mango Banana Smoothie</h4>
+                        <p>Price: ₹150 | Discount: ₹129</p>
+                        <p>Calories: 220 | Size: 350ml</p>
+                        <p>Prep Time: 7 min | Featured: Yes</p>
+                        <button class="btn btn-success" onclick="testItem('smoothies', 'mango-banana')">➕ Test Create</button>
+                    </div>
+                    <div class="test-item-card">
+                        <h4>Green Detox Smoothie</h4>
+                        <p>Price: ₹140 | No Discount</p>
+                        <p>Calories: 180 | Size: 300ml</p>
+                        <p>Prep Time: 6 min | Featured: No</p>
+                        <button class="btn btn-success" onclick="testItem('smoothies', 'green-detox')">➕ Test Create</button>
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="testAllItems('smoothies')">🧪 Test All Smoothies</button>
+                <button class="btn btn-primary" onclick="fetchItems('smoothies')">📋 Fetch Smoothies</button>
+            </div>
+
+            <!-- Desserts Tab -->
+            <div id="desserts-tab" class="tab-content">
+                <h3>🍰 Test Desserts</h3>
+                <div class="test-items">
+                    <div class="test-item-card">
+                        <h4>Chocolate Brownie</h4>
+                        <p>Price: ₹180 | Discount: ₹149</p>
+                        <p>Calories: 380 | Size: 1 piece</p>
+                        <p>Prep Time: 8 min | Featured: Yes</p>
+                        <button class="btn btn-success" onclick="testItem('desserts', 'brownie')">➕ Test Create</button>
+                    </div>
+                    <div class="test-item-card">
+                        <h4>Fruit Salad Bowl</h4>
+                        <p>Price: ₹120 | No Discount</p>
+                        <p>Calories: 150 | Size: 1 bowl</p>
+                        <p>Prep Time: 5 min | Featured: No</p>
+                        <button class="btn btn-success" onclick="testItem('desserts', 'fruit-salad')">➕ Test Create</button>
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="testAllItems('desserts')">🧪 Test All Desserts</button>
+                <button class="btn btn-primary" onclick="fetchItems('desserts')">📋 Fetch Desserts</button>
+            </div>
+
+            <!-- Manual Test Tab -->
+            <div id="manual-tab" class="tab-content">
+                <h3>✏️ Manual Item Creation</h3>
+                <form id="manualForm" onsubmit="createManualItem(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="itemName">Item Name *</label>
+                            <input type="text" id="itemName" required placeholder="e.g., Custom Drink">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemCategory">Category *</label>
+                            <select id="itemCategory" required>
+                                <option value="drinks">🥤 Drinks</option>
+                                <option value="smoothies">🥤 Smoothies</option>
+                                <option value="desserts">🍰 Desserts</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemPrice">Price (₹) *</label>
+                            <input type="number" id="itemPrice" required placeholder="99">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemDiscount">Discount Price (₹)</label>
+                            <input type="number" id="itemDiscount" placeholder="79">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemPrepTime">Prep Time (min)</label>
+                            <input type="number" id="itemPrepTime" placeholder="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemServingSize">Serving Size</label>
+                            <input type="text" id="itemServingSize" placeholder="e.g., 250ml">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemCalories">Calories</label>
+                            <input type="number" id="itemCalories" placeholder="180">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemImage">Image URL</label>
+                            <input type="text" id="itemImage" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="itemDescription">Description</label>
+                            <textarea id="itemDescription" rows="3" placeholder="Describe your item..."></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="itemIngredients">Ingredients (comma-separated)</label>
+                            <input type="text" id="itemIngredients" placeholder="e.g., Mango, Yogurt, Honey">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="itemAllergens">Allergens (comma-separated)</label>
+                            <input type="text" id="itemAllergens" placeholder="e.g., Contains dairy, nuts">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>
+                                <input type="checkbox" id="itemAvailable" checked> Available for orders
+                            </label>
+                            <label style="margin-left: 20px;">
+                                <input type="checkbox" id="itemFeatured"> ⭐ Featured item
+                            </label>
+                        </div>
+                        <div class="form-group full-width">
+                            <button type="submit" class="btn btn-primary">➕ Create Item</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results">
+                <h3>📊 Test Results</h3>
+                <div id="results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+        const API_URL = document.getElementById('apiUrl').value;
+
+        // Test item data
+        const testItems = {
+            'orange-juice': {
+                name: 'Fresh Orange Juice',
+                description: 'Freshly squeezed orange juice with pulp',
+                price: 89,
+                discountPrice: 79,
+                type: 'drinks',
+                preparationTime: 3,
+                servingSize: '300ml',
+                calories: 120,
+                ingredients: ['Fresh Oranges', 'Ice', 'Sugar'],
+                allergens: [],
+                isAvailable: true,
+                isFeatured: true
+            },
+            'iced-coffee': {
+                name: 'Iced Coffee',
+                description: 'Chilled coffee with milk and ice',
+                price: 120,
+                type: 'drinks',
+                preparationTime: 5,
+                servingSize: '250ml',
+                calories: 95,
+                ingredients: ['Coffee', 'Milk', 'Ice', 'Sugar Syrup'],
+                allergens: ['Contains dairy'],
+                isAvailable: true,
+                isFeatured: false
+            },
+            'mango-banana': {
+                name: 'Mango Banana Smoothie',
+                description: 'Creamy blend of mango and banana',
+                price: 150,
+                discountPrice: 129,
+                type: 'smoothies',
+                preparationTime: 7,
+                servingSize: '350ml',
+                calories: 220,
+                ingredients: ['Mango', 'Banana', 'Yogurt', 'Honey', 'Ice'],
+                allergens: ['Contains dairy'],
+                isAvailable: true,
+                isFeatured: true
+            },
+            'green-detox': {
+                name: 'Green Detox Smoothie',
+                description: 'Healthy green smoothie with spinach and fruits',
+                price: 140,
+                type: 'smoothies',
+                preparationTime: 6,
+                servingSize: '300ml',
+                calories: 180,
+                ingredients: ['Spinach', 'Apple', 'Cucumber', 'Lemon', 'Ginger'],
+                allergens: [],
+                isAvailable: true,
+                isFeatured: false
+            },
+            'brownie': {
+                name: 'Chocolate Brownie',
+                description: 'Warm chocolate brownie with vanilla ice cream',
+                price: 180,
+                discountPrice: 149,
+                type: 'desserts',
+                preparationTime: 8,
+                servingSize: '1 piece',
+                calories: 380,
+                ingredients: ['Chocolate', 'Flour', 'Butter', 'Eggs', 'Vanilla Ice Cream'],
+                allergens: ['Contains dairy', 'Contains gluten', 'Contains eggs'],
+                isAvailable: true,
+                isFeatured: true
+            },
+            'fruit-salad': {
+                name: 'Fruit Salad Bowl',
+                description: 'Fresh seasonal fruits with honey dressing',
+                price: 120,
+                type: 'desserts',
+                preparationTime: 5,
+                servingSize: '1 bowl',
+                calories: 150,
+                ingredients: ['Mixed Fruits', 'Honey', 'Mint Leaves'],
+                allergens: [],
+                isAvailable: true,
+                isFeatured: false
+            }
+        };
+
+        // Switch tabs
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Add result
+        function addResult(message, type = 'success') {
+            const resultsDiv = document.getElementById('results');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${type}`;
+            resultItem.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            resultsDiv.insertBefore(resultItem, resultsDiv.firstChild);
+
+            // Keep only last 10 results
+            while (resultsDiv.children.length > 10) {
+                resultsDiv.removeChild(resultsDiv.lastChild);
+            }
+        }
+
+        // Authenticate
+        async function authenticate() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            showStatus('🔄 Authenticating...', 'info');
+
+            try {
+                const response = await fetch(`${apiUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.token) {
+                    authToken = data.token;
+                    showStatus('✅ Authentication successful!', 'success');
+                    addResult('Admin authenticated successfully', 'success');
+                } else {
+                    showStatus(`❌ Authentication failed: ${data.message}`, 'error');
+                    addResult(`Authentication failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Authentication error: ${error.message}`, 'error');
+                addResult(`Authentication error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test single item
+        async function testItem(category, itemKey) {
+            if (!authToken) {
+                addResult('Please authenticate first', 'error');
+                return;
+            }
+
+            const item = testItems[itemKey];
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            addResult(`Testing ${item.name} creation...`, 'info');
+
+            try {
+                const formData = new FormData();
+                
+                // Add all item fields
+                Object.keys(item).forEach(key => {
+                    if (key === 'ingredients' || key === 'allergens') {
+                        formData.append(key, JSON.stringify(item[key]));
+                    } else if (typeof item[key] === 'boolean') {
+                        formData.append(key, item[key]);
+                    } else {
+                        formData.append(key, item[key]);
+                    }
+                });
+
+                const response = await fetch(`${apiUrl}/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    addResult(`✅ ${item.name} created successfully (ID: ${data.data._id})`, 'success');
+                } else {
+                    addResult(`❌ Failed to create ${item.name}: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error creating ${item.name}: ${error.message}`, 'error');
+            }
+        }
+
+        // Test all items in category
+        async function testAllItems(category) {
+            const categoryItems = {
+                'drinks': ['orange-juice', 'iced-coffee'],
+                'smoothies': ['mango-banana', 'green-detox'],
+                'desserts': ['brownie', 'fruit-salad']
+            };
+
+            const items = categoryItems[category];
+            
+            for (const itemKey of items) {
+                await testItem(category, itemKey);
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        // Fetch items
+        async function fetchItems(category) {
+            if (!authToken) {
+                addResult('Please authenticate first', 'error');
+                return;
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            addResult(`Fetching ${category}...`, 'info');
+
+            try {
+                const response = await fetch(`${apiUrl}/items?type=${category}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    addResult(`✅ Found ${data.data.length} ${category}`, 'success');
+                    
+                    // Show first few items
+                    data.data.slice(0, 3).forEach((item, index) => {
+                        addResult(`   ${index + 1}. ${item.name} - ₹${item.price}`, 'success');
+                    });
+                } else {
+                    addResult(`❌ Failed to fetch ${category}: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error fetching ${category}: ${error.message}`, 'error');
+            }
+        }
+
+        // Create manual item
+        async function createManualItem(event) {
+            event.preventDefault();
+
+            if (!authToken) {
+                addResult('Please authenticate first', 'error');
+                return;
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            const itemData = {
+                name: document.getElementById('itemName').value,
+                description: document.getElementById('itemDescription').value,
+                price: parseFloat(document.getElementById('itemPrice').value),
+                type: document.getElementById('itemCategory').value,
+                preparationTime: parseInt(document.getElementById('itemPrepTime').value) || 5,
+                servingSize: document.getElementById('itemServingSize').value,
+                calories: parseInt(document.getElementById('itemCalories').value) || 0,
+                ingredients: document.getElementById('itemIngredients').value.split(',').map(i => i.trim()).filter(i => i),
+                allergens: document.getElementById('itemAllergens').value.split(',').map(a => a.trim()).filter(a => a),
+                isAvailable: document.getElementById('itemAvailable').checked,
+                isFeatured: document.getElementById('itemFeatured').checked
+            };
+
+            const discountPrice = document.getElementById('itemDiscount').value;
+            if (discountPrice) {
+                itemData.discountPrice = parseFloat(discountPrice);
+            }
+
+            addResult(`Creating manual item: ${itemData.name}...`, 'info');
+
+            try {
+                const formData = new FormData();
+                
+                Object.keys(itemData).forEach(key => {
+                    if (key === 'ingredients' || key === 'allergens') {
+                        formData.append(key, JSON.stringify(itemData[key]));
+                    } else if (typeof itemData[key] === 'boolean') {
+                        formData.append(key, itemData[key]);
+                    } else {
+                        formData.append(key, itemData[key]);
+                    }
+                });
+
+                const response = await fetch(`${apiUrl}/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    addResult(`✅ Manual item created successfully (ID: ${data.data._id})`, 'success');
+                    document.getElementById('manualForm').reset();
+                } else {
+                    addResult(`❌ Failed to create manual item: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error creating manual item: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-authenticate on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                authenticate();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
