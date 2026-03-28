@@ -359,6 +359,21 @@ const Checkoutpage = () => {
     await handleSendOTP();
   }, [resendTimer, clearRecaptcha, handleSendOTP]);
 
+  // ── Change phone ───────────────────────────────────────────────────────────
+  const handleChangePhone = () => {
+    setPhoneStep('input');
+    setPhoneNumber('');
+    setOtp(['', '', '', '', '', '']);
+    setOtpError(false);
+    otpExpiredRef.current = false;
+    setOtpExpiredDisplay(false);
+    setOtpExpiryTimer(60);
+    setResendTimer(0);
+    setConfirmationResult(null);
+    // FIX: clear reCAPTCHA here so the pre-init useEffect on 'input' gets a clean slate
+    clearRecaptcha();
+  };
+
   // ── Address handlers ──────────────────────────────────────────────────────
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
