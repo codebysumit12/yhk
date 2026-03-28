@@ -4,6 +4,7 @@ import Nav from './Nav';
 import CartSidebar from './CartSidebar';
 import CartNotification from './CartNotification';
 import YHKLoader from './Yhkloader';
+import HeroBannerVideo from '../components/HeroBannerVideo';
 import { API_CONFIG } from '../../config/api';
 import './Main.css';
 
@@ -14,6 +15,7 @@ const Main = ({ restaurants }) => {
   const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants || []);
 
   const [heroBanner, setHeroBanner] = useState(null);
+  const [heroVideoError, setHeroVideoError] = useState(false);
 
   const [categories, setCategories] = useState([]);
 
@@ -226,104 +228,14 @@ const Main = ({ restaurants }) => {
 
       {/* Hero Section */}
 
-      {heroBanner?.mediaType === 'video' ? (
-
-        <section className="hero hero-video">
-
-          <video 
-
-            autoPlay 
-
-            muted 
-
-            loop 
-
-            playsInline
-
-            controls
-
-            onError={(e) => console.error('Video error:', e)}
-
-            onLoadStart={() => console.log('Video loading started')}
-
-            onCanPlay={() => console.log('Video can play')}
-
-            style={{
-
-              position: 'absolute',
-
-              top: 0,
-
-              left: 0,
-
-              width: '100%',
-
-              height: '100%',
-
-              objectFit: 'cover',
-
-              zIndex: '-1',
-
-              display: 'block'
-
-            }}
-
-          >
-
-            <source src={heroBanner.mediaUrl} type="video/mp4" />
-
-            Your browser does not support the video tag.
-
-          </video>
-
-          <div className="hero-overlay"></div>
-
-          <div className="hero-content">
-
-            <h1>Yeswanth's Healthy Kitchen</h1>
-
-            <div className="hero-links">
-
-              <div className="quick-links">
-
-                <Link to="/menu" className="quick-link">
-
-                  <i className="fas fa-birthday-cake"></i> Birthday Party
-
-                </Link>
-
-                <Link to="/menu" className="quick-link">
-
-                  <i className="fas fa-leaf"></i> Healthy Food
-
-                </Link>
-
-                <Link to="/menu" className="quick-link">
-
-                  <i className="fas fa-pizza-slice"></i> Veg
-
-                </Link>
-
-                <Link to="/menu" className="quick-link">
-
-                  <i className="fas fa-drumstick-bite"></i> Non-Veg
-
-                </Link>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
+      {heroBanner && heroBanner.mediaType === 'video' && !heroVideoError ? (
+        <HeroBannerVideo 
+          heroBanner={heroBanner} 
+          onError={() => setHeroVideoError(true)}
+        />
       ) : (
-
         <section className="hero" style={{
-
           backgroundImage: heroBanner ? 
-
             `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('${heroBanner.mediaUrl}')` :
 
             `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80')`,
