@@ -3,42 +3,31 @@ import { API_CONFIG } from '../../config/api';
 import './deliveries-page.css';
 
 const DeliveriesPage = () => {
-  const [deliveries, setDeliveries]             = useState([]);
-  const [deliveryBoys, setDeliveryBoys]         = useState([]);
-  const [loading, setLoading]                   = useState(false);
-  const [filterStatus, setFilterStatus]         = useState('all');
-  const [searchTerm, setSearchTerm]             = useState('');
+  const [deliveries,     setDeliveries]     = useState([]);
+  const [deliveryBoys,   setDeliveryBoys]   = useState([]);
+  const [loading,        setLoading]        = useState(false);
+  const [filterStatus,   setFilterStatus]   = useState('all');
+  const [searchTerm,     setSearchTerm]     = useState('');
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  // OTP modal state
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpDelivery, setOtpDelivery]   = useState(null);
-  const [enteredOtp, setEnteredOtp]     = useState('');
-  const [otpError, setOtpError]         = useState('');
-  const [otpLoading, setOtpLoading]     = useState(false);
-
   // Per-row assign dropdown selections: { [orderId]: boyId }
   const [assignSelections, setAssignSelections] = useState({});
-  const [assigningId, setAssigningId]           = useState(null);
+  const [assigningId,      setAssigningId]      = useState(null);
 
   const API_URL = API_CONFIG.API_URL;
   const token   = localStorage.getItem('userToken') || localStorage.getItem('token');
 
-  /* ─── Fetch deliveries (ready + out-for-delivery + delivered) ─── */
+  // ── Fetch deliveries ──────────────────────────────────────────────────────
   const fetchDeliveries = useCallback(async () => {
     setLoading(true);
     try {
-      console.log('Fetching deliveries with token:', token ? 'exists' : 'missing');
       const response = await fetch(
         `${API_URL}/orders?status=ready,out-for-delivery,delivered`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log('Deliveries response status:', response.status);
       const data = await response.json();
-      console.log('Deliveries data:', data);
       if (data.success) setDeliveries(data.data || []);
-      else console.error('Deliveries API error:', data);
     } catch (err) {
       console.error('Error fetching deliveries:', err);
     } finally {
@@ -46,25 +35,17 @@ const DeliveriesPage = () => {
     }
   }, [API_URL, token]);
 
-  /* ─── Fetch available delivery boys ─────────────────────────── */
+  // ── Fetch delivery boys ───────────────────────────────────────────────────
   const fetchDeliveryBoys = useCallback(async () => {
     try {
-      console.log('Fetching delivery boys with token:', token ? 'exists' : 'missing');
       const response = await fetch(`${API_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Delivery boys response status:', response.status);
       const data = await response.json();
-      console.log('Delivery boys raw data:', data);
       if (data.success) {
-        // Filter users with role 'delivery_partner' and isActive true
-        const deliveryUsers = (data.data || []).filter(user => 
-          user.role === 'delivery_partner' && user.isActive === true
+        setDeliveryBoys(
+          (data.data || []).filter(u => u.role === 'delivery_partner' && u.isActive)
         );
-        console.log('Filtered delivery users:', deliveryUsers);
-        setDeliveryBoys(deliveryUsers);
-      } else {
-        console.error('Delivery boys API error:', data);
       }
     } catch (err) {
       console.error('Error fetching delivery boys:', err);
@@ -76,105 +57,60 @@ const DeliveriesPage = () => {
     fetchDeliveryBoys();
   }, [fetchDeliveries, fetchDeliveryBoys]);
 
-  /* ─── Assign delivery boy to order ──────────────────────────── */
+  // ── Assign delivery boy ───────────────────────────────────────────────────
   const assignDeliveryBoy = async (orderId) => {
     const boyId = assignSelections[orderId];
     if (!boyId) return;
     setAssigningId(orderId);
     try {
       const response = await fetch(`${API_URL}/orders/${orderId}/assign-delivery`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ deliveryBoyId: boyId }),
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body:    JSON.stringify({ deliveryBoyId: boyId }),
       });
       const data = await response.json();
       if (data.success) {
         await fetchDeliveries();
         await fetchDeliveryBoys();
-        setAssignSelections(prev => {
-          const next = { ...prev };
-          delete next[orderId];
-          return next;
-        });
+        setAssignSelections(prev => { const n = { ...prev }; delete n[orderId]; return n; });
       } else {
         alert(data.message || 'Failed to assign delivery boy');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to assign delivery boy');
     } finally {
       setAssigningId(null);
     }
   };
 
-  /* ─── Update order status ────────────────────────────────────── */
-  const updateDeliveryStatus = async (deliveryId, newStatus) => {
+  // ── Dispatch order (ready → out-for-delivery) ─────────────────────────────
+  const dispatchOrder = async (orderId) => {
     try {
-      const response = await fetch(`${API_URL}/orders/${deliveryId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
+      const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body:    JSON.stringify({ status: 'out-for-delivery' }),
       });
       const data = await response.json();
       if (data.success) {
         fetchDeliveries();
         setShowDetailsModal(false);
       } else {
-        alert(data.message || 'Failed to update status');
+        alert(data.message || 'Failed to dispatch order');
       }
-    } catch (err) {
-      alert('Failed to update delivery status');
+    } catch {
+      alert('Failed to dispatch order');
     }
   };
 
-  /* ─── OTP verify ─────────────────────────────────────────────── */
-  const openOtpModal = (delivery) => {
-    setOtpDelivery(delivery);
-    setEnteredOtp('');
-    setOtpError('');
-    setShowOtpModal(true);
-  };
-
-  const verifyOtp = async () => {
-    if (enteredOtp.length < 4) { setOtpError('Please enter a valid OTP'); return; }
-    setOtpLoading(true);
-    setOtpError('');
-    try {
-      const response = await fetch(`${API_URL}/orders/${otpDelivery._id}/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ otp: enteredOtp }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setShowOtpModal(false);
-        fetchDeliveries();
-      } else {
-        setOtpError(data.message || 'Incorrect OTP. Please try again.');
-      }
-    } catch (err) {
-      setOtpError('Server error. Please try again.');
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  /* ─── Filters ────────────────────────────────────────────────── */
+  // ── Filters ───────────────────────────────────────────────────────────────
   const filteredDeliveries = deliveries.filter(d => {
-    const matchesSearch =
+    const matchSearch =
       d.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.customer?.phone?.includes(searchTerm);
-    const matchesStatus = filterStatus === 'all' || d.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchStatus = filterStatus === 'all' || d.status === filterStatus;
+    return matchSearch && matchStatus;
   });
 
   const stats = {
@@ -184,21 +120,21 @@ const DeliveriesPage = () => {
     delivered:      deliveries.filter(d => d.status === 'delivered').length,
   };
 
-  /* ─── Sub-components ─────────────────────────────────────────── */
+  // ── Sub-components ────────────────────────────────────────────────────────
   const StatusBadge = ({ status }) => {
     const map = {
-      'ready':            { label: 'Ready',            color: '#8b5cf6', icon: '✓' },
+      ready:              { label: 'Ready',            color: '#8b5cf6', icon: '✓'  },
       'out-for-delivery': { label: 'Out for Delivery', color: '#06b6d4', icon: '🚚' },
-      'delivered':        { label: 'Delivered',        color: '#10b981', icon: '✅' },
+      delivered:          { label: 'Delivered',        color: '#10b981', icon: '✅' },
     };
-    const cfg = map[status] || { label: status, color: '#6b7280', icon: '•' };
+    const c = map[status] || { label: status, color: '#6b7280', icon: '•' };
     return (
       <span style={{
         display: 'inline-flex', alignItems: 'center', gap: 4,
         padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-        background: cfg.color + '18', color: cfg.color, border: `1px solid ${cfg.color}40`,
+        background: c.color + '18', color: c.color, border: `1px solid ${c.color}40`,
       }}>
-        {cfg.icon} {cfg.label}
+        {c.icon} {c.label}
       </span>
     );
   };
@@ -222,15 +158,11 @@ const DeliveriesPage = () => {
         <select
           className="assign-select"
           value={assignSelections[delivery._id] || ''}
-          onChange={e =>
-            setAssignSelections(prev => ({ ...prev, [delivery._id]: e.target.value }))
-          }
+          onChange={e => setAssignSelections(p => ({ ...p, [delivery._id]: e.target.value }))}
         >
           <option value="">— select boy —</option>
           {deliveryBoys.map(boy => (
-            <option key={boy._id} value={boy._id}>
-              {boy.name} ({boy.phone})
-            </option>
+            <option key={boy._id} value={boy._id}>{boy.name} ({boy.phone})</option>
           ))}
         </select>
         <button
@@ -244,7 +176,7 @@ const DeliveriesPage = () => {
     );
   };
 
-  /* ─── Render ─────────────────────────────────────────────────── */
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="deliveries-page">
 
@@ -252,7 +184,7 @@ const DeliveriesPage = () => {
       <div className="page-header">
         <div>
           <h2>🛵 Deliveries Management</h2>
-          <p>Assign delivery boys, dispatch orders & verify OTP on arrival</p>
+          <p>Assign delivery boys and dispatch orders — OTP confirmation is handled by the delivery partner</p>
         </div>
       </div>
 
@@ -320,7 +252,7 @@ const DeliveriesPage = () => {
                 <th style={{ width: '10%' }}>Amount</th>
                 <th style={{ width: '13%' }}>Status</th>
                 <th style={{ width: '23%' }}>Assigned Boy</th>
-                <th style={{ width: 150, textAlign: 'center' }}>Actions</th>
+                <th style={{ width: 100, textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -352,6 +284,8 @@ const DeliveriesPage = () => {
                   <td><AssignCell delivery={delivery} /></td>
                   <td>
                     <div className="table-actions">
+
+                      {/* View details */}
                       <button
                         className="table-action-btn view"
                         title="View Details"
@@ -363,18 +297,10 @@ const DeliveriesPage = () => {
                         <button
                           className="table-action-btn dispatch"
                           title="Dispatch for Delivery"
-                          onClick={() => updateDeliveryStatus(delivery._id, 'out-for-delivery')}
+                          onClick={() => dispatchOrder(delivery._id)}
                         >🚚</button>
                       )}
 
-                      {/* OTP verify — when out for delivery */}
-                      {delivery.status === 'out-for-delivery' && (
-                        <button
-                          className="table-action-btn otp"
-                          title="Verify OTP & Confirm Delivery"
-                          onClick={() => openOtpModal(delivery)}
-                        >🔐</button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -384,7 +310,7 @@ const DeliveriesPage = () => {
         </div>
       )}
 
-      {/* ── Details Modal ──────────────────────────────────────── */}
+      {/* ── Details Modal ─────────────────────────────────────────────────── */}
       {showDetailsModal && selectedDelivery && (
         <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
           <div className="modal modal-large" onClick={e => e.stopPropagation()}>
@@ -393,109 +319,85 @@ const DeliveriesPage = () => {
               <button className="close-btn" onClick={() => setShowDetailsModal(false)}>✕</button>
             </div>
             <div className="modal-body delivery-details-modal">
+
               <div className="info-card">
                 <h4>👤 Customer</h4>
                 <div className="info-content">
-                  <p><strong>Name:</strong> {selectedDelivery.customer.name}</p>
+                  <p><strong>Name:</strong>  {selectedDelivery.customer.name}</p>
                   <p><strong>Phone:</strong> {selectedDelivery.customer.phone}</p>
                   <p><strong>Email:</strong> {selectedDelivery.customer.email}</p>
                 </div>
               </div>
+
               <div className="info-card">
                 <h4>📍 Delivery Address</h4>
                 <div className="info-content">
                   <p>{selectedDelivery.deliveryAddress?.street}</p>
-                  {selectedDelivery.deliveryAddress?.apartment && <p>{selectedDelivery.deliveryAddress.apartment}</p>}
-                  <p>{selectedDelivery.deliveryAddress?.city}, {selectedDelivery.deliveryAddress?.state} — {selectedDelivery.deliveryAddress?.zipCode}</p>
+                  {selectedDelivery.deliveryAddress?.apartment && (
+                    <p>{selectedDelivery.deliveryAddress.apartment}</p>
+                  )}
+                  <p>
+                    {selectedDelivery.deliveryAddress?.city}, {selectedDelivery.deliveryAddress?.state} — {selectedDelivery.deliveryAddress?.zipCode}
+                  </p>
                   {selectedDelivery.deliveryAddress?.landmark && (
                     <p><strong>Landmark:</strong> {selectedDelivery.deliveryAddress.landmark}</p>
                   )}
                 </div>
               </div>
+
               <div className="info-card">
                 <h4>📦 Order Info</h4>
                 <div className="info-content">
-                  <p><strong>Order #:</strong> {selectedDelivery.orderNumber}</p>
-                  <p><strong>Items:</strong> {selectedDelivery.orderItems?.length || 0}</p>
-                  <p><strong>Total:</strong> ₹{selectedDelivery.pricing?.total || 0}</p>
-                  <p><strong>Payment:</strong> {selectedDelivery.paymentMethod?.toUpperCase()}</p>
+                  <p><strong>Order #:</strong>  {selectedDelivery.orderNumber}</p>
+                  <p><strong>Items:</strong>    {selectedDelivery.orderItems?.length || 0}</p>
+                  <p><strong>Total:</strong>    ₹{selectedDelivery.pricing?.total || 0}</p>
+                  <p><strong>Payment:</strong>  {selectedDelivery.paymentMethod?.toUpperCase()}</p>
                 </div>
               </div>
+
               {selectedDelivery.delivery?.deliveryPerson && (
                 <div className="info-card">
                   <h4>🛵 Delivery Boy</h4>
                   <div className="info-content">
-                    <p><strong>Name:</strong> {selectedDelivery.delivery.deliveryPerson.name}</p>
-                    <p><strong>Phone:</strong> {selectedDelivery.delivery.deliveryPerson.phone}</p>
+                    <p><strong>Name:</strong>    {selectedDelivery.delivery.deliveryPerson.name}</p>
+                    <p><strong>Phone:</strong>   {selectedDelivery.delivery.deliveryPerson.phone}</p>
                     {selectedDelivery.delivery.deliveryPerson.vehicleNumber && (
                       <p><strong>Vehicle:</strong> {selectedDelivery.delivery.deliveryPerson.vehicleNumber}</p>
                     )}
                   </div>
                 </div>
               )}
+
               {selectedDelivery.specialInstructions && (
                 <div className="info-card full-width">
                   <h4>📝 Special Instructions</h4>
                   <p>{selectedDelivery.specialInstructions}</p>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ── OTP Modal ─────────────────────────────────────────── */}
-      {showOtpModal && otpDelivery && (
-        <div className="modal-overlay" onClick={() => setShowOtpModal(false)}>
-          <div className="modal otp-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🔐 Verify OTP — {otpDelivery.orderNumber}</h3>
-              <button className="close-btn" onClick={() => setShowOtpModal(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className="otp-info-box">
-                <p>The customer has received a one-time password on their registered phone.</p>
-                <p>Ask the customer for the OTP and enter it below to confirm successful delivery.</p>
-              </div>
-
-              <div className="otp-customer-row">
-                <div className="otp-cust-avatar">{otpDelivery.customer.name?.[0]?.toUpperCase()}</div>
-                <div>
-                  <strong>{otpDelivery.customer.name}</strong>
-                  <small>{otpDelivery.customer.phone}</small>
+              {/* Dispatch action inside modal */}
+              {selectedDelivery.status === 'ready' && selectedDelivery.delivery?.deliveryPerson && (
+                <div className="info-card full-width">
+                  <button
+                    className="btn-primary"
+                    style={{ width: '100%' }}
+                    onClick={() => dispatchOrder(selectedDelivery._id)}
+                  >
+                    🚚 Dispatch for Delivery
+                  </button>
                 </div>
-                <div className="otp-amount">₹{otpDelivery.pricing?.total}</div>
-              </div>
+              )}
 
-              <div className="otp-input-group">
-                <label>Enter OTP received from customer</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="Enter OTP"
-                  className={`otp-input ${otpError ? 'error' : ''}`}
-                  value={enteredOtp}
-                  autoFocus
-                  onChange={e => {
-                    setEnteredOtp(e.target.value.replace(/\D/g, ''));
-                    setOtpError('');
-                  }}
-                  onKeyDown={e => e.key === 'Enter' && verifyOtp()}
-                />
-                {otpError && <span className="otp-error-msg">⚠️ {otpError}</span>}
-              </div>
+              {/* Info note when out for delivery */}
+              {selectedDelivery.status === 'out-for-delivery' && (
+                <div className="info-card full-width" style={{
+                  background: '#f0fdf4', border: '1px solid #86efac',
+                  fontSize: 13, color: '#16a34a', textAlign: 'center', padding: '12px',
+                }}>
+                  🔐 Delivery confirmation is handled by the delivery partner via OTP
+                </div>
+              )}
 
-              <div className="otp-actions">
-                <button className="btn-secondary" onClick={() => setShowOtpModal(false)}>Cancel</button>
-                <button
-                  className="btn-verify"
-                  disabled={otpLoading || enteredOtp.length < 4}
-                  onClick={verifyOtp}
-                >
-                  {otpLoading ? 'Verifying…' : '✅ Confirm Delivery'}
-                </button>
-              </div>
             </div>
           </div>
         </div>

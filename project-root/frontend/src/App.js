@@ -62,6 +62,9 @@ function App() {
                 {/* ✅ FIXED: Auth at /auth */}
                 <Route path="/auth" element={<Auth />} />
                   
+                {/* ✅ FIXED: Register page */}
+                <Route path="/register" element={<Auth />} />
+                  
                 {/* Customer Routes */}
                 <Route path="/menu/:categorySlug" element={<Menu />} />
                 <Route path="/menu" element={<Menu />} />
