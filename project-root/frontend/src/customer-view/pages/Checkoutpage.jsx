@@ -109,12 +109,18 @@ const Checkoutpage = () => {
 
   // ── OTP expiry timer ──────────────────────────────────────────────────────
   useEffect(() => {
+    // Stop timer completely when not in OTP step
     if (phoneStep !== 'otp') return;
+
+    // Additional safety: stop if phone is already verified
+    if (phoneStep === 'verified') return;
+
     if (otpExpiryTimer <= 0) {
       otpExpiredRef.current = true;
       setOtpExpiredDisplay(true);
       return;
     }
+
     const t = setTimeout(() => setOtpExpiryTimer(v => v - 1), 1000);
     return () => clearTimeout(t);
   }, [otpExpiryTimer, phoneStep]);
@@ -308,6 +314,10 @@ const Checkoutpage = () => {
       setOtpError(false);
       localStorage.setItem('verifiedPhone', result.user.phoneNumber);
       setPhoneStep('verified');
+      // FIX: Stop OTP timer immediately on successful verification
+      otpExpiredRef.current = false;
+      setOtpExpiredDisplay(false);
+      setOtpExpiryTimer(0); // Changed from 60 to 0
       console.log('✅ Phone verified:', result.user.phoneNumber);
     } catch (error) {
       console.error('❌ OTP verify error:', error);
