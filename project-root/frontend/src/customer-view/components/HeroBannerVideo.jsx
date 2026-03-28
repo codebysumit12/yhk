@@ -104,7 +104,7 @@ const HeroBannerVideo = ({ heroBanner, onError }) => {
           </div>
         </div>
 
-        {/* Video Controls */}
+        {/* Video Controls 
         <div className="video-controls">
           <button 
             className="video-control-btn play-pause-btn"
@@ -121,7 +121,7 @@ const HeroBannerVideo = ({ heroBanner, onError }) => {
           >
             <i className={`fas ${isMuted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
           </button>
-        </div>
+        </div>  */}
       </div>
 
       {/* Banner Info */}

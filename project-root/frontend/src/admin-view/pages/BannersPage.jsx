@@ -16,7 +16,7 @@ const BannersPage = () => {
     displayOrder: 0,
     overlayTitle: '',
     overlaySubtitle: '',
-    overlayButtonText: ''
+    overlayButtonText: '',
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -39,7 +39,7 @@ const BannersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [API_URL]);
 
   useEffect(() => {
     fetchBanners();
@@ -50,12 +50,8 @@ const BannersPage = () => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
-      
-      // Create preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
+      reader.onloadend = () => setPreviewUrl(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -77,7 +73,7 @@ const BannersPage = () => {
       displayOrder: 0,
       overlayTitle: '',
       overlaySubtitle: '',
-      overlayButtonText: ''
+      overlayButtonText: '',
     });
     setSelectedFile(null);
     setPreviewUrl('');
@@ -85,10 +81,10 @@ const BannersPage = () => {
     setShowModal(false);
   };
 
-  // Handle create/update banner
+  // Handle create / update banner
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedFile && !editingBanner) {
       alert('Please select a file');
       return;
@@ -98,33 +94,31 @@ const BannersPage = () => {
 
     try {
       const formDataToSend = new FormData();
-      if (selectedFile) {
-        formDataToSend.append('file', selectedFile);
-      }
+      if (selectedFile) formDataToSend.append('file', selectedFile);
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('position', formData.position);
       formDataToSend.append('link', formData.link);
       formDataToSend.append('linkText', formData.linkText);
       formDataToSend.append('displayOrder', formData.displayOrder);
-      formDataToSend.append('overlayText', JSON.stringify({
-        title: formData.overlayTitle,
-        subtitle: formData.overlaySubtitle,
-        buttonText: formData.overlayButtonText
-      }));
+      formDataToSend.append(
+        'overlayText',
+        JSON.stringify({
+          title: formData.overlayTitle,
+          subtitle: formData.overlaySubtitle,
+          buttonText: formData.overlayButtonText,
+        })
+      );
 
-      const url = editingBanner 
+      const url = editingBanner
         ? `${API_URL}/banners/${editingBanner._id}`
         : `${API_URL}/banners`;
-      
       const method = editingBanner ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataToSend
+        headers: { Authorization: `Bearer ${token}` },
+        body: formDataToSend,
       });
 
       const data = await response.json();
@@ -156,7 +150,7 @@ const BannersPage = () => {
       displayOrder: banner.displayOrder,
       overlayTitle: banner.overlayText?.title || '',
       overlaySubtitle: banner.overlayText?.subtitle || '',
-      overlayButtonText: banner.overlayText?.buttonText || ''
+      overlayButtonText: banner.overlayText?.buttonText || '',
     });
     setPreviewUrl(banner.mediaUrl);
     setShowModal(true);
@@ -165,17 +159,12 @@ const BannersPage = () => {
   // Handle delete
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this banner?')) return;
-
     try {
       const response = await fetch(`${API_URL}/banners/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await response.json();
-
       if (data.success) {
         alert('Banner deleted successfully!');
         fetchBanners();
@@ -193,13 +182,9 @@ const BannersPage = () => {
     try {
       const response = await fetch(`${API_URL}/banners/${id}/toggle`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await response.json();
-      
       if (data.success) {
         await fetchBanners();
       } else {
@@ -213,84 +198,93 @@ const BannersPage = () => {
 
   return (
     <div className="banners-page">
+      {/* ── Header ── */}
       <div className="page-header">
         <h2>Banners Management</h2>
         <button className="btn-primary" onClick={() => setShowModal(true)}>
-          Add New Banner
+          + Add New Banner
         </button>
       </div>
 
-      {/* Stats */}
+      {/* ── Stats ── */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">📸</div>
-          <div>
-            <p className="stat-value">{banners.length}</p>
-            <p className="stat-label">Total Banners</p>
+        {[
+          { icon: '📸', value: banners.length, label: 'Total Banners' },
+          { icon: '✅', value: banners.filter(b => b.isActive).length, label: 'Active' },
+          { icon: '🎬', value: banners.filter(b => b.mediaType === 'video').length, label: 'Videos' },
+          { icon: '🖼️', value: banners.filter(b => b.mediaType === 'image').length, label: 'Images' },
+        ].map(stat => (
+          <div className="stat-card" key={stat.label}>
+            <div className="stat-icon">{stat.icon}</div>
+            <div>
+              <p className="stat-value">{stat.value}</p>
+              <p className="stat-label">{stat.label}</p>
+            </div>
           </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">✅</div>
-          <div>
-            <p className="stat-value">{banners.filter(b => b.isActive).length}</p>
-            <p className="stat-label">Active</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🎬</div>
-          <div>
-            <p className="stat-value">{banners.filter(b => b.mediaType === 'video').length}</p>
-            <p className="stat-label">Videos</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🖼️</div>
-          <div>
-            <p className="stat-value">{banners.filter(b => b.mediaType === 'image').length}</p>
-            <p className="stat-label">Images</p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Banners Grid */}
+      {/* ── Banners Grid ── */}
       {loading ? (
         <div className="loading">Loading banners...</div>
+      ) : banners.length === 0 ? (
+        <div className="empty-state">
+          <span>📭</span>
+          <p>No banners yet. Add your first banner!</p>
+        </div>
       ) : (
         <div className="banners-grid">
           {banners.map(banner => (
-            <div key={banner._id} className="banner-card">
+            <div key={banner._id} className={`banner-card ${!banner.isActive ? 'is-inactive' : ''}`}>
+              {/* Preview */}
               <div className="banner-preview">
                 {banner.mediaType === 'video' ? (
-                  <video src={banner.mediaUrl} controls />
+                  <video src={banner.mediaUrl} muted />
                 ) : (
-                  <img src={banner.mediaUrl} alt={banner.title} />
+                  <img src={banner.mediaUrl} alt={banner.title} loading="lazy" />
                 )}
+                {/* Quick-edit overlay on hover */}
                 <div className="banner-overlay">
-                  <button className="overlay-btn" onClick={() => handleEdit(banner)}>✏️</button>
+                  <button className="overlay-btn" onClick={() => handleEdit(banner)} title="Edit">
+                    ✏️
+                  </button>
+                  <button
+                    className="overlay-btn overlay-btn--delete"
+                    onClick={() => handleDelete(banner._id)}
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
                 </div>
                 {!banner.isActive && <div className="inactive-badge">Inactive</div>}
+                {banner.mediaType === 'video' && <div className="video-badge">🎬 Video</div>}
               </div>
-              
+
+              {/* Info */}
               <div className="banner-info">
-                <h3>{banner.title}</h3>
-                <div className="banner-meta">
-                  <span className={`position-badge ${banner.position}`}>
-                    {banner.position}
-                  </span>
-                  <span className="media-type">
-                    {banner.mediaType === 'video' ? '🎬' : '🖼️'} {banner.mediaType}
-                  </span>
+                <div className="banner-info-top">
+                  <h3 className="banner-title" title={banner.title}>{banner.title}</h3>
+                  <div className="banner-meta">
+                    <span className={`position-badge position-badge--${banner.position}`}>
+                      {banner.position}
+                    </span>
+                    <span className="order-badge">#{banner.displayOrder}</span>
+                  </div>
                 </div>
-                
+
                 <div className="banner-actions">
-                  <button 
-                    className={`toggle-btn ${banner.isActive ? 'active' : ''}`}
+                  <button
+                    className={`toggle-btn ${banner.isActive ? 'toggle-btn--active' : ''}`}
                     onClick={() => handleToggleStatus(banner._id)}
                   >
                     {banner.isActive ? '✓ Active' : '○ Inactive'}
                   </button>
-                  <button className="edit-btn" onClick={() => handleEdit(banner)}>✏️ Edit</button>
-                  <button className="delete-btn" onClick={() => handleDelete(banner._id)}>🗑️ Delete</button>
+                  <button className="edit-btn" onClick={() => handleEdit(banner)}>
+                    ✏️ Edit
+                  </button>
+                  <button className="delete-btn" onClick={() => handleDelete(banner._id)}>
+                    🗑️
+                  </button>
                 </div>
               </div>
             </div>
@@ -298,7 +292,7 @@ const BannersPage = () => {
         </div>
       )}
 
-      {/* Upload Modal */}
+      {/* ── Upload / Edit Modal ── */}
       {showModal && (
         <div className="modal-overlay" onClick={resetForm}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -306,20 +300,26 @@ const BannersPage = () => {
               <h3>{editingBanner ? 'Edit Banner' : 'Upload New Banner'}</h3>
               <button className="close-btn" onClick={resetForm}>✕</button>
             </div>
-            
+
+            {/* ✅ FIX: entire form including footer is inside <form> */}
             <form onSubmit={handleSubmit} className="modal-body">
+
               {/* File Upload */}
               <div className="form-group">
-                <label>Upload Image/Video</label>
+                <label>Upload Image / Video</label>
                 <div className="file-upload-area">
                   {previewUrl ? (
                     <div className="preview">
-                      {selectedFile?.type.startsWith('video') || editingBanner?.mediaType === 'video' ? (
+                      {selectedFile?.type?.startsWith('video') || editingBanner?.mediaType === 'video' ? (
                         <video src={previewUrl} controls />
                       ) : (
                         <img src={previewUrl} alt="Preview" />
                       )}
-                      <button type="button" className="change-btn" onClick={() => setPreviewUrl('')}>
+                      <button
+                        type="button"
+                        className="change-btn"
+                        onClick={() => { setPreviewUrl(''); setSelectedFile(null); }}
+                      >
                         Change File
                       </button>
                     </div>
@@ -334,7 +334,7 @@ const BannersPage = () => {
                       <div className="upload-placeholder">
                         <span className="upload-icon">📤</span>
                         <p>Click to upload or drag and drop</p>
-                        <span className="upload-hint">Images or Videos (Max 50MB)</span>
+                        <span className="upload-hint">Images or Videos (Max 50 MB)</span>
                       </div>
                     </label>
                   )}
@@ -350,7 +350,7 @@ const BannersPage = () => {
                   value={formData.title}
                   onChange={handleInputChange}
                   required
-                  placeholder="Hero Banner - Summer Sale"
+                  placeholder="Hero Banner – Summer Sale"
                 />
               </div>
 
@@ -366,7 +366,7 @@ const BannersPage = () => {
                 />
               </div>
 
-              {/* Position */}
+              {/* Position + Order */}
               <div className="form-row">
                 <div className="form-group">
                   <label>Position *</label>
@@ -378,7 +378,6 @@ const BannersPage = () => {
                     <option value="popup">Popup</option>
                   </select>
                 </div>
-
                 <div className="form-group">
                   <label>Display Order</label>
                   <input
@@ -393,7 +392,7 @@ const BannersPage = () => {
 
               {/* Overlay Text */}
               <div className="form-section">
-                <h4>Overlay Text (Optional)</h4>
+                <h4>Overlay Text <span className="optional">(Optional)</span></h4>
                 <div className="form-group">
                   <label>Overlay Title</label>
                   <input
@@ -450,15 +449,20 @@ const BannersPage = () => {
                 </div>
               </div>
 
-              {/* Submit */}
+              {/* ✅ FIX: modal-footer is NOW inside the <form> so submit works */}
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={resetForm}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={uploading}>
-                  {uploading ? 'Uploading...' : editingBanner ? 'Update Banner' : 'Upload Banner'}
+                  {uploading
+                    ? 'Uploading…'
+                    : editingBanner
+                    ? 'Update Banner'
+                    : 'Upload Banner'}
                 </button>
               </div>
+
             </form>
           </div>
         </div>
