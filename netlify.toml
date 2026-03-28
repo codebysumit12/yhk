@@ -3,7 +3,15 @@
   command = "npm install && CI=false npm run build"
   publish = "build"
 
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+[context.production.environment]
+  REACT_APP_API_URL = "https://yhk-66ta.onrender.com/api"
+  REACT_APP_USER_API_URL = "https://yhk-66ta.onrender.com/api"
