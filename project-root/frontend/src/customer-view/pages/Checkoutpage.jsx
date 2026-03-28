@@ -78,6 +78,7 @@ const Checkoutpage = () => {
   const recaptchaVerifierRef = useRef(null);
   // FIX: track whether reCAPTCHA widget is currently rendered
   const recaptchaRenderedRef = useRef(false);
+  const isVerifyingRef = useRef(false); // ← THE KEY FIX: prevent double-calls
   const otpInputsRef         = useRef([]);
 
   // ── Address state ─────────────────────────────────────────────────────────
@@ -300,10 +301,15 @@ const Checkoutpage = () => {
     const otpValue = otpOverride || otp.join('');
     if (otpValue.length < 6) { setOtpError(true); return; }
 
+    // ← THE KEY FIX: block double-calls
+    if (isVerifyingRef.current) return;
+    isVerifyingRef.current = true;
+
     if (otpExpiredRef.current) {
       setOtpErrorMsg('OTP has expired. Please request a new one.');
       setOtpError(true);
       setPhoneStep('input');
+      isVerifyingRef.current = false;
       return;
     }
 
@@ -314,10 +320,12 @@ const Checkoutpage = () => {
       setOtpError(false);
       localStorage.setItem('verifiedPhone', result.user.phoneNumber);
       setPhoneStep('verified');
+      
       // FIX: Stop OTP timer immediately on successful verification
       otpExpiredRef.current = false;
       setOtpExpiredDisplay(false);
-      setOtpExpiryTimer(0); // Changed from 60 to 0
+      setOtpExpiryTimer(0);
+      
       console.log('✅ Phone verified:', result.user.phoneNumber);
     } catch (error) {
       console.error('❌ OTP verify error:', error);
@@ -335,22 +343,9 @@ const Checkoutpage = () => {
         setOtpErrorMsg('Verification failed. Please try again.');
         setOtpError(true);
       }
+    } finally {
+      isVerifyingRef.current = false;  // ← always reset
     }
-  };
-
-  // ── Change phone / resend ─────────────────────────────────────────────────
-  const handleChangePhone = () => {
-    setPhoneStep('input');
-    setPhoneNumber('');
-    setOtp(['', '', '', '', '', '']);
-    setOtpError(false);
-    otpExpiredRef.current = false;
-    setOtpExpiredDisplay(false);
-    setOtpExpiryTimer(60);
-    setResendTimer(0);
-    setConfirmationResult(null);
-    // FIX: clear reCAPTCHA here so the pre-init useEffect on 'input' gets a clean slate
-    clearRecaptcha();
   };
 
   // FIX: resend — clear first, THEN send (initRecaptcha inside handleSendOTP handles re-init)
