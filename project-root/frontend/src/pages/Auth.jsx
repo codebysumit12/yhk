@@ -388,10 +388,15 @@ const Auth = () => {
 
       const phone = result.user.phoneNumber;
       try {
-        const resp = await fetch(`${API_CONFIG.API_URL}/auth/phone-login`, {
+        const resp = await fetch(`${API_CONFIG.API_URL}/auth/firebase-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, firebaseUid: result.user.uid }),
+          body: JSON.stringify({ 
+            uid: result.user.uid, 
+            phone: phone, 
+            name: null, 
+            email: null 
+          }),
         });
         const data = await resp.json();
         if (data.success) {
