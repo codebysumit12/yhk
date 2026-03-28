@@ -11,9 +11,9 @@ const Checkoutpage = () => {
   const navigate = useNavigate();
 
   // ── Cart ──────────────────────────────────────────────────────────────────
-  const [cartItems, setCartItems]       = useState([]);
+  const [cartItems, setCartItems]           = useState([]);
   const [restaurantInfo, setRestaurantInfo] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing]     = useState(false);
 
   useEffect(() => {
     const savedCart = localStorage.getItem('checkoutCart');
@@ -21,8 +21,8 @@ const Checkoutpage = () => {
       const cartData = JSON.parse(savedCart);
       setCartItems(cartData.items || []);
       setRestaurantInfo({
-        restaurantId: cartData.restaurantId,
-        restaurantName: cartData.restaurantName
+        restaurantId:   cartData.restaurantId,
+        restaurantName: cartData.restaurantName,
       });
     }
   }, []);
@@ -30,7 +30,7 @@ const Checkoutpage = () => {
   // ── Pricing ───────────────────────────────────────────────────────────────
   const [pricing, setPricing] = useState({
     subtotal: 0, discount: 0, deliveryFee: 0,
-    packagingFee: 0, gst: 0, platformFee: 0, total: 0, breakdown: {}
+    packagingFee: 0, gst: 0, platformFee: 0, total: 0, breakdown: {},
   });
   const [pricingLoading, setPricingLoading] = useState(false);
 
@@ -47,11 +47,11 @@ const Checkoutpage = () => {
       }
       setPricingLoading(true);
       try {
-        const pricingResult = await calculateOrderPricing(subtotal, 5);
-        setPricing(pricingResult);
+        const result = await calculateOrderPricing(subtotal, 5);
+        setPricing(result);
       } catch {
-        const discount    = Math.round(subtotal * 0.20);
-        const gst         = Math.round((subtotal - discount) * 0.05);
+        const discount = Math.round(subtotal * 0.20);
+        const gst      = Math.round((subtotal - discount) * 0.05);
         setPricing({ subtotal, discount, deliveryFee: 0, packagingFee: 0, gst, platformFee: 0, total: subtotal - discount + gst, breakdown: {} });
       } finally {
         setPricingLoading(false);
@@ -61,27 +61,24 @@ const Checkoutpage = () => {
   }, [subtotal]);
 
   // ── Phone / OTP state ─────────────────────────────────────────────────────
-  const [phoneStep, setPhoneStep]               = useState('input'); // input | otp | verified
-  const [phoneNumber, setPhoneNumber]           = useState('');
-  const [otp, setOtp]                           = useState(['', '', '', '', '', '']);
-  const [phoneError, setPhoneError]             = useState(false);
-  const [otpError, setOtpError]                 = useState(false);
-  const [otpErrorMsg, setOtpErrorMsg]           = useState('Invalid OTP. Please try again.');
-  const [resendTimer, setResendTimer]           = useState(0);
-
-  // FIX: reduced to 45s to stay safely under Firebase's server expiry
-  const OTP_VALIDITY_SECONDS = 45;
-  const [otpExpiryTimer, setOtpExpiryTimer]     = useState(OTP_VALIDITY_SECONDS);
-
+  const [phoneStep, setPhoneStep]             = useState('input'); // input | otp | verified
+  const [phoneNumber, setPhoneNumber]         = useState('');
+  const [otp, setOtp]                         = useState(['', '', '', '', '', '']);
+  const [phoneError, setPhoneError]           = useState(false);
+  const [otpError, setOtpError]               = useState(false);
+  const [otpErrorMsg, setOtpErrorMsg]         = useState('Invalid OTP. Please try again.');
+  const [resendTimer, setResendTimer]         = useState(0);
+  const [otpExpiryTimer, setOtpExpiryTimer]   = useState(60);
   const [confirmationResult, setConfirmationResult] = useState(null);
-  const [isSendingOTP, setIsSendingOTP]         = useState(false);
+  const [isSendingOTP, setIsSendingOTP]       = useState(false);
 
-  // FIX: use a ref for otpExpired so auto-verify closure always reads current value
-  const otpExpiredRef                           = useRef(false);
+  // Refs — safe to read inside async callbacks and closures
+  const otpExpiredRef        = useRef(false);
   const [otpExpiredDisplay, setOtpExpiredDisplay] = useState(false);
-
-  const recaptchaVerifierRef                    = useRef(null);
-  const otpInputsRef                            = useRef([]);
+  const recaptchaVerifierRef = useRef(null);
+  // FIX: track whether reCAPTCHA widget is currently rendered
+  const recaptchaRenderedRef = useRef(false);
+  const otpInputsRef         = useRef([]);
 
   // ── Address state ─────────────────────────────────────────────────────────
   const [addressStep, setAddressStep]         = useState('location');
@@ -92,10 +89,10 @@ const Checkoutpage = () => {
   const [addressForm, setAddressForm] = useState({
     flatNo: '', landmark: '', addressType: 'home',
     fullName: '', addressLine1: '', addressLine2: '',
-    city: 'Pune', state: 'Maharashtra', pinCode: ''
+    city: 'Pune', state: 'Maharashtra', pinCode: '',
   });
 
-  // ── Instructions / modal state ────────────────────────────────────────────
+  // ── Instructions / modal ──────────────────────────────────────────────────
   const [instructionsStep, setInstructionsStep] = useState(false);
   const [deliveryNote, setDeliveryNote]         = useState('');
   const [contactlessDelivery, setContactlessDelivery] = useState(false);
@@ -110,42 +107,57 @@ const Checkoutpage = () => {
     return () => clearTimeout(t);
   }, [resendTimer]);
 
-  // ── OTP expiry timer ─────────────────────────────────────────────────────
-  // FIX: runs only when phoneStep === 'otp'; cleans up properly on step change
+  // ── OTP expiry timer ──────────────────────────────────────────────────────
   useEffect(() => {
     if (phoneStep !== 'otp') return;
-
     if (otpExpiryTimer <= 0) {
-      // Mark expired via ref (read by closures) AND state (read by render)
       otpExpiredRef.current = true;
       setOtpExpiredDisplay(true);
       return;
     }
-
     const t = setTimeout(() => setOtpExpiryTimer(v => v - 1), 1000);
     return () => clearTimeout(t);
   }, [otpExpiryTimer, phoneStep]);
 
   // ── reCAPTCHA helpers ─────────────────────────────────────────────────────
-  const clearRecaptcha = () => {
+
+  /**
+   * FIX: Destroys the existing reCAPTCHA verifier AND clears the DOM container.
+   * Sets recaptchaRenderedRef.current = false so initRecaptcha knows it's safe
+   * to render a fresh instance.
+   */
+  const clearRecaptcha = useCallback(() => {
     if (recaptchaVerifierRef.current) {
-      try { recaptchaVerifierRef.current.clear(); } catch (_) {}
+      try { recaptchaVerifierRef.current.clear(); } catch (_) { /* already cleared */ }
       recaptchaVerifierRef.current = null;
     }
-    // FIX: Clear the container element to prevent "already rendered" error
     const container = document.getElementById('checkout-recaptcha-container');
-    if (container) {
-      container.innerHTML = '';
-    }
-  };
+    if (container) container.innerHTML = '';
+    recaptchaRenderedRef.current = false;
+  }, []);
 
-  // FIX: single, reliable reCAPTCHA initializer used in both useEffect and on-demand
+  /**
+   * FIX: Guard against double-render.
+   * If recaptchaRenderedRef.current is true the widget is already alive — reuse it.
+   * Only create a new RecaptchaVerifier when the previous one has been cleared.
+   */
   const initRecaptcha = useCallback(() => {
     return new Promise((resolve, reject) => {
+      // Already rendered — reuse the existing verifier
+      if (recaptchaRenderedRef.current && recaptchaVerifierRef.current) {
+        resolve(recaptchaVerifierRef.current);
+        return;
+      }
+
       const container = document.getElementById('checkout-recaptcha-container');
       if (!container) { reject(new Error('reCAPTCHA container missing')); return; }
 
-      clearRecaptcha();
+      // Ensure a clean slate before creating a new verifier
+      if (recaptchaVerifierRef.current) {
+        try { recaptchaVerifierRef.current.clear(); } catch (_) {}
+        recaptchaVerifierRef.current = null;
+      }
+      container.innerHTML = '';
 
       try {
         recaptchaVerifierRef.current = new RecaptchaVerifier(
@@ -155,67 +167,78 @@ const Checkoutpage = () => {
             size: 'invisible',
             callback: () => console.log('✅ reCAPTCHA solved'),
             'expired-callback': () => {
-              console.warn('⚠️ reCAPTCHA expired — clearing');
+              console.warn('⚠️ reCAPTCHA expired');
               clearRecaptcha();
-            }
+            },
           }
         );
-        resolve(recaptchaVerifierRef.current);
+
+        // render() returns a promise that resolves when the widget is ready
+        recaptchaVerifierRef.current
+          .render()
+          .then(() => {
+            recaptchaRenderedRef.current = true;
+            resolve(recaptchaVerifierRef.current);
+          })
+          .catch(err => {
+            console.error('❌ reCAPTCHA render error:', err);
+            clearRecaptcha();
+            reject(err);
+          });
       } catch (err) {
         console.error('❌ reCAPTCHA init error:', err);
+        clearRecaptcha();
         reject(err);
       }
     });
-  }, []);
+  }, [clearRecaptcha]);
 
   // Pre-initialize reCAPTCHA when on input step
   useEffect(() => {
     if (phoneStep !== 'input') return;
+    // Small delay to ensure DOM is ready
     const timer = setTimeout(() => {
-      initRecaptcha().catch(err => console.error('Pre-init failed:', err));
-    }, 500);
+      initRecaptcha().catch(err => console.warn('Pre-init reCAPTCHA failed:', err));
+    }, 600);
     return () => clearTimeout(timer);
   }, [phoneStep, initRecaptcha]);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => { clearRecaptcha(); };
-  }, []);
+  useEffect(() => () => clearRecaptcha(), [clearRecaptcha]);
 
   // ── OTP send ──────────────────────────────────────────────────────────────
-  const handleSendOTP = async () => {
+  const handleSendOTP = useCallback(async () => {
     if (!/^\d{10}$/.test(phoneNumber)) { setPhoneError(true); return; }
     setPhoneError(false);
     setIsSendingOTP(true);
 
     try {
-      // Ensure reCAPTCHA is ready (init if needed)
-      if (!recaptchaVerifierRef.current) {
-        await initRecaptcha();
-      }
+      // FIX: always call initRecaptcha() — the guard inside will reuse or re-init
+      const verifier = await initRecaptcha();
 
       const confirmation = await signInWithPhoneNumber(
         auth,
         `+91${phoneNumber}`,
-        recaptchaVerifierRef.current
+        verifier
       );
 
       setConfirmationResult(confirmation);
 
-      // FIX: reset all OTP state atomically before switching step
+      // Reset all OTP state atomically before switching step
       otpExpiredRef.current = false;
       setOtpExpiredDisplay(false);
       setOtp(['', '', '', '', '', '']);
       setOtpError(false);
       setOtpErrorMsg('Invalid OTP. Please try again.');
-      setOtpExpiryTimer(OTP_VALIDITY_SECONDS);
+      setOtpExpiryTimer(60);
       setResendTimer(45);
-      setPhoneStep('otp'); // switch step LAST so timer useEffect fires cleanly
+      setPhoneStep('otp'); // switch step LAST
 
       console.log('✅ OTP sent');
     } catch (error) {
       console.error('❌ OTP send error:', error);
       setPhoneError(true);
+      // FIX: always clear on failure so next attempt gets a fresh verifier
       clearRecaptcha();
 
       if (error.code === 'auth/too-many-requests') {
@@ -224,13 +247,17 @@ const Checkoutpage = () => {
         alert('Phone authentication is not enabled. Please contact support.');
       } else if (error.code === 'auth/invalid-phone-number') {
         alert('Invalid phone number. Please check and try again.');
+      } else if (error.message?.includes('already been rendered')) {
+        // This should no longer happen with the guard, but handle gracefully
+        clearRecaptcha();
+        alert('A reCAPTCHA error occurred. Please try again.');
       } else {
         alert('Failed to send OTP. Please refresh the page and try again.');
       }
     } finally {
       setIsSendingOTP(false);
     }
-  };
+  }, [phoneNumber, initRecaptcha, clearRecaptcha]);
 
   // ── OTP input handling ────────────────────────────────────────────────────
   const handleOtpChange = (index, value) => {
@@ -241,12 +268,11 @@ const Checkoutpage = () => {
     setOtp(newOtp);
     setOtpError(false);
 
-    // Auto-focus next box
     if (value && index < 5) {
       otpInputsRef.current[index + 1]?.focus();
     }
 
-    // FIX: auto-verify uses ref for expiry check — not stale closure state
+    // Auto-verify when all 6 digits entered
     if (newOtp.every(d => d !== '') && newOtp.join('').length === 6) {
       if (otpExpiredRef.current) {
         setOtpErrorMsg('OTP has expired. Please request a new one.');
@@ -268,7 +294,6 @@ const Checkoutpage = () => {
     const otpValue = otpOverride || otp.join('');
     if (otpValue.length < 6) { setOtpError(true); return; }
 
-    // FIX: read from ref, not state — safe in async callbacks and closures
     if (otpExpiredRef.current) {
       setOtpErrorMsg('OTP has expired. Please request a new one.');
       setOtpError(true);
@@ -287,23 +312,15 @@ const Checkoutpage = () => {
     } catch (error) {
       console.error('❌ OTP verify error:', error);
 
-      if (
-        error.code === 'auth/code-expired' ||
-        error.code === 'auth/invalid-verification-code'
-      ) {
-        // Server says code is expired — mark expired and go back to input
+      if (error.code === 'auth/code-expired') {
         otpExpiredRef.current = true;
         setOtpExpiredDisplay(true);
-
-        if (error.code === 'auth/code-expired') {
-          setOtpErrorMsg('OTP has expired. Please request a new one.');
-          setOtpError(true);
-          // Give user 2s to read the message, then reset to input
-          setTimeout(() => setPhoneStep('input'), 2000);
-        } else {
-          setOtpErrorMsg('Incorrect OTP. Please check and try again.');
-          setOtpError(true);
-        }
+        setOtpErrorMsg('OTP has expired. Please request a new one.');
+        setOtpError(true);
+        setTimeout(() => setPhoneStep('input'), 2000);
+      } else if (error.code === 'auth/invalid-verification-code') {
+        setOtpErrorMsg('Incorrect OTP. Please check and try again.');
+        setOtpError(true);
       } else {
         setOtpErrorMsg('Verification failed. Please try again.');
         setOtpError(true);
@@ -319,22 +336,23 @@ const Checkoutpage = () => {
     setOtpError(false);
     otpExpiredRef.current = false;
     setOtpExpiredDisplay(false);
-    setOtpExpiryTimer(OTP_VALIDITY_SECONDS);
+    setOtpExpiryTimer(60);
     setResendTimer(0);
     setConfirmationResult(null);
+    // FIX: clear reCAPTCHA here so the pre-init useEffect on 'input' gets a clean slate
+    clearRecaptcha();
   };
 
-  // FIX: resend clears old reCAPTCHA first, re-inits, THEN sends
-  const handleResendOTP = async () => {
-    if (resendTimer > 0) return; // guard — button should be disabled but double-check
+  // FIX: resend — clear first, THEN send (initRecaptcha inside handleSendOTP handles re-init)
+  const handleResendOTP = useCallback(async () => {
+    if (resendTimer > 0) return;
     clearRecaptcha();
     setOtp(['', '', '', '', '', '']);
     setOtpError(false);
     otpExpiredRef.current = false;
     setOtpExpiredDisplay(false);
-    // Don't change phoneStep here — stay on 'otp'; handleSendOTP will reset timer
     await handleSendOTP();
-  };
+  }, [resendTimer, clearRecaptcha, handleSendOTP]);
 
   // ── Address handlers ──────────────────────────────────────────────────────
   const handleDetectLocation = () => {
@@ -357,20 +375,21 @@ const Checkoutpage = () => {
           const data = await response.json();
           if (data?.address) {
             const a = data.address;
-            const area         = a.neighbourhood || a.suburb || a.village || a.town || a.county || '';
+            const area          = a.neighbourhood || a.suburb || a.village || a.town || a.county || '';
             const streetAddress = [a.house_number, a.road].filter(Boolean).join(' ') || area;
-            const city         = a.city || a.town || a.village || a.county || '';
-            const state        = a.state || '';
-            const pinCode      = a.postcode || '';
+            const city          = a.city || a.town || a.village || a.county || '';
+            const state         = a.state || '';
+            const pinCode       = a.postcode || '';
 
             setDetectedAddress({
               area, city: `${city}, ${state} ${pinCode}`.trim(),
-              fullAddress: data.display_name, latitude, longitude, loading: false
+              fullAddress: data.display_name, latitude, longitude, loading: false,
             });
             setAddressForm(prev => ({
-              ...prev, flatNo: '', landmark: '', addressType: 'home', fullName: '',
+              ...prev,
+              flatNo: '', landmark: '', addressType: 'home', fullName: '',
               addressLine1: streetAddress || '', addressLine2: area || '',
-              city: city || '', state: state || '', pinCode: pinCode || ''
+              city: city || '', state: state || '', pinCode: pinCode || '',
             }));
           } else {
             alert('Could not fetch address. Please enter manually.');
@@ -415,7 +434,7 @@ const Checkoutpage = () => {
       setAddressForm({
         flatNo: '', landmark: '', addressType: 'home', fullName: '',
         addressLine1: detectedAddress.area || '', addressLine2: '',
-        city: 'Pune', state: 'Maharashtra', pinCode: '411018'
+        city: 'Pune', state: 'Maharashtra', pinCode: '411018',
       });
     }
   };
@@ -425,52 +444,55 @@ const Checkoutpage = () => {
 
   // ── Place order ───────────────────────────────────────────────────────────
   const handlePlaceOrder = async () => {
-    if (cartItems.length === 0)     { alert('Your cart is empty.'); navigate('/'); return; }
-    if (phoneStep !== 'verified')   { alert('Please verify your phone number first.'); return; }
+    if (cartItems.length === 0)   { alert('Your cart is empty.'); navigate('/'); return; }
+    if (phoneStep !== 'verified') { alert('Please verify your phone number first.'); return; }
     if (!addressForm?.addressLine1 || !addressForm?.city || !addressForm?.state || !addressForm?.pinCode) {
       alert('Please fill in all address details.'); return;
     }
 
     setIsProcessing(true);
     try {
+      const authToken = localStorage.getItem('userToken') || localStorage.getItem('token');
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+
       const orderResponse = await fetch(`${API_CONFIG.API_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken') || localStorage.getItem('token')}`
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           customer: {
-            name: addressForm.fullName || JSON.parse(localStorage.getItem('user') || '{}').name || 'Guest',
+            name:  addressForm.fullName || storedUser.name || 'Guest',
             phone: phoneNumber,
-            email: JSON.parse(localStorage.getItem('user') || '{}').email || 'customer@example.com'
+            email: storedUser.email || 'customer@example.com',
           },
           orderItems: cartItems.map(item => ({
             menuItem: item.id || item._id,
-            name: item.name,
-            price: item.finalPrice || item.price,
+            name:     item.name,
+            price:    item.finalPrice || item.price,
             quantity: item.quantity || 1,
-            subtotal: (item.finalPrice || item.price) * (item.quantity || 1)
+            subtotal: (item.finalPrice || item.price) * (item.quantity || 1),
           })),
           deliveryAddress: {
-            street: addressForm.addressLine1,
-            city: addressForm.city,
-            state: addressForm.state,
-            zipCode: addressForm.pinCode,
-            apartment: addressForm.flatNo || '',
-            landmark: addressForm.landmark || '',
-            instructions: deliveryNote || ''
+            street:       addressForm.addressLine1,
+            city:         addressForm.city,
+            state:        addressForm.state,
+            zipCode:      addressForm.pinCode,
+            apartment:    addressForm.flatNo   || '',
+            landmark:     addressForm.landmark || '',
+            instructions: deliveryNote         || '',
           },
-          orderType: 'delivery',
-          paymentMethod: paymentMethod === 'cash' ? 'cash' : 'online',
+          orderType:           'delivery',
+          paymentMethod:       paymentMethod === 'cash' ? 'cash' : 'online',
           delivery: {
-            type: 'standard',
+            type:          'standard',
             estimatedTime: new Date(Date.now() + 30 * 60 * 1000),
-            actualTime: null,
-            deliveryPerson: null
+            actualTime:    null,
+            deliveryPerson: null,
           },
-          specialInstructions: deliveryNote
-        })
+          specialInstructions: deliveryNote,
+        }),
       });
 
       if (!orderResponse.ok) {
@@ -491,9 +513,9 @@ const Checkoutpage = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken') || localStorage.getItem('token')}`
+          'Authorization': `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ amount: pricing.total })
+        body: JSON.stringify({ amount: pricing.total }),
       });
       if (!razorpayOrderResponse.ok) throw new Error('Failed to create Razorpay order');
       const razorpayOrderResult = await razorpayOrderResponse.json();
@@ -509,48 +531,44 @@ const Checkoutpage = () => {
       const Razorpay = await loadRazorpay();
 
       const rzp = new Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY, // FIX: use env var, never hardcode
-        amount: pricing.total * 100,
-        currency: 'INR',
-        name: "Yeswanth's Healthy Kitchen",
+        key:         import.meta.env.VITE_RAZORPAY_KEY,
+        amount:      pricing.total * 100,
+        currency:    'INR',
+        name:        "Yeswanth's Healthy Kitchen",
         description: `Order #${orderNumber}`,
-        order_id: razorpayOrderResult.data.id,
+        order_id:    razorpayOrderResult.data.id,
         handler: async (response) => {
           try {
-            const paymentResponse = await fetch(`${API_CONFIG.API_URL}/payments`, {
+            await fetch(`${API_CONFIG.API_URL}/payments`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('userToken') || localStorage.getItem('token')}`
+                'Authorization': `Bearer ${authToken}`,
               },
               body: JSON.stringify({
                 orderId,
-                amount: pricing.total,
-                paymentMethod: 'razorpay',
-                paymentStatus: 'completed',
-                razorpayOrderId: response.razorpay_order_id,
+                amount:            pricing.total,
+                paymentMethod:     'razorpay',
+                paymentStatus:     'completed',
+                razorpayOrderId:   response.razorpay_order_id,
                 razorpaySignature: response.razorpay_signature,
-                razorpayPaymentId: response.razorpay_payment_id
-              })
+                razorpayPaymentId: response.razorpay_payment_id,
+              }),
             });
             localStorage.removeItem('checkoutCart');
             setShowSuccessModal(true);
-            if (!paymentResponse.ok) {
-              const errBody = await paymentResponse.json();
-              console.error('Payment record save failed:', errBody);
-            }
           } catch (saveError) {
             console.error('Payment save error:', saveError);
-            setShowSuccessModal(true); // Order was captured; show success anyway
+            setShowSuccessModal(true); // Payment was captured — show success anyway
           }
         },
         modal: { ondismiss: () => alert('Payment cancelled. Please try again.') },
         prefill: {
-          name: addressForm.fullName || 'Customer',
-          email: JSON.parse(localStorage.getItem('user') || '{}').email || '',
-          contact: phoneNumber
+          name:    addressForm.fullName || 'Customer',
+          email:   storedUser.email || '',
+          contact: phoneNumber,
         },
-        theme: { color: '#22c55e' }
+        theme: { color: '#22c55e' },
       });
       rzp.open();
 
@@ -574,7 +592,7 @@ const Checkoutpage = () => {
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('en-IN', {
       style: 'currency', currency: 'INR',
-      minimumFractionDigits: 0, maximumFractionDigits: 2
+      minimumFractionDigits: 0, maximumFractionDigits: 2,
     }).format(amount).replace('₹', '₹');
 
   // ── Empty cart guard ──────────────────────────────────────────────────────
@@ -590,7 +608,11 @@ const Checkoutpage = () => {
         <div className="checkout-page-container" style={{ textAlign: 'center', paddingTop: '100px' }}>
           <h2>Your cart is empty</h2>
           <p>Please add items to your cart first</p>
-          <button className="btn btn-primary" style={{ marginTop: '20px', width: 'auto' }} onClick={() => navigate('/')}>
+          <button
+            className="btn btn-primary"
+            style={{ marginTop: '20px', width: 'auto' }}
+            onClick={() => navigate('/')}
+          >
             Browse Restaurants
           </button>
         </div>
@@ -601,8 +623,8 @@ const Checkoutpage = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="checkout-page">
-      {/* reCAPTCHA container — always rendered, never conditional */}
-      <div id="checkout-recaptcha-container" style={{ display: 'none' }}></div>
+      {/* FIX: reCAPTCHA container — always rendered, never conditional or re-mounted */}
+      <div id="checkout-recaptcha-container" style={{ display: 'none' }} />
 
       {/* TOP NAV */}
       <nav className="checkout-topnav">
@@ -628,7 +650,7 @@ const Checkoutpage = () => {
           {/* ── LEFT COLUMN ──────────────────────────────────────────────── */}
           <div>
 
-            {/* STEP 1: Phone verification */}
+            {/* STEP 1 — Phone verification */}
             <div className="section-card" id="phoneSection">
               <div className="section-head">
                 <div className={`section-num ${phoneStep === 'verified' ? 'done' : ''}`}>
@@ -639,9 +661,11 @@ const Checkoutpage = () => {
                   <p>We'll send an OTP to confirm your identity</p>
                 </div>
               </div>
+
               <div className="section-body">
                 <div className="phone-wrap">
 
+                  {/* ── INPUT step ── */}
                   {phoneStep === 'input' && (
                     <div>
                       <div className="input-group">
@@ -662,13 +686,14 @@ const Checkoutpage = () => {
                             onClick={handleSendOTP}
                             disabled={isSendingOTP}
                           >
-                            {isSendingOTP ? 'Sending...' : 'Send OTP'}
+                            {isSendingOTP ? 'Sending…' : 'Send OTP'}
                           </button>
                         </div>
                         <div className={`error-text ${phoneError ? 'show' : ''}`}>
                           Please enter a valid 10-digit mobile number.
                         </div>
                       </div>
+
                       <div className="or-divider">or continue with</div>
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <button className="btn btn-outline" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px' }}>
@@ -681,6 +706,7 @@ const Checkoutpage = () => {
                     </div>
                   )}
 
+                  {/* ── OTP step ── */}
                   {phoneStep === 'otp' && (
                     <div>
                       <div className="otp-section" style={{ border: 'none', padding: 0, margin: 0 }}>
@@ -688,29 +714,32 @@ const Checkoutpage = () => {
                           <p>OTP sent to <strong>{formatPhone(phoneNumber)}</strong></p>
                           <button className="btn-ghost" onClick={handleChangePhone}>Change</button>
                         </div>
+
                         <label style={{
                           fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)',
                           textTransform: 'uppercase', letterSpacing: '.8px',
-                          display: 'block', marginBottom: '10px'
+                          display: 'block', marginBottom: '10px',
                         }}>
                           Enter 6-Digit OTP
                         </label>
+
                         <div className="otp-boxes">
                           {otp.map((digit, index) => (
                             <input
                               key={index}
-                              ref={el => otpInputsRef.current[index] = el}
+                              ref={el => (otpInputsRef.current[index] = el)}
                               type="text"
+                              inputMode="numeric"
                               className={`otp-box ${digit ? 'filled' : ''} ${otpError ? 'error' : ''}`}
                               maxLength="1"
                               value={digit}
                               onChange={e => handleOtpChange(index, e.target.value)}
                               onKeyDown={e => handleOtpKeyDown(index, e)}
-                              // FIX: disable input when expired to prevent confusing state
                               disabled={otpExpiredDisplay}
                             />
                           ))}
                         </div>
+
                         <div className="otp-resend">
                           <div style={{ marginBottom: '8px', fontSize: '12px', color: otpExpiredDisplay ? '#ef4444' : '#6b7280' }}>
                             {otpExpiredDisplay
@@ -722,9 +751,9 @@ const Checkoutpage = () => {
                             <a
                               onClick={resendTimer > 0 ? undefined : handleResendOTP}
                               style={{
-                                cursor: resendTimer > 0 ? 'default' : 'pointer',
-                                color: resendTimer > 0 ? '#9ca3af' : '#22c55e',
-                                textDecoration: resendTimer > 0 ? 'none' : 'underline'
+                                cursor:          resendTimer > 0 ? 'default' : 'pointer',
+                                color:           resendTimer > 0 ? '#9ca3af' : '#22c55e',
+                                textDecoration:  resendTimer > 0 ? 'none' : 'underline',
                               }}
                             >
                               Resend OTP
@@ -734,9 +763,11 @@ const Checkoutpage = () => {
                             )}
                           </div>
                         </div>
+
                         <div className={`error-text ${otpError ? 'show' : ''}`}>
                           {otpErrorMsg}
                         </div>
+
                         <button
                           className="btn btn-primary"
                           style={{ marginTop: '16px' }}
@@ -749,16 +780,21 @@ const Checkoutpage = () => {
                     </div>
                   )}
 
+                  {/* ── VERIFIED step ── */}
                   {phoneStep === 'verified' && (
-                    <div>
-                      <div className="otp-verified">
-                        <span className="check">✅</span>
-                        <div>
-                          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--green)' }}>Phone Verified!</div>
-                          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '1px' }}>{formatPhone(phoneNumber)}</div>
-                        </div>
-                        <button className="btn-ghost" style={{ marginLeft: 'auto', color: 'var(--accent2)' }} onClick={handleChangePhone}>Change</button>
+                    <div className="otp-verified">
+                      <span className="check">✅</span>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--green)' }}>Phone Verified!</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '1px' }}>{formatPhone(phoneNumber)}</div>
                       </div>
+                      <button
+                        className="btn-ghost"
+                        style={{ marginLeft: 'auto', color: 'var(--accent2)' }}
+                        onClick={handleChangePhone}
+                      >
+                        Change
+                      </button>
                     </div>
                   )}
 
@@ -766,7 +802,7 @@ const Checkoutpage = () => {
               </div>
             </div>
 
-            {/* STEP 2: Delivery address */}
+            {/* STEP 2 — Delivery address */}
             <div className={`section-card ${instructionsStep ? 'disabled' : ''}`} id="addressSection">
               <div className="section-head">
                 <div className={`section-num ${instructionsStep ? 'done' : ''}`}>
@@ -795,7 +831,9 @@ const Checkoutpage = () => {
                   onClick={handleDetectLocation}
                   disabled={locationLoading}
                 >
-                  {locationLoading ? <><span className="spinner"></span> Detecting location...</> : '📍 Detect My Location'}
+                  {locationLoading
+                    ? <><span className="spinner"></span> Detecting location…</>
+                    : '📍 Detect My Location'}
                 </button>
 
                 {detectedAddress && !detectedAddress.loading && (
@@ -841,8 +879,13 @@ const Checkoutpage = () => {
                     <div className="input-group">
                       <label>State</label>
                       <select className="checkout-input-field" value={addressForm.state} onChange={e => handleAddressFormChange('state', e.target.value)}>
-                        <option>Maharashtra</option><option>Karnataka</option><option>Tamil Nadu</option>
-                        <option>Delhi</option><option>Gujarat</option>
+                        <option>Maharashtra</option>
+                        <option>Karnataka</option>
+                        <option>Tamil Nadu</option>
+                        <option>Delhi</option>
+                        <option>Gujarat</option>
+                        <option>Andhra Pradesh</option>
+                        <option>Telangana</option>
                       </select>
                     </div>
                     <div className="input-group">
@@ -853,7 +896,9 @@ const Checkoutpage = () => {
                     <div className="input-group">
                       <label>Address Type</label>
                       <select className="checkout-input-field" value={addressForm.addressType} onChange={e => handleAddressFormChange('addressType', e.target.value)}>
-                        <option>🏠 Home</option><option>💼 Work</option><option>📍 Other</option>
+                        <option value="home">🏠 Home</option>
+                        <option value="work">💼 Work</option>
+                        <option value="other">📍 Other</option>
                       </select>
                     </div>
                     <div className="full">
@@ -867,16 +912,23 @@ const Checkoutpage = () => {
                     <div className="address-options" style={{ flexDirection: 'column' }}>
                       {[
                         { icon: '🏠', label: 'Home', detail: 'A-402, Greenview Apts, Sector 14, Pimpri, Pune – 411018' },
-                        { icon: '💼', label: 'Work', detail: 'IT Park, Hinjewadi Phase 2, Pune – 411057' }
+                        { icon: '💼', label: 'Work', detail: 'IT Park, Hinjewadi Phase 2, Pune – 411057' },
                       ].map((addr, i) => (
-                        <div key={i} className={`addr-opt ${selectedAddress === i ? 'selected' : ''}`} onClick={() => setSelectedAddress(i)}>
+                        <div
+                          key={i}
+                          className={`addr-opt ${selectedAddress === i ? 'selected' : ''}`}
+                          onClick={() => setSelectedAddress(i)}
+                        >
                           <div className="opt-icon">{addr.icon}</div>
                           <div className="opt-info"><p>{addr.label}</p><span>{addr.detail}</span></div>
                           <div className="radio"></div>
                         </div>
                       ))}
-                      <div className="addr-opt" onClick={() => handleAddressTab('manual')}
-                        style={{ borderStyle: 'dashed', justifyContent: 'center', gap: '8px', color: 'var(--accent2)' }}>
+                      <div
+                        className="addr-opt"
+                        onClick={() => handleAddressTab('manual')}
+                        style={{ borderStyle: 'dashed', justifyContent: 'center', gap: '8px', color: 'var(--accent2)' }}
+                      >
                         <div className="opt-icon">➕</div>
                         <div className="opt-info"><p style={{ color: 'var(--accent2)' }}>Add New Address</p></div>
                       </div>
@@ -889,9 +941,12 @@ const Checkoutpage = () => {
               </div>
             </div>
 
-            {/* STEP 3: Delivery instructions + payment */}
-            <div className="section-card" id="instructionsSection"
-              style={{ opacity: instructionsStep ? '1' : '.55', pointerEvents: instructionsStep ? 'auto' : 'none' }}>
+            {/* STEP 3 — Delivery instructions + payment */}
+            <div
+              className="section-card"
+              id="instructionsSection"
+              style={{ opacity: instructionsStep ? '1' : '.55', pointerEvents: instructionsStep ? 'auto' : 'none' }}
+            >
               <div className="section-head">
                 <div className="section-num">3</div>
                 <div>
@@ -911,10 +966,15 @@ const Checkoutpage = () => {
                     onChange={e => setDeliveryNote(e.target.value)}
                   />
                 </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
-                  <input type="checkbox" id="contactlessCheck" checked={contactlessDelivery}
+                  <input
+                    type="checkbox"
+                    id="contactlessCheck"
+                    checked={contactlessDelivery}
                     onChange={e => setContactlessDelivery(e.target.checked)}
-                    style={{ accentColor: 'var(--accent)', width: '16px', height: '16px' }} />
+                    style={{ accentColor: 'var(--accent)', width: '16px', height: '16px' }}
+                  />
                   <label htmlFor="contactlessCheck" style={{ fontSize: '13px', cursor: 'pointer' }}>
                     🤝 Contactless Delivery (leave at door)
                   </label>
@@ -922,22 +982,25 @@ const Checkoutpage = () => {
 
                 {/* Payment method */}
                 <div style={{ marginTop: '24px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.8px', display: 'block', marginBottom: '12px' }}>
+                  <label style={{
+                    fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)',
+                    textTransform: 'uppercase', letterSpacing: '.8px', display: 'block', marginBottom: '12px',
+                  }}>
                     Payment Method
                   </label>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     {[
-                      { key: 'online', icon: '💳', label: 'Pay Online',       sub: 'UPI, Card, Net Banking', border: 'var(--accent)', bg: 'var(--accent)' },
-                      { key: 'cash',   icon: '💵', label: 'Cash on Delivery', sub: 'Pay when order arrives', border: '#f59e0b',      bg: '#f59e0b'      }
+                      { key: 'online', icon: '💳', label: 'Pay Online',       sub: 'UPI, Card, Net Banking', color: 'var(--accent)' },
+                      { key: 'cash',   icon: '💵', label: 'Cash on Delivery', sub: 'Pay when order arrives', color: '#f59e0b'      },
                     ].map(opt => (
                       <div
                         key={opt.key}
                         onClick={() => setPaymentMethod(opt.key)}
                         style={{
                           flex: 1, padding: '14px 16px', borderRadius: '10px', cursor: 'pointer',
-                          border: `2px solid ${paymentMethod === opt.key ? opt.border : 'var(--border)'}`,
-                          background: paymentMethod === opt.key ? `${opt.bg}10` : 'transparent',
-                          transition: 'all 0.2s'
+                          border:      `2px solid ${paymentMethod === opt.key ? opt.color : 'var(--border)'}`,
+                          background:  paymentMethod === opt.key ? `${opt.color}15` : 'transparent',
+                          transition:  'all 0.2s',
                         }}
                       >
                         <div style={{ fontSize: '20px', marginBottom: '4px' }}>{opt.icon}</div>
@@ -946,6 +1009,7 @@ const Checkoutpage = () => {
                       </div>
                     ))}
                   </div>
+
                   {paymentMethod === 'cash' && (
                     <div style={{ marginTop: '10px', padding: '10px 14px', background: '#f59e0b15', borderRadius: '8px', fontSize: '12px', color: '#92400e' }}>
                       💡 Please keep exact change of <strong>{formatCurrency(pricing.total)}</strong> ready for the delivery partner.
@@ -953,9 +1017,14 @@ const Checkoutpage = () => {
                   )}
                 </div>
 
-                <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={handlePlaceOrder} disabled={isProcessing}>
+                <button
+                  className="btn btn-primary"
+                  style={{ marginTop: '20px' }}
+                  onClick={handlePlaceOrder}
+                  disabled={isProcessing}
+                >
                   {isProcessing
-                    ? 'Processing...'
+                    ? 'Processing…'
                     : paymentMethod === 'cash'
                       ? `🛵 Place Order · ${formatCurrency(pricing.total)}`
                       : `💳 Continue to Payment · ${formatCurrency(pricing.total)}`}
@@ -996,27 +1065,49 @@ const Checkoutpage = () => {
 
               <div className="order-totals">
                 {pricingLoading ? (
-                  <div className="total-row"><span>Calculating...</span></div>
+                  <div className="total-row"><span>Calculating…</span></div>
                 ) : (
                   <>
-                    <div className="total-row subtotal"><span>Subtotal ({cartItems.length} items)</span><span>{formatCurrency(pricing.subtotal)}</span></div>
-                    {pricing.discount > 0 && <div className="total-row discount"><span>Discount</span><span>−{formatCurrency(pricing.discount)}</span></div>}
+                    <div className="total-row subtotal">
+                      <span>Subtotal ({cartItems.length} items)</span>
+                      <span>{formatCurrency(pricing.subtotal)}</span>
+                    </div>
+                    {pricing.discount > 0 && (
+                      <div className="total-row discount">
+                        <span>Discount</span>
+                        <span>−{formatCurrency(pricing.discount)}</span>
+                      </div>
+                    )}
                     <div className="total-row delivery">
                       <span>Delivery fee</span>
                       <span style={{ color: pricing.deliveryFee === 0 ? 'var(--green)' : 'inherit', fontWeight: 600 }}>
                         {pricing.deliveryFee === 0 ? 'FREE' : formatCurrency(pricing.deliveryFee)}
                       </span>
                     </div>
-                    {pricing.packagingFee > 0 && <div className="total-row delivery"><span>Packaging</span><span>{formatCurrency(pricing.packagingFee)}</span></div>}
-                    {pricing.gst > 0 && <div className="total-row delivery"><span>GST</span><span>{formatCurrency(pricing.gst)}</span></div>}
-                    {pricing.platformFee > 0 && <div className="total-row delivery"><span>Platform Fee</span><span>{formatCurrency(pricing.platformFee)}</span></div>}
-                    <div className="total-row grand"><span>Total</span><span>{formatCurrency(pricing.total)}</span></div>
+                    {pricing.packagingFee > 0 && (
+                      <div className="total-row delivery">
+                        <span>Packaging</span><span>{formatCurrency(pricing.packagingFee)}</span>
+                      </div>
+                    )}
+                    {pricing.gst > 0 && (
+                      <div className="total-row delivery">
+                        <span>GST</span><span>{formatCurrency(pricing.gst)}</span>
+                      </div>
+                    )}
+                    {pricing.platformFee > 0 && (
+                      <div className="total-row delivery">
+                        <span>Platform Fee</span><span>{formatCurrency(pricing.platformFee)}</span>
+                      </div>
+                    )}
+                    <div className="total-row grand">
+                      <span>Total</span><span>{formatCurrency(pricing.total)}</span>
+                    </div>
                   </>
                 )}
               </div>
 
               <button className="place-order-btn" onClick={handlePlaceOrder} disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : `🛵 Place Order · ${formatCurrency(pricing.total)}`}
+                {isProcessing ? 'Processing…' : `🛵 Place Order · ${formatCurrency(pricing.total)}`}
               </button>
               <div className="secure-note">🔒 Secure checkout · 256-bit SSL encrypted</div>
             </div>
