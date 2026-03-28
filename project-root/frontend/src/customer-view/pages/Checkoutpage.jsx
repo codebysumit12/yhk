@@ -69,8 +69,8 @@ const Checkoutpage = () => {
   const [otpErrorMsg, setOtpErrorMsg]           = useState('Invalid OTP. Please try again.');
   const [resendTimer, setResendTimer]           = useState(0);
 
-  // FIX: reduced to 55s to stay safely under Firebase's 60s server expiry
-  const OTP_VALIDITY_SECONDS = 55;
+  // FIX: reduced to 45s to stay safely under Firebase's server expiry
+  const OTP_VALIDITY_SECONDS = 45;
   const [otpExpiryTimer, setOtpExpiryTimer]     = useState(OTP_VALIDITY_SECONDS);
 
   const [confirmationResult, setConfirmationResult] = useState(null);
@@ -131,6 +131,11 @@ const Checkoutpage = () => {
     if (recaptchaVerifierRef.current) {
       try { recaptchaVerifierRef.current.clear(); } catch (_) {}
       recaptchaVerifierRef.current = null;
+    }
+    // FIX: Clear the container element to prevent "already rendered" error
+    const container = document.getElementById('checkout-recaptcha-container');
+    if (container) {
+      container.innerHTML = '';
     }
   };
 
