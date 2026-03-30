@@ -214,6 +214,35 @@ export const createItem = async (req, res) => {
       isAvailable, isFeatured, isPopular,
     } = req.body;
 
+    // Comprehensive validation
+    if (!name || name.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Item name is required'
+      });
+    }
+
+    if (!categoryId || categoryId === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Category is required'
+      });
+    }
+
+    if (!price || isNaN(price) || parseFloat(price) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid price is required'
+      });
+    }
+
+    if (!type || type === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Item type is required'
+      });
+    }
+
     console.log('📝 Creating item:', name);
     console.log('📁 Files received:', req.files?.length || 0);
 
@@ -380,10 +409,30 @@ export const updateItem = async (req, res) => {
     if (req.files && req.files.length > 0) {
       // Delete old images from Cloudinary
       if (item.images && item.images.length > 0) {
-        const deletePromises = item.images.map(img => 
-          cloudinary.uploader.destroy(img.cloudinaryId)
-        );
+        // Handle new schema with images array
+        const deletePromises = item.images.map(img => {
+          // Handle both field names: cloudinaryId (from upload) and publicId (from schema)
+          const publicIdToDelete = img.cloudinaryId || img.publicId;
+          if (publicIdToDelete && typeof publicIdToDelete === 'string' && publicIdToDelete.trim() !== '') {
+            return cloudinary.uploader.destroy(publicIdToDelete);
+          }
+          return Promise.resolve(); // Skip if no valid publicId
+        });
         await Promise.all(deletePromises);
+      } else if (item.imageUrl && item.imageUrl.trim() !== '') {
+        // Handle old schema with single imageUrl
+        try {
+          // Extract public_id from Cloudinary URL
+          const urlParts = item.imageUrl.split('/');
+          const filename = urlParts[urlParts.length - 1];
+          const publicId = filename.split('.')[0];
+          if (publicId && typeof publicId === 'string' && publicId.trim() !== '') {
+            await cloudinary.uploader.destroy(publicId);
+          }
+        } catch (error) {
+          console.log('Failed to delete old image:', error.message);
+          // Continue with update even if image deletion fails
+        }
       }
 
       // Upload new images
@@ -489,8 +538,9 @@ export const updateItem = async (req, res) => {
 // @access  Private/Admin
 export const deleteItem = async (req, res) => {
   try {
+    console.log('Delete request for item:', req.params.id);
+    
     const item = await MenuItem.findById(req.params.id);
-
     if (!item) {
       return res.status(404).json({
         success: false,
@@ -498,22 +548,21 @@ export const deleteItem = async (req, res) => {
       });
     }
 
-    // Delete images from Cloudinary
-    if (item.images && item.images.length > 0) {
-      const deletePromises = item.images.map(img => 
-        cloudinary.uploader.destroy(img.cloudinaryId)
-      );
-      await Promise.all(deletePromises);
-    }
+    console.log('Found item:', item.name);
 
-    // Delete item
+    // Skip Cloudinary deletion for now to isolate the crash
+    console.log('Skipping Cloudinary deletion for debugging');
+
+    // Delete item from database
     await item.deleteOne();
+    console.log('Item deleted from database');
 
     res.json({
       success: true,
       message: 'Item deleted successfully'
     });
   } catch (error) {
+    console.error('Delete error:', error);
     res.status(500).json({
       success: false,
       message: error.message

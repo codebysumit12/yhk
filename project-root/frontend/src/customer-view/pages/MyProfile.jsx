@@ -269,7 +269,7 @@ const MyProfile = () => {
               ) : (
                 <div className="addresses-list">
                   {addresses.map((address, index) => (
-                    <div key={index} className="address-card">
+                    <div key={`address-${index}-${address.type}`} className="address-card">
                       <div className="address-header">
                         <span className="address-type">{address.type.toUpperCase()}</span>
                         {address.isDefault && <span className="default-badge">Default</span>}

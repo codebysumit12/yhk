@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { API_CONFIG } from '../../config/api';
+import { API_CONFIG, authHeaders } from '../../config/api';
 import './CategoriesPage.css';
 
 const CategoriesPage = () => {
+  console.log(' CategoriesPage component rendered!');
+  
+  // Helper function for image URLs
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return '';
+    if (imageUrl.startsWith('http')) return imageUrl; // already absolute
+    const base = API_CONFIG.API_URL.replace(/\/api\/?$/, ''); // safely strip /api
+    return `${base}${imageUrl}`;
+  };
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -20,9 +30,6 @@ const CategoriesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const API_URL = API_CONFIG.API_URL;
-  const token = localStorage.getItem('userToken');
-
   // Available icons
   const availableIcons = [
     '🍕', '🍔', '🍟', '🌮', '🌯', '🥗', '🍝', '🍜',
@@ -30,7 +37,7 @@ const CategoriesPage = () => {
     '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🌭', '🥪',
     '🍰', '🎂', '🧁', '🍪', '🍩', '🥧', '🍦', '🥤',
     '☕', '🍵', '🧃', '🥛', '🍷', '🍺', '🥂', '🍾',
-    '', '🥕', '🌽', '🥒', '🍅', '🥦', '🧄', '🍞',
+    '🥕', '🌽', '🥒', '🍅', '🥦', '🧄', '🍞',
     '🥖', '🥨', '🧀', '🥚', '🍳'
   ];
 
@@ -45,25 +52,52 @@ const CategoriesPage = () => {
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/categories`, {
+      console.log('🔍 Frontend: Fetching categories from:', `${API_CONFIG.API_URL}/categories?isActive=all`);
+      const response = await fetch(`${API_CONFIG.API_URL}/categories?isActive=all`, {
         headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
+      console.log('🔍 Frontend: Response status:', response.status);
       const data = await response.json();
+      console.log('🔍 Frontend: Response data:', data);
       if (data.success) {
         setCategories(data.data);
+        console.log('🔍 Frontend: Categories set:', data.data.length);
+      } else {
+        console.error('🔍 Frontend: API returned error:', data);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('🔍 Frontend: Error fetching categories:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    console.log('🔍 useEffect triggered, calling fetchCategories');
     fetchCategories();
   }, [fetchCategories]);
+
+  // Test direct API call
+  useEffect(() => {
+    console.log('🔍 Testing direct API call');
+    fetch('http://localhost:50017/api/categories?isActive=all')
+      .then(response => {
+        console.log('🔍 Direct API response status:', response.status);
+        console.log('🔍 Direct API response headers:', response.headers);
+        return response.json();
+      })
+      .then(data => {
+        console.log('🔍 Direct API response data:', data);
+        console.log('🔍 Direct API response data type:', typeof data);
+        console.log('🔍 Direct API response data keys:', Object.keys(data));
+      })
+      .catch(error => {
+        console.error('🔍 Direct API error:', error);
+      });
+  }, []);
 
   // Handle image selection
   const handleImageChange = (e) => {
@@ -117,7 +151,7 @@ const CategoriesPage = () => {
     // Check for duplicate category name (only for new categories, not edits)
     if (!editingCategory) {
       const existingCategory = categories.find(cat => 
-        cat.name.toLowerCase() === formData.name.toLowerCase().trim()
+        (cat.name || '').toLowerCase() === (formData.name || '').toLowerCase().trim()
       );
       if (existingCategory) {
         alert('A category with this name already exists!');
@@ -138,15 +172,15 @@ const CategoriesPage = () => {
       formDataToSend.append('displayOrder', formData.displayOrder);
 
       const url = editingCategory 
-        ? `${API_URL}/categories/${editingCategory._id}`
-        : `${API_URL}/categories`;
+        ? `${API_CONFIG.API_URL}/categories/${editingCategory._id}`
+        : `${API_CONFIG.API_URL}/categories`;
       
       const method = editingCategory ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: formDataToSend
       });
@@ -179,7 +213,7 @@ const CategoriesPage = () => {
       displayOrder: category.displayOrder
     });
     if (category.imageUrl) {
-      setPreviewUrl(category.imageUrl);
+      setPreviewUrl(getImageUrl(category.imageUrl));
     }
     setShowModal(true);
   };
@@ -189,11 +223,9 @@ const CategoriesPage = () => {
     if (!window.confirm('Are you sure you want to delete this category?')) return;
 
     try {
-      const response = await fetch(`${API_URL}/categories/${id}`, {
+      const response = await fetch(`${API_CONFIG.API_URL}/categories/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: authHeaders()
       });
 
       const data = await response.json();
@@ -213,11 +245,9 @@ const CategoriesPage = () => {
   // Handle toggle status
   const handleToggleStatus = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/categories/${id}/toggle`, {
+      const response = await fetch(`${API_CONFIG.API_URL}/categories/${id}/toggle-status`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: authHeaders()
       });
 
       const data = await response.json();
@@ -232,8 +262,8 @@ const CategoriesPage = () => {
 
   // Filter categories
   const filteredCategories = categories.filter(category => {
-    const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          category.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (category.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (category.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || 
                           (filterStatus === 'active' && category.isActive) ||
                           (filterStatus === 'inactive' && !category.isActive);
@@ -352,7 +382,11 @@ const CategoriesPage = () => {
 
               <div className="category-body">
                 {category.imageUrl && (
-                  <img src={category.imageUrl} alt={category.name} className="category-image" />
+                  <img 
+                    src={getImageUrl(category.imageUrl)} 
+                    alt={category.name} 
+                    className="category-image" 
+                  />
                 )}
                 <p className="category-description">
                   {category.description || 'No description provided'}

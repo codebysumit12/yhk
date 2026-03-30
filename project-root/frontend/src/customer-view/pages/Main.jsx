@@ -112,11 +112,9 @@ const Main = ({ restaurants }) => {
         
         if (bannerData.success && bannerData.data.length > 0) {
           setHeroBanner(bannerData.data[0]);
-          console.log('Hero banner loaded:', bannerData.data[0]);
         }
         if (catData.success) {
           setCategories(catData.data);
-          console.log('Categories loaded:', catData.data.length, 'items');
         }
       } catch (error) {
         console.error('Error fetching main data:', error);
@@ -359,9 +357,9 @@ const Main = ({ restaurants }) => {
             <YHKLoader message="Loading menu categories..." />
           ) : (
             <div className="restaurant-grid">
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <div 
-                  key={category._id} 
+                  key={`${category._id || category.slug || 'category'}-${index}`} 
                   className="restaurant-card"
                   onClick={() => handleCategoryClick(category)}
                 >

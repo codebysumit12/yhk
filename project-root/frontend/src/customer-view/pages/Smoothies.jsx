@@ -246,7 +246,7 @@ const Smoothies = () => {
                     <h3><i className="fas fa-carrot"></i> Ingredients</h3>
                     <ul className="ingredients-list">
                       {selectedItem.ingredients.map((ingredient, index) => (
-                        <li key={index}>{ingredient}</li>
+                        <li key={`ingredient-${index}-${ingredient}`}>{ingredient}</li>
                       ))}
                     </ul>
                   </div>
@@ -258,7 +258,7 @@ const Smoothies = () => {
                     <div className="nutritional-grid">
                       {Object.entries(selectedItem.nutritionInfo).map(([key, value]) => (
                         value && (
-                          <div key={key} className="nutrient-item">
+                          <div key={`nutrient-${key}-${value}`} className="nutrient-item">
                             <span className="nutrient-name">
                               {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
                             </span>
@@ -279,7 +279,7 @@ const Smoothies = () => {
                     <h3><i className="fas fa-exclamation-triangle"></i> Allergens</h3>
                     <div className="allergen-tags">
                       {selectedItem.allergens.map((allergen, index) => (
-                        <span key={index} className="allergen-tag">⚠️ {allergen}</span>
+                        <span key={`allergen-${index}-${allergen}`} className="allergen-tag">⚠️ {allergen}</span>
                       ))}
                     </div>
                   </div>
@@ -292,11 +292,11 @@ const Smoothies = () => {
                     <i className="fas fa-blender"></i> More Smoothies
                   </h3>
                   <div className="related-items-list">
-                    {relatedItems.map(item => {
+                    {relatedItems.map((item, index) => {
                       const relatedImage = item.images?.[0]?.url || item.image || item.imageUrl || 'https://via.placeholder.com/200x150.png?text=No+Image';
                       return (
                         <div 
-                          key={item._id} 
+                          key={`smoothie-related-${item._id || item.name || index}`}
                           className="related-item-card"
                           onClick={() => handleItemClick(item)}
                         >
@@ -430,13 +430,12 @@ const Smoothies = () => {
             </div>
           ) : (
             <div className="menu-items-grid">
-              {getFilteredItems().map(item => {
-                const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || 
-                                 `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}`;
+              {getFilteredItems().map((item, index) => {
+                const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}`;
                 
                 return (
                   <div 
-                    key={item._id} 
+                    key={`smoothie-item-${item._id || item.name || index}`}
                     className="menu-item-card clickable"
                     onClick={() => handleItemClick(item)}
                   >

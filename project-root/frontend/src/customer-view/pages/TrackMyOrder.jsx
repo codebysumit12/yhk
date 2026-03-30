@@ -175,8 +175,8 @@ const TrackOrder = () => {
           </div>
 
           <div className="orders-list">
-            {orders.map((order) => (
-              <div key={order._id} className="order-card" onClick={() => handleSelectOrder(order)}>
+            {orders.map((order, index) => (
+              <div key={`order-${order._id || order.orderNumber || index}`} className="order-card" onClick={() => handleSelectOrder(order)}>
                 <div className="order-card-header">
                   <div className="order-number">#{order.orderNumber}</div>
                   <span className={`status-badge status-${order.status}`}>
@@ -186,7 +186,7 @@ const TrackOrder = () => {
                 <div className="order-card-body">
                   <div className="order-items-preview">
                     {order.orderItems?.slice(0, 3).map((item, index) => (
-                      <span key={index} className="item-preview">{item.name} x{item.quantity}</span>
+                      <span key={`order-item-${index}-${item._id || item.name}`} className="item-preview">{item.name} x{item.quantity}</span>
                     ))}
                     {order.orderItems?.length > 3 && (
                       <span className="more-items">+{order.orderItems.length - 3} more</span>
@@ -286,7 +286,7 @@ const TrackOrder = () => {
 
                       return (
                         <div
-                          key={status}
+                          key={`timeline-${index}-${status}`}
                           className={`timeline-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
                         >
                           {index < orderStatuses.length - 1 && (
@@ -409,7 +409,7 @@ const TrackOrder = () => {
                 <h2>🍽️ Order Items</h2>
                 <div className="order-items-list">
                   {(selectedOrder.orderItems || selectedOrder.items || []).map((item, index) => (
-                    <div key={index} className="order-item">
+                    <div key={`selected-item-${index}-${item._id || item.name || item.menuItem}`} className="order-item">
                       <div className="item-image">
                         {item.image ? <img src={item.image} alt={item.name} /> : <div className="no-image">🍽️</div>}
                       </div>

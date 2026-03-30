@@ -3,1090 +3,762 @@ import { useNavigate } from 'react-router-dom';
 import { API_CONFIG } from '../config/api';
 import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
 import { auth } from '../firebase';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import './Auth.css';
 
-const Auth = () => {
+/*
+ * FLOW  (industry-standard, like Swiggy / Zomato / Linear)
+ * ─────────────────────────────────────────────────────────
+ *  screen: 'landing'   → hero: Continue with Google | Facebook | Phone | Email
+ *  screen: 'email'     → email + password  (existing users)
+ *  screen: 'phone'     → phone → OTP
+ *  screen: 'register'  → full sign-up form (reached via "Create account" link)
+ *  screen: 'otp'       → 6-digit OTP (phone or email-otp)
+ */
+
+const GOOGLE_CLIENT_ID = '579329797638-hd52etnj43u7camu9qrh8ev8i53imukp.apps.googleusercontent.com';
+
+export default function Auth() {
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthInner />
+    </GoogleOAuthProvider>
+  );
+}
+
+function AuthInner() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [tab, setTab] = useState('email'); // 'email' | 'phone'
+  const googleInitializedRef = useRef(false);
+  const googleLoginRef = useRef(null);
 
-  // ── Email login state ──────────────────────────────────────────────────────
-  const [formData, setFormData] = useState({
-    email: 'sumitkhekare@gmail.com',
-    password: 'sumit123',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  // ── top-level screen ──────────────────────────────────────────────────────
+  const [screen, setScreen] = useState('landing'); // landing | email | phone | register | otp
 
-  // ── Registration state ─────────────────────────────────────────────────────
-  const [registerData, setRegisterData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    role: 'customer'
-  });
-  const [registerErrors, setRegisterErrors] = useState({});
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // ── shared ────────────────────────────────────────────────────────────────
+  const [globalError, setGlobalError]   = useState('');
+  const [globalSuccess, setGlobalSuccess] = useState('');
 
-  // ── Phone login state ──────────────────────────────────────────────────────
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneStep, setPhoneStep] = useState('input'); // 'input' | 'otp' | 'verified'
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [phoneError, setPhoneError] = useState('');
-  const [otpError, setOtpError] = useState('');
+  // ── email/password ────────────────────────────────────────────────────────
+  const [emailVal, setEmailVal]     = useState('');
+  const [passVal, setPassVal]       = useState('');
+  const [showPass, setShowPass]     = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  // ── phone OTP (Firebase) ──────────────────────────────────────────────────
+  const [phone, setPhone]               = useState('');
+  const [phoneError, setPhoneError]     = useState('');
   const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [otpDigits, setOtpDigits]       = useState(['','','','','','']);
+  const [otpError, setOtpError]         = useState('');
   const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
-  const [otpExpiryTimer, setOtpExpiryTimer] = useState(60);
-  const [confirmationResult, setConfirmationResult] = useState(null);
-
-  // Refs
-  const otpInputsRef = useRef([]);
+  const [otpTimer, setOtpTimer]         = useState(0);   // expiry
+  const [resendTimer, setResendTimer]   = useState(0);
+  const [confirmResult, setConfirmResult] = useState(null);
+  const otpRefs        = useRef([]);
   const isVerifyingRef = useRef(false);
-  const otpExpiredRef = useRef(false);
-  const recaptchaVerifierRef = useRef(null);
-  const recaptchaRenderedRef = useRef(false);
+  const otpExpiredRef  = useRef(false);
+  const recaptchaRef   = useRef(null);
+  const recaptchaRendered = useRef(false);
 
-  // ── Resend timer ───────────────────────────────────────────────────────────
+  // ── registration ──────────────────────────────────────────────────────────
+  const [reg, setReg] = useState({
+    name: '', email: '', phone: '', password: '', confirmPassword: '', role: 'customer'
+  });
+  const [regErrors, setRegErrors]   = useState({});
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [showRegPass, setShowRegPass]   = useState(false);
+  const [showRegConf, setShowRegConf]   = useState(false);
+
+  // ── OTP timers ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (resendTimer <= 0) return;
     const t = setTimeout(() => setResendTimer(v => v - 1), 1000);
     return () => clearTimeout(t);
   }, [resendTimer]);
 
-  // ── OTP expiry countdown ───────────────────────────────────────────────────
   useEffect(() => {
-    if (phoneStep !== 'otp') return;
-    if (otpExpiryTimer <= 0) {
-      otpExpiredRef.current = true;
-      return;
-    }
-    const t = setTimeout(() => setOtpExpiryTimer(v => v - 1), 1000);
+    if (screen !== 'otp' || otpTimer <= 0) return;
+    if (otpTimer === 0) { otpExpiredRef.current = true; return; }
+    const t = setTimeout(() => setOtpTimer(v => v - 1), 1000);
     return () => clearTimeout(t);
-  }, [otpExpiryTimer, phoneStep]);
+  }, [otpTimer, screen]);
 
-  // ── reCAPTCHA helpers ──────────────────────────────────────────────────────
+  // ── reCAPTCHA ─────────────────────────────────────────────────────────────
   const clearRecaptcha = useCallback(() => {
-    if (recaptchaVerifierRef.current) {
-      try {
-        recaptchaVerifierRef.current.clear();
-      } catch (_) {}
-      recaptchaVerifierRef.current = null;
+    if (recaptchaRef.current) {
+      try { recaptchaRef.current.clear(); } catch (_) {}
+      recaptchaRef.current = null;
     }
-    const el = document.getElementById('auth-recaptcha-container');
+    const el = document.getElementById('recaptcha-root');
     if (el) el.innerHTML = '';
-    recaptchaRenderedRef.current = false;
+    recaptchaRendered.current = false;
   }, []);
 
-  const initRecaptcha = useCallback(() => new Promise((resolve, reject) => {
-    if (recaptchaRenderedRef.current && recaptchaVerifierRef.current) {
-      return resolve(recaptchaVerifierRef.current);
-    }
-    const container = document.getElementById('auth-recaptcha-container');
-    if (!container) return reject(new Error('reCAPTCHA container missing'));
-
-    if (recaptchaVerifierRef.current) {
-      try {
-        recaptchaVerifierRef.current.clear();
-      } catch (_) {}
-      recaptchaVerifierRef.current = null;
-    }
-    container.innerHTML = '';
-
+  const initRecaptcha = useCallback(() => new Promise((res, rej) => {
+    if (recaptchaRendered.current && recaptchaRef.current) return res(recaptchaRef.current);
+    const el = document.getElementById('recaptcha-root');
+    if (!el) return rej(new Error('reCAPTCHA container missing'));
+    if (recaptchaRef.current) { try { recaptchaRef.current.clear(); } catch (_) {} recaptchaRef.current = null; }
+    el.innerHTML = '';
     try {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(
-        auth,
-        'auth-recaptcha-container',
-        {
-          size: 'invisible',
-          callback: () => {},
-          'expired-callback': () => clearRecaptcha(),
-        }
-      );
-      recaptchaVerifierRef.current
-        .render()
-        .then(() => {
-          recaptchaRenderedRef.current = true;
-          resolve(recaptchaVerifierRef.current);
-        })
-        .catch(err => {
-          clearRecaptcha();
-          reject(err);
-        });
-    } catch (err) {
-      clearRecaptcha();
-      reject(err);
-    }
+      recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-root', {
+        size: 'invisible',
+        callback: () => {},
+        'expired-callback': () => clearRecaptcha(),
+      });
+      recaptchaRef.current.render()
+        .then(() => { recaptchaRendered.current = true; res(recaptchaRef.current); })
+        .catch(err => { clearRecaptcha(); rej(err); });
+    } catch (err) { clearRecaptcha(); rej(err); }
   }), [clearRecaptcha]);
 
-  // Pre-init reCAPTCHA when phone tab + input step is visible
   useEffect(() => {
-    if (tab !== 'phone' || phoneStep !== 'input') return;
-    const t = setTimeout(() => {
-      initRecaptcha().catch(() => {});
-    }, 500);
-    return () => clearTimeout(t);
-  }, [tab, phoneStep, initRecaptcha]);
-
-  // Cleanup on unmount
-  useEffect(() => () => clearRecaptcha(), [clearRecaptcha]);
-
-  // ── Switch mode ────────────────────────────────────────────────────────────
-  const switchMode = (newMode) => {
-    setMode(newMode);
-    setError('');
-    setSuccess('');
-    setRegisterErrors({});
-    if (newMode === 'register') {
-      setRegisterData({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
-        role: 'customer'
-      });
+    if (screen === 'phone') {
+      const t = setTimeout(() => initRecaptcha().catch(() => {}), 500);
+      return () => clearTimeout(t);
     }
+  }, [screen]); // Remove initRecaptcha to prevent infinite loop
+
+  useEffect(() => {
+    return () => {
+      if (recaptchaRef.current) {
+        try { recaptchaRef.current.clear(); } catch (_) {}
+        recaptchaRef.current = null;
+      }
+      const el = document.getElementById('recaptcha-root');
+      if (el) el.innerHTML = '';
+      recaptchaRendered.current = false;
+    };
+  }, []); // Cleanup on unmount only
+
+  // ── helpers ───────────────────────────────────────────────────────────────
+  const reset = () => {
+    setGlobalError(''); setGlobalSuccess('');
+    setPhone(''); setPhoneError('');
+    setOtpDigits(['','','','','','']); setOtpError('');
+    otpExpiredRef.current = false;
+    setOtpTimer(0); setResendTimer(0);
+    setConfirmResult(null);
+    clearRecaptcha();
   };
 
-  // ── Switch tab ─────────────────────────────────────────────────────────────
-  const switchTab = (newTab) => {
-    setTab(newTab);
-    setError('');
-    setSuccess('');
-    setRegisterErrors({});
-    if (newTab === 'email') clearRecaptcha();
-    if (newTab === 'phone') {
-      setPhoneStep('input');
-      setPhoneNumber('');
-      setOtp(['', '', '', '', '', '']);
-      setPhoneError('');
-      setOtpError('');
-      otpExpiredRef.current = false;
-      setOtpExpiryTimer(60);
-      setResendTimer(0);
-    }
+  const goTo = (s) => { reset(); setScreen(s); };
+
+  const redirect = (user) => {
+    if (user.isAdmin || user.role === 'admin') navigate('/admin', { replace: true });
+    else if (user.role === 'delivery_partner') navigate('/delivery-app', { replace: true });
+    else navigate('/', { replace: true });
   };
 
-  // ── Validation ─────────────────────────────────────────────────────────────
-  const validateRegisterForm = () => {
-    const errors = {};
-
-    // Name validation
-    if (!registerData.name || registerData.name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters';
-    } else if (!/^[a-zA-Z\s]+$/.test(registerData.name)) {
-      errors.name = 'Name can only contain letters and spaces';
-    }
-
-    // Email validation
-    if (!registerData.email) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    // Phone validation
-    if (!registerData.phone) {
-      errors.phone = 'Phone number is required';
-    } else if (!/^[6-9]\d{9}$/.test(registerData.phone)) {
-      errors.phone = 'Enter a valid 10-digit phone number starting with 6-9';
-    }
-
-    // Password validation
-    if (!registerData.password) {
-      errors.password = 'Password is required';
-    } else if (registerData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(registerData.password)) {
-      errors.password = 'Password must contain at least one letter and one number';
-    }
-
-    // Confirm password validation
-    if (!registerData.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (registerData.password !== registerData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-
-    return errors;
-  };
-
-  // ── Registration handler ───────────────────────────────────────────────────
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    
-    // Validate form
-    const errors = validateRegisterForm();
-    if (Object.keys(errors).length > 0) {
-      setRegisterErrors(errors);
-      return;
-    }
-
-    setIsRegistering(true);
-    setRegisterErrors({});
-    setError('');
-
+  // ── Google login ──────────────────────────────────────────────────────────
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (!googleInitializedRef.current) return; // Prevent multiple calls
+    setGlobalError('');
     try {
-      console.log('🔍 Attempting registration:', registerData.email);
-
-      const response = await fetch(`${API_CONFIG.API_URL}/auth/register`, {
+      const payload = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
+      const r = await fetch(`${API_CONFIG.API_URL}/auth/google-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: registerData.name.trim(),
-          email: registerData.email.toLowerCase(),
-          phone: registerData.phone,
-          password: registerData.password,
-          role: registerData.role
-        })
+        body: JSON.stringify({ email: payload.email, name: payload.name, googleId: payload.sub, photoURL: payload.picture }),
       });
-
-      const data = await response.json();
-      console.log('📦 Registration response:', data);
-
+      const data = await r.json();
       if (data.success) {
-        // Store token and user data
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-
-        setSuccess('Registration successful! Redirecting...');
-
-        // Redirect based on role
-        setTimeout(() => {
-          if (data.user.isAdmin || data.user.role === 'admin') {
-            navigate('/admin', { replace: true });
-          } else if (data.user.role === 'delivery_partner') {
-            navigate('/delivery-app', { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
-        }, 1500);
+        setGlobalSuccess('Welcome! Redirecting…');
+        setTimeout(() => redirect(data.user), 1000);
       } else {
-        // Handle specific error messages
-        if (data.message.includes('email')) {
-          setRegisterErrors({ email: data.message });
-        } else if (data.message.includes('phone')) {
-          setRegisterErrors({ phone: data.message });
-        } else {
-          setError(data.message || 'Registration failed');
-        }
+        setGlobalError(data.message || 'Google sign-in failed');
       }
-    } catch (err) {
-      console.error('❌ Registration error:', err);
-      setError('Network error. Please try again.');
-    } finally {
-      setIsRegistering(false);
-    }
+    } catch { setGlobalError('Network error. Please try again.'); }
   };
 
-  // ── Email login ────────────────────────────────────────────────────────────
+  // ── Facebook (placeholder — wire up FB SDK as needed) ────────────────────
+  const handleFacebook = () => {
+    setGlobalError('Facebook login coming soon!');
+  };
+
+  // ── Email / password login ────────────────────────────────────────────────
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setEmailLoading(true); setGlobalError('');
     try {
-      const response = await fetch(`${API_CONFIG.API_URL}/auth/login`, {
+      const r = await fetch(`${API_CONFIG.API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
+        body: JSON.stringify({ email: emailVal, password: passVal }),
       });
-      const data = await response.json();
+      const data = await r.json();
       if (data.success) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        setSuccess('Login successful! Redirecting...');
-        setTimeout(() => {
-          if (data.user.isAdmin) navigate('/admin', { replace: true });
-          else if (data.user.role === 'delivery_partner') navigate('/delivery-app', { replace: true });
-          else navigate('/', { replace: true });
-        }, 1000);
-      } else {
-        setError(data.message || 'Login failed');
-      }
-    } catch {
-      setError('Server error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+        setGlobalSuccess('Welcome back!');
+        setTimeout(() => redirect(data.user), 900);
+      } else { setGlobalError(data.message || 'Login failed'); }
+    } catch { setGlobalError('Server error. Please try again.'); }
+    finally { setEmailLoading(false); }
   };
 
-  // ── Send OTP ───────────────────────────────────────────────────────────────
+  // ── Send phone OTP ────────────────────────────────────────────────────────
   const handleSendOTP = useCallback(async () => {
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      setPhoneError('Enter a valid 10-digit number.');
-      return;
-    }
-    setPhoneError('');
-    setIsSendingOTP(true);
+    if (!/^\d{10}$/.test(phone)) { setPhoneError('Enter a valid 10-digit number.'); return; }
+    setPhoneError(''); setIsSendingOTP(true);
     try {
       const verifier = await initRecaptcha();
-      const confirmation = await signInWithPhoneNumber(auth, `+91${phoneNumber}`, verifier);
-      setConfirmationResult(confirmation);
+      const result = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
+      setConfirmResult(result);
       otpExpiredRef.current = false;
-      setOtp(['', '', '', '', '', '']);
+      setOtpDigits(['','','','','','']);
       setOtpError('');
-      setOtpExpiryTimer(60);
+      setOtpTimer(60);
       setResendTimer(45);
-      setPhoneStep('otp');
+      setScreen('otp');
     } catch (err) {
       clearRecaptcha();
       if (err.code === 'auth/too-many-requests') setPhoneError('Too many attempts. Wait a few minutes.');
       else if (err.code === 'auth/invalid-phone-number') setPhoneError('Invalid phone number.');
       else setPhoneError('Failed to send OTP. Try again.');
-    } finally {
-      setIsSendingOTP(false);
-    }
-  }, [phoneNumber, initRecaptcha, clearRecaptcha]);
+    } finally { setIsSendingOTP(false); }
+  }, [phone, initRecaptcha, clearRecaptcha]);
 
-  // ── OTP input ──────────────────────────────────────────────────────────────
-  const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-    const next = [...otp];
-    next[index] = value;
-    setOtp(next);
-    setOtpError('');
-    if (value && index < 5) otpInputsRef.current[index + 1]?.focus();
-    if (next.every(d => d) && next.join('').length === 6 && !otpExpiredRef.current) {
-      handleVerifyOTP(next.join(''));
-    }
+  // ── OTP input handling ────────────────────────────────────────────────────
+  const handleOtpChange = (i, val) => {
+    if (!/^\d*$/.test(val)) return;
+    const next = [...otpDigits]; next[i] = val;
+    setOtpDigits(next); setOtpError('');
+    if (val && i < 5) otpRefs.current[i + 1]?.focus();
+    if (next.every(d => d) && !otpExpiredRef.current) handleVerifyOTP(next.join(''));
   };
 
-  const handleOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpInputsRef.current[index - 1]?.focus();
-    }
+  const handleOtpKeyDown = (i, e) => {
+    if (e.key === 'Backspace' && !otpDigits[i] && i > 0) otpRefs.current[i - 1]?.focus();
   };
 
-  // ── Verify OTP ─────────────────────────────────────────────────────────────
-  const handleVerifyOTP = async (otpOverride) => {
-    const val = otpOverride || otp.join('');
-    if (val.length < 6) {
-      setOtpError('Enter all 6 digits.');
-      return;
-    }
+  // ── Verify OTP ────────────────────────────────────────────────────────────
+  const handleVerifyOTP = async (override) => {
+    const val = override || otpDigits.join('');
+    if (val.length < 6) { setOtpError('Enter all 6 digits.'); return; }
     if (isVerifyingRef.current) return;
+    if (otpExpiredRef.current) { setOtpError('OTP expired. Resend a new one.'); return; }
     isVerifyingRef.current = true;
-
-    if (otpExpiredRef.current) {
-      setOtpError('OTP expired. Request a new one.');
-      isVerifyingRef.current = false;
-      return;
-    }
-
     setIsVerifyingOTP(true);
     try {
-      const result = await confirmationResult.confirm(val);
-      setPhoneStep('verified');
-      otpExpiredRef.current = false;
-      setOtpExpiryTimer(0);
-
-      const phone = result.user.phoneNumber;
+      const result = await confirmResult.confirm(val);
+      const ph = result.user.phoneNumber;
       try {
-        const resp = await fetch(`${API_CONFIG.API_URL}/auth/firebase-login`, {
+        const r = await fetch(`${API_CONFIG.API_URL}/auth/firebase-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            uid: result.user.uid, 
-            phone: phone, 
-            name: null, 
-            email: null 
-          }),
+          body: JSON.stringify({ uid: result.user.uid, phone: ph, name: null, email: null }),
         });
-        const data = await resp.json();
+        const data = await r.json();
         if (data.success) {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
-          setSuccess('Phone verified! Redirecting...');
-          setTimeout(() => {
-            if (data.user.isAdmin) navigate('/admin', { replace: true });
-            else if (data.user.role === 'delivery_partner') navigate('/delivery-app', { replace: true });
-            else navigate('/', { replace: true });
-          }, 1000);
+          setGlobalSuccess('Phone verified! Redirecting…');
+          setTimeout(() => redirect(data.user), 900);
         } else {
-          localStorage.setItem('verifiedPhone', phone);
-          setSuccess('Phone verified! Redirecting...');
-          setTimeout(() => navigate('/', { replace: true }), 1000);
+          localStorage.setItem('verifiedPhone', ph);
+          setGlobalSuccess('Verified! Redirecting…');
+          setTimeout(() => navigate('/'), 900);
         }
       } catch {
-        localStorage.setItem('verifiedPhone', phone);
-        setSuccess('Phone verified! Redirecting...');
-        setTimeout(() => navigate('/', { replace: true }), 1000);
+        localStorage.setItem('verifiedPhone', ph);
+        setGlobalSuccess('Verified! Redirecting…');
+        setTimeout(() => navigate('/'), 900);
       }
     } catch (err) {
-      if (err.code === 'auth/code-expired') setOtpError('OTP expired. Request a new one.');
+      if (err.code === 'auth/code-expired') setOtpError('OTP expired. Resend a new one.');
       else if (err.code === 'auth/invalid-verification-code') setOtpError('Incorrect OTP. Try again.');
       else setOtpError('Verification failed. Try again.');
-    } finally {
-      setIsVerifyingOTP(false);
-      isVerifyingRef.current = false;
-    }
+    } finally { setIsVerifyingOTP(false); isVerifyingRef.current = false; }
   };
 
   const handleResendOTP = useCallback(async () => {
     if (resendTimer > 0) return;
     clearRecaptcha();
-    setOtp(['', '', '', '', '', '']);
+    setOtpDigits(['','','','','','']);
     setOtpError('');
     otpExpiredRef.current = false;
-    setOtpExpiryTimer(60);
+    setOtpTimer(60);
     await handleSendOTP();
   }, [resendTimer, clearRecaptcha, handleSendOTP]);
 
-  const handleChangePhone = () => {
-    setPhoneStep('input');
-    setPhoneNumber('');
-    setOtp(['', '', '', '', '', '']);
-    setOtpError('');
-    otpExpiredRef.current = false;
-    setOtpExpiryTimer(60);
-    setResendTimer(0);
-    setConfirmationResult(null);
-    clearRecaptcha();
+  // ── Registration ──────────────────────────────────────────────────────────
+  const validateReg = () => {
+    const e = {};
+    if (!reg.name.trim() || reg.name.trim().length < 2) e.name = 'At least 2 characters';
+    else if (!/^[a-zA-Z\s]+$/.test(reg.name)) e.name = 'Letters and spaces only';
+    if (!reg.email) e.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reg.email)) e.email = 'Invalid email address';
+    if (!reg.phone) e.phone = 'Phone is required';
+    else if (!/^[6-9]\d{9}$/.test(reg.phone)) e.phone = 'Valid 10-digit number (starts 6–9)';
+    if (!reg.password) e.password = 'Password is required';
+    else if (reg.password.length < 6) e.password = 'Minimum 6 characters';
+    else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(reg.password)) e.password = 'Mix of letters and numbers';
+    if (!reg.confirmPassword) e.confirmPassword = 'Please confirm password';
+    else if (reg.password !== reg.confirmPassword) e.confirmPassword = 'Passwords do not match';
+    return e;
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-  return (
-    <div className="auth-page-modern">
-      {/* reCAPTCHA */}
-      <div id="auth-recaptcha-container" style={{ display: 'none' }} />
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    const errors = validateReg();
+    if (Object.keys(errors).length) { setRegErrors(errors); return; }
+    setIsRegistering(true); setRegErrors({}); setGlobalError('');
+    try {
+      const r = await fetch(`${API_CONFIG.API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: reg.name.trim(), email: reg.email.toLowerCase(),
+          phone: reg.phone, password: reg.password, role: reg.role,
+        }),
+      });
+      const data = await r.json();
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setGlobalSuccess('Account created! Redirecting…');
+        setTimeout(() => redirect(data.user), 1200);
+      } else {
+        if (data.message?.includes('email')) setRegErrors({ email: data.message });
+        else if (data.message?.includes('phone')) setRegErrors({ phone: data.message });
+        else setGlobalError(data.message || 'Registration failed');
+      }
+    } catch { setGlobalError('Network error. Please try again.'); }
+    finally { setIsRegistering(false); }
+  };
 
-      {/* Background */}
-      <div className="auth-background">
-        <div className="gradient-orb orb-1" />
-        <div className="gradient-orb orb-2" />
-        <div className="gradient-orb orb-3" />
-        <div className="floating-elements">
-          {[
-            ['🥗', '10%', '8%', '0s'],
-            ['🥑', '20%', null, '2s', '12%'],
-            ['🍇', null, '15%', '4s', null, '10%'],
-            ['🥕', null, '25%', '1s', null, '8%'],
-            ['🥦', '50%', '5%', '3s'],
-            ['🍓', '60%', null, '5s', null, '6%']
-          ].map(([icon, top, bottom, delay, right, left], i) => (
-            <span
-              key={i}
-              className="float-item"
-              style={{
-                top,
-                bottom,
-                left: left || (right ? undefined : '8%'),
-                right,
-                animationDelay: delay,
-              }}
-            >
-              {icon}
-            </span>
-          ))}
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER HELPERS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const Alert = ({ type, msg }) => msg ? (
+    <div className={`auth-alert auth-alert--${type}`}>
+      <span className="auth-alert__icon">{type === 'success' ? '✓' : '!'}</span>
+      <span>{msg}</span>
+    </div>
+  ) : null;
+
+  const Field = ({ label, icon, error, children }) => (
+    <div className="auth-field">
+      {label && <label className="auth-field__label"><span>{icon}</span>{label}</label>}
+      {children}
+      {error && <span className="auth-field__error">{error}</span>}
+    </div>
+  );
+
+  const Spinner = () => <span className="auth-spinner" />;
+
+  const SocialDivider = () => (
+    <div className="auth-divider"><span>or continue with</span></div>
+  );
+
+  const SocialRow = () => (
+    <div className="auth-social-row">
+      {/* Facebook */}
+      <button type="button" className="auth-social-btn auth-social-btn--fb" onClick={handleFacebook}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
+          <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+        </svg>
+        <span>Facebook</span>
+      </button>
+    </div>
+  );
+
+  const BackBtn = ({ to }) => (
+    <button type="button" className="auth-back-btn" onClick={() => goTo(to)}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Back
+    </button>
+  );
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SCREENS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── 1. LANDING ────────────────────────────────────────────────────────────
+  const LandingScreen = () => (
+    <div className="auth-screen">
+      <div className="auth-screen__header">
+        <h2 className="auth-screen__title">Welcome</h2>
+        <p className="auth-screen__sub">Sign in or create your account</p>
+      </div>
+
+      <Alert type="error" msg={globalError} />
+      <Alert type="success" msg={globalSuccess} />
+
+      {/* Social */}
+      <div className="auth-social-stack">
+        <SocialRow />
+      </div>
+
+      <div className="auth-divider"><span>or</span></div>
+
+      {/* Other options */}
+      <div className="auth-option-stack">
+        <button type="button" className="auth-option-btn" onClick={() => goTo('phone')}>
+          <span className="auth-option-btn__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/>
+            </svg>
+          </span>
+          <span>Continue with Phone</span>
+          <svg className="auth-option-btn__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <button type="button" className="auth-option-btn" onClick={() => goTo('email')}>
+          <span className="auth-option-btn__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/>
+            </svg>
+          </span>
+          <span>Continue with Email</span>
+          <svg className="auth-option-btn__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <p className="auth-screen__footer-note">
+        New here?{' '}
+        <button type="button" className="auth-text-link" onClick={() => goTo('register')}>
+          Create an account
+        </button>
+      </p>
+    </div>
+  );
+
+  // ── 2. PHONE ──────────────────────────────────────────────────────────────
+  const PhoneScreen = () => (
+    <div className="auth-screen">
+      <BackBtn to="landing" />
+      <div className="auth-screen__header">
+        <h2 className="auth-screen__title">Your phone</h2>
+        <p className="auth-screen__sub">We'll send a 6-digit code to verify</p>
+      </div>
+
+      <Alert type="error" msg={phoneError} />
+
+      <Field label="Mobile number" icon="📱">
+        <div className="auth-phone-row">
+          <div className="auth-phone-prefix">🇮🇳 +91</div>
+          <input
+            type="tel" maxLength="10"
+            className="auth-input auth-input--flex"
+            placeholder="98765 43210"
+            value={phone}
+            onChange={e => { setPhone(e.target.value.replace(/\D/g, '')); setPhoneError(''); }}
+            onKeyDown={e => e.key === 'Enter' && handleSendOTP()}
+            autoFocus
+          />
         </div>
+      </Field>
+
+      <button
+        type="button" className="auth-primary-btn"
+        onClick={handleSendOTP} disabled={isSendingOTP || phone.length !== 10}
+      >
+        {isSendingOTP ? <><Spinner /> Sending…</> : <>Send OTP <span className="auth-btn-arrow">→</span></>}
+      </button>
+
+      <SocialDivider />
+      <SocialRow />
+    </div>
+  );
+
+  // ── 3. OTP ────────────────────────────────────────────────────────────────
+  const OtpScreen = () => (
+    <div className="auth-screen">
+      <BackBtn to="phone" />
+      <div className="auth-screen__header">
+        <div className="auth-otp-badge">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <h2 className="auth-screen__title">Enter OTP</h2>
+        <p className="auth-screen__sub">
+          Sent to <strong>+91 {phone.slice(0,5)} {phone.slice(5)}</strong>{' '}
+          <button type="button" className="auth-text-link" onClick={() => goTo('phone')}>Change</button>
+        </p>
+      </div>
+
+      <Alert type="success" msg={globalSuccess} />
+      <Alert type="error" msg={otpError} />
+
+      {/* OTP boxes */}
+      <div className="auth-otp-row">
+        {otpDigits.map((d, i) => (
+          <input
+            key={`otp-${i}`}
+            ref={el => (otpRefs.current[i] = el)}
+            type="text" inputMode="numeric" maxLength="1"
+            value={d}
+            onChange={e => handleOtpChange(i, e.target.value)}
+            onKeyDown={e => handleOtpKeyDown(i, e)}
+            disabled={otpExpiredRef.current}
+            className={`auth-otp-cell ${d ? 'auth-otp-cell--filled' : ''} ${otpError ? 'auth-otp-cell--error' : ''}`}
+          />
+        ))}
+      </div>
+
+      {/* Timer */}
+      <div className={`auth-otp-timer ${otpTimer === 0 ? 'auth-otp-timer--expired' : ''}`}>
+        {otpTimer > 0 ? `⏱ Code valid for ${otpTimer}s` : '⏰ Code expired'}
+      </div>
+
+      <button
+        type="button" className="auth-primary-btn"
+        onClick={() => handleVerifyOTP()}
+        disabled={isVerifyingOTP || otpExpiredRef.current || otpDigits.join('').length < 6}
+      >
+        {isVerifyingOTP ? <><Spinner /> Verifying…</> : <>Verify & Continue <span className="auth-btn-arrow">→</span></>}
+      </button>
+
+      <p className="auth-resend-row">
+        Didn't receive it?{' '}
+        <button
+          type="button" className="auth-text-link"
+          onClick={handleResendOTP} disabled={resendTimer > 0}
+          style={{ opacity: resendTimer > 0 ? 0.45 : 1 }}
+        >
+          Resend{resendTimer > 0 ? ` (${resendTimer}s)` : ''}
+        </button>
+      </p>
+    </div>
+  );
+
+  // ── 4. EMAIL ──────────────────────────────────────────────────────────────
+  const EmailScreen = () => (
+    <div className="auth-screen">
+      <BackBtn to="landing" />
+      <div className="auth-screen__header">
+        <h2 className="auth-screen__title">Sign in</h2>
+        <p className="auth-screen__sub">Enter your email and password</p>
+      </div>
+
+      <Alert type="error" msg={globalError} />
+      <Alert type="success" msg={globalSuccess} />
+
+      <form onSubmit={handleEmailLogin} className="auth-form">
+        <Field label="Email address" icon="📧">
+          <input
+            type="email" required
+            className="auth-input" placeholder="you@example.com"
+            value={emailVal}
+            onChange={e => { setEmailVal(e.target.value); setGlobalError(''); }}
+            autoFocus
+          />
+        </Field>
+        <Field label="Password" icon="🔒">
+          <div className="auth-pass-wrap">
+            <input
+              type={showPass ? 'text' : 'password'} required minLength="6"
+              className="auth-input" placeholder="Your password"
+              value={passVal}
+              onChange={e => { setPassVal(e.target.value); setGlobalError(''); }}
+            />
+            <button type="button" className="auth-pass-toggle" onClick={() => setShowPass(p => !p)}>
+              {showPass ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
+        </Field>
+
+        <div className="auth-forgot-row">
+          <button type="button" className="auth-text-link auth-text-link--sm">Forgot password?</button>
+        </div>
+
+        <button type="submit" className="auth-primary-btn" disabled={emailLoading}>
+          {emailLoading ? <><Spinner /> Signing in…</> : <>Sign In <span className="auth-btn-arrow">→</span></>}
+        </button>
+      </form>
+
+      <SocialDivider />
+      <SocialRow />
+
+      <p className="auth-screen__footer-note">
+        No account?{' '}
+        <button type="button" className="auth-text-link" onClick={() => goTo('register')}>Create one</button>
+      </p>
+    </div>
+  );
+
+  // ── 5. REGISTER ───────────────────────────────────────────────────────────
+  const RegisterScreen = () => (
+    <div className="auth-screen">
+      <BackBtn to="landing" />
+      <div className="auth-screen__header">
+        <h2 className="auth-screen__title">Create account</h2>
+        <p className="auth-screen__sub">Join Yeswanth's Healthy Kitchen</p>
+      </div>
+
+      <Alert type="error" msg={globalError} />
+      <Alert type="success" msg={globalSuccess} />
+
+      <form onSubmit={handleRegister} className="auth-form">
+        <Field label="Full name" icon="👤" error={regErrors.name}>
+          <input
+            type="text" className={`auth-input ${regErrors.name ? 'auth-input--error' : ''}`}
+            placeholder="Your full name" value={reg.name}
+            onChange={e => { setReg({ ...reg, name: e.target.value }); setRegErrors({ ...regErrors, name: '' }); }}
+          />
+        </Field>
+
+        <Field label="Email address" icon="📧" error={regErrors.email}>
+          <input
+            type="email" className={`auth-input ${regErrors.email ? 'auth-input--error' : ''}`}
+            placeholder="you@example.com" value={reg.email}
+            onChange={e => { setReg({ ...reg, email: e.target.value }); setRegErrors({ ...regErrors, email: '' }); }}
+          />
+        </Field>
+
+        <Field label="Phone number" icon="📱" error={regErrors.phone}>
+          <div className="auth-phone-row">
+            <div className="auth-phone-prefix">🇮🇳 +91</div>
+            <input
+              type="tel" maxLength="10"
+              className={`auth-input auth-input--flex ${regErrors.phone ? 'auth-input--error' : ''}`}
+              placeholder="98765 43210" value={reg.phone}
+              onChange={e => { setReg({ ...reg, phone: e.target.value.replace(/\D/g, '') }); setRegErrors({ ...regErrors, phone: '' }); }}
+            />
+          </div>
+        </Field>
+
+        <Field label="Password" icon="🔒" error={regErrors.password}>
+          <div className="auth-pass-wrap">
+            <input
+              type={showRegPass ? 'text' : 'password'}
+              className={`auth-input ${regErrors.password ? 'auth-input--error' : ''}`}
+              placeholder="Min. 6 chars, letters + numbers" value={reg.password}
+              onChange={e => { setReg({ ...reg, password: e.target.value }); setRegErrors({ ...regErrors, password: '' }); }}
+            />
+            <button type="button" className="auth-pass-toggle" onClick={() => setShowRegPass(p => !p)}>
+              {showRegPass ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
+        </Field>
+
+        <Field label="Confirm password" icon="🔒" error={regErrors.confirmPassword}>
+          <div className="auth-pass-wrap">
+            <input
+              type={showRegConf ? 'text' : 'password'}
+              className={`auth-input ${regErrors.confirmPassword ? 'auth-input--error' : ''}`}
+              placeholder="Repeat your password" value={reg.confirmPassword}
+              onChange={e => { setReg({ ...reg, confirmPassword: e.target.value }); setRegErrors({ ...regErrors, confirmPassword: '' }); }}
+            />
+            <button type="button" className="auth-pass-toggle" onClick={() => setShowRegConf(p => !p)}>
+              {showRegConf ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
+        </Field>
+
+        <Field label="I am a" icon="🎭">
+          <select
+            className="auth-input auth-input--select" value={reg.role}
+            onChange={e => setReg({ ...reg, role: e.target.value })}
+          >
+            <option value="customer">🛒 Customer — order delicious meals</option>
+            <option value="delivery_partner">🛵 Delivery Partner — join our team</option>
+          </select>
+        </Field>
+
+        <button type="submit" className="auth-primary-btn" disabled={isRegistering}>
+          {isRegistering ? <><Spinner /> Creating account…</> : <>Create Account <span className="auth-btn-arrow">→</span></>}
+        </button>
+      </form>
+
+      <p className="auth-screen__footer-note">
+        Already have an account?{' '}
+        <button type="button" className="auth-text-link" onClick={() => goTo('email')}>Sign in</button>
+      </p>
+    </div>
+  );
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ROOT RENDER
+  // ─────────────────────────────────────────────────────────────────────────
+  const SCREENS = { landing: LandingScreen, phone: PhoneScreen, otp: OtpScreen, email: EmailScreen, register: RegisterScreen };
+  const ActiveScreen = SCREENS[screen] || LandingScreen;
+
+  return (
+    <div className="auth-page">
+      {/* Hidden reCAPTCHA */}
+      <div id="recaptcha-root" style={{ display: 'none' }} />
+
+      {/* Ambient background */}
+      <div className="auth-bg" aria-hidden="true">
+        <div className="auth-orb auth-orb--1" />
+        <div className="auth-orb auth-orb--2" />
+        <div className="auth-orb auth-orb--3" />
+        {['🥗','🥑','🍇','🥕','🥦','🍓'].map((e, i) => (
+          <span key={`emoji-${i}`} className="auth-float" style={{ '--delay': `${i * 2.2}s`, '--x': `${10 + i * 14}%`, '--y': `${8 + (i % 3) * 28}%` }}>{e}</span>
+        ))}
       </div>
 
       {/* Card */}
-      <div className="auth-card-modern">
+      <div className="auth-card">
         {/* Left brand panel */}
-        <div className="auth-brand-panel">
-          <div className="brand-overlay" />
-          <div className="brand-content-modern">
-            <div className="brand-logo-modern">
-              <div className="logo-wrapper">
-                <div className="logo-glow" />
-                <span className="logo-emoji">🍽️</span>
+        <aside className="auth-brand">
+          <div className="auth-brand__inner">
+            <div className="auth-brand__logo">
+              <div className="auth-brand__logo-ring">
+                <span>🍽️</span>
               </div>
             </div>
-            <h1 className="brand-title-modern">
+            <h1 className="auth-brand__name">
               Yeswanth's<br />
-              <span className="brand-highlight">Healthy Kitchen</span>
+              <em>Healthy Kitchen</em>
             </h1>
-            <p className="brand-subtitle-modern">Experience the joy of healthy eating</p>
-            <div className="brand-features-modern">
-              {['100% Fresh Ingredients', 'Farm to Table', 'Zero Preservatives'].map(f => (
-                <div key={f} className="feature-badge">
-                  <span className="feature-icon">✓</span>
-                  <span>{f}</span>
-                </div>
+            <p className="auth-brand__tagline">Experience the joy of healthy eating</p>
+            <ul className="auth-brand__features">
+              {['100% Fresh Ingredients', 'Farm to Table', 'Zero Preservatives', 'Chef-crafted Daily'].map((f, i) => (
+                <li key={`feature-${i}`}>
+                  <span className="auth-brand__check">✓</span>
+                  {f}
+                </li>
               ))}
-            </div>
-            <div className="decorative-image">
-              <div className="image-placeholder">
-                <span className="placeholder-icon">🥗🥑🍇</span>
-                <div className="image-glow" />
-              </div>
+            </ul>
+            <div className="auth-brand__plate">
+              <span>🥗🥑🍇</span>
             </div>
           </div>
-        </div>
+        </aside>
 
         {/* Right form panel */}
-        <div className="auth-form-panel">
-          <div className="form-container-modern">
-            <div className="form-header-modern">
-              <h2 className="form-title">
-                {mode === 'login' ? 'Welcome Back!' : 'Join Us Today!'}
-              </h2>
-              <p className="form-subtitle">
-                {mode === 'login' 
-                  ? 'Sign in to continue your healthy journey' 
-                  : 'Create your account and start your healthy journey'}
-              </p>
-            </div>
-
-            {/* Mode switcher */}
-            <div style={{
-              display: 'flex',
-              gap: 0,
-              marginBottom: 24,
-              border: '1.5px solid #e2e8f0',
-              borderRadius: 10,
-              overflow: 'hidden',
-            }}>
-              {[
-                ['login', '🔑 Login'],
-                ['register', '📝 Register']
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => switchMode(key)}
-                  style={{
-                    flex: 1,
-                    padding: '10px 0',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    transition: 'all 0.2s',
-                    background: mode === key ? '#22c55e' : 'white',
-                    color: mode === key ? 'white' : '#64748b',
+        <main className="auth-panel">
+          <div className="auth-panel__inner">
+            {/* Single GoogleLogin instance - always rendered but conditionally visible */}
+            <div style={{ display: (screen === 'landing' || screen === 'phone' || screen === 'email' || screen === 'register') ? 'block' : 'none' }}>
+              <div className="auth-social-btn-wrapper--full">
+                <GoogleLogin
+                  ref={googleLoginRef}
+                  onSuccess={(credentialResponse) => {
+                    if (!googleInitializedRef.current) {
+                      googleInitializedRef.current = true;
+                      handleGoogleSuccess(credentialResponse);
+                    }
                   }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Tab switcher (only for login mode) */}
-            {mode === 'login' && (
-              <div style={{
-                display: 'flex',
-                gap: 0,
-                marginBottom: 28,
-                border: '1.5px solid #e2e8f0',
-                borderRadius: 10,
-                overflow: 'hidden',
-              }}>
-                {[
-                  ['email', '📧 Email'],
-                  ['phone', '📱 Phone']
-                ].map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => switchTab(key)}
-                    style={{
-                      flex: 1,
-                      padding: '10px 0',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      fontSize: 14,
-                      transition: 'all 0.2s',
-                      background: tab === key ? '#22c55e' : 'white',
-                      color: tab === key ? 'white' : '#64748b',
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Alerts */}
-            {success && (
-              <div className="alert-modern alert-success">
-                <div className="alert-icon-wrapper success">
-                  <span className="checkmark">✓</span>
-                </div>
-                <div className="alert-content">
-                  <strong>Success!</strong>
-                  <p>{success}</p>
-                </div>
-              </div>
-            )}
-            {error && (
-              <div className="alert-modern alert-error">
-                <div className="alert-icon-wrapper error">
-                  <span className="error-icon">✕</span>
-                </div>
-                <div className="alert-content">
-                  <strong>Error</strong>
-                  <p>{error}</p>
-                </div>
-              </div>
-            )}
-
-            {/* ════════════════ REGISTRATION FORM ════════════════ */}
-            {mode === 'register' && (
-              <form onSubmit={handleRegister} className="auth-form-modern">
-                {/* Full Name */}
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">👤</span> Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={registerData.name}
-                    onChange={e => {
-                      setRegisterData({ ...registerData, name: e.target.value });
-                      setRegisterErrors({ ...registerErrors, name: '' });
-                    }}
-                    placeholder="Enter your full name"
-                    className={`input-field-modern ${registerErrors.name ? 'input-error' : ''}`}
-                  />
-                  {registerErrors.name && (
-                    <span className="field-error">{registerErrors.name}</span>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">📧</span> Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={registerData.email}
-                    onChange={e => {
-                      setRegisterData({ ...registerData, email: e.target.value });
-                      setRegisterErrors({ ...registerErrors, email: '' });
-                    }}
-                    placeholder="your.email@example.com"
-                    className={`input-field-modern ${registerErrors.email ? 'input-error' : ''}`}
-                  />
-                  {registerErrors.email && (
-                    <span className="field-error">{registerErrors.email}</span>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">📱</span> Phone Number
-                  </label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{
-                      padding: '14px 12px',
-                      border: '2px solid #e2e8f0',
-                      borderRadius: 12,
-                      background: '#f8fafc',
-                      fontSize: 15,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      🇮🇳 +91
-                    </div>
-                    <input
-                      type="tel"
-                      maxLength="10"
-                      value={registerData.phone}
-                      onChange={e => {
-                        setRegisterData({ ...registerData, phone: e.target.value.replace(/\D/g, '') });
-                        setRegisterErrors({ ...registerErrors, phone: '' });
-                      }}
-                      placeholder="10-digit number"
-                      className={`input-field-modern ${registerErrors.phone ? 'input-error' : ''}`}
-                      style={{ flex: 1 }}
-                    />
-                  </div>
-                  {registerErrors.phone && (
-                    <span className="field-error">{registerErrors.phone}</span>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">🔒</span> Password
-                  </label>
-                  <div className="password-wrapper">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={registerData.password}
-                      onChange={e => {
-                        setRegisterData({ ...registerData, password: e.target.value });
-                        setRegisterErrors({ ...registerErrors, password: '' });
-                      }}
-                      placeholder="At least 6 characters"
-                      className={`input-field-modern ${registerErrors.password ? 'input-error' : ''}`}
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? '👁️' : '👁️‍🗨️'}
-                    </button>
-                  </div>
-                  {registerErrors.password && (
-                    <span className="field-error">{registerErrors.password}</span>
-                  )}
-                </div>
-
-                {/* Confirm Password */}
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">🔒</span> Confirm Password
-                  </label>
-                  <div className="password-wrapper">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      value={registerData.confirmPassword}
-                      onChange={e => {
-                        setRegisterData({ ...registerData, confirmPassword: e.target.value });
-                        setRegisterErrors({ ...registerErrors, confirmPassword: '' });
-                      }}
-                      placeholder="Re-enter your password"
-                      className={`input-field-modern ${registerErrors.confirmPassword ? 'input-error' : ''}`}
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                    </button>
-                  </div>
-                  {registerErrors.confirmPassword && (
-                    <span className="field-error">{registerErrors.confirmPassword}</span>
-                  )}
-                </div>
-
-                {/* Role Selection */}
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">🎭</span> I want to join as
-                  </label>
-                  <select
-                    value={registerData.role}
-                    onChange={e => setRegisterData({ ...registerData, role: e.target.value })}
-                    className="input-field-modern"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <option value="customer">🛒 Customer - Order delicious meals</option>
-                    <option value="delivery_partner">🛵 Delivery Partner - Join our team</option>
-                  </select>
-                </div>
-
-                {/* Submit Button */}
-                <button type="submit" className="submit-btn-modern" disabled={isRegistering}>
-                  {isRegistering ? (
-                    <>
-                      <span className="btn-spinner" />
-                      <span>Creating Account...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Create Account</span>
-                      <span className="btn-arrow">→</span>
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-
-            {/* ════════════════ EMAIL LOGIN ════════════════ */}
-            {mode === 'login' && tab === 'email' && (
-              <form onSubmit={handleEmailLogin} className="auth-form-modern">
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">📧</span> Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="your.email@example.com"
-                    className="input-field-modern"
-                  />
-                </div>
-                <div className="input-group-modern">
-                  <label className="input-label-modern">
-                    <span className="label-icon-modern">🔒</span> Password
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    required
-                    minLength="6"
-                    value={formData.password}
-                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Enter your password"
-                    className="input-field-modern"
-                  />
-                </div>
-                <button type="submit" className="submit-btn-modern" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <span className="btn-spinner" />
-                      <span>Logging in...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Sign In</span>
-                      <span className="btn-arrow">→</span>
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-
-            {/* ════════════════ PHONE LOGIN ════════════════ */}
-            {mode === 'login' && tab === 'phone' && (
-              <div>
-                {phoneStep === 'input' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div className="input-group-modern">
-                      <label className="input-label-modern">
-                        <span className="label-icon-modern">📱</span> Mobile Number
-                      </label>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <div style={{
-                          padding: '14px 12px',
-                          border: '2px solid #e2e8f0',
-                          borderRadius: 12,
-                          background: '#f8fafc',
-                          fontSize: 15,
-                          whiteSpace: 'nowrap',
-                        }}>
-                          🇮🇳 +91
-                        </div>
-                        <input
-                          type="tel"
-                          maxLength="10"
-                          value={phoneNumber}
-                          onChange={e => {
-                            setPhoneNumber(e.target.value.replace(/\D/g, ''));
-                            setPhoneError('');
-                          }}
-                          onKeyDown={e => e.key === 'Enter' && handleSendOTP()}
-                          placeholder="10-digit number"
-                          className="input-field-modern"
-                          style={{ flex: 1 }}
-                        />
-                      </div>
-                      {phoneError && (
-                        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#ef4444' }}>
-                          {phoneError}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="submit-btn-modern"
-                      onClick={handleSendOTP}
-                      disabled={isSendingOTP}
-                    >
-                      {isSendingOTP ? (
-                        <>
-                          <span className="btn-spinner" />
-                          <span>Sending OTP…</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Send OTP</span>
-                          <span className="btn-arrow">→</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-                {phoneStep === 'otp' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '10px 14px',
-                      background: '#f0fdf4',
-                      borderRadius: 10,
-                      border: '1px solid #86efac',
-                      fontSize: 14,
-                    }}>
-                      <span>
-                        OTP sent to <strong>+91 {phoneNumber.slice(0, 5)} {phoneNumber.slice(5)}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleChangePhone}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#22c55e',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontSize: 13
-                        }}
-                      >
-                        Change
-                      </button>
-                    </div>
-
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        marginBottom: 10,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#64748b',
-                        textTransform: 'uppercase',
-                        letterSpacing: '.7px',
-                      }}>
-                        Enter 6-digit OTP
-                      </label>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        {otp.map((digit, i) => (
-                          <input
-                            key={i}
-                            ref={el => (otpInputsRef.current[i] = el)}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength="1"
-                            value={digit}
-                            onChange={e => handleOtpChange(i, e.target.value)}
-                            onKeyDown={e => handleOtpKeyDown(i, e)}
-                            disabled={otpExpiredRef.current}
-                            style={{
-                              width: 46,
-                              height: 52,
-                              textAlign: 'center',
-                              fontSize: 22,
-                              fontWeight: 700,
-                              border: `2px solid ${otpError ? '#ef4444' : digit ? '#22c55e' : '#e2e8f0'}`,
-                              borderRadius: 10,
-                              outline: 'none',
-                              background: digit ? '#f0fdf4' : '#f8fafc',
-                              transition: 'all 0.15s',
-                            }}
-                          />
-                        ))}
-                      </div>
-                      {otpError && (
-                        <p style={{ margin: '8px 0 0', fontSize: 13, color: '#ef4444', textAlign: 'center' }}>
-                          {otpError}
-                        </p>
-                      )}
-                    </div>
-
-                    <div style={{
-                      fontSize: 13,
-                      color: otpExpiryTimer === 0 ? '#ef4444' : '#64748b',
-                      textAlign: 'center'
-                    }}>
-                      {otpExpiryTimer > 0
-                        ? `⏱️ OTP valid for ${otpExpiryTimer}s`
-                        : '⏰ OTP expired — please resend'}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="submit-btn-modern"
-                      onClick={() => handleVerifyOTP()}
-                      disabled={isVerifyingOTP || otpExpiredRef.current}
-                    >
-                      {isVerifyingOTP ? (
-                        <>
-                          <span className="btn-spinner" />
-                          <span>Verifying…</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Verify & Sign In</span>
-                          <span className="btn-arrow">→</span>
-                        </>
-                      )}
-                    </button>
-
-                    <p style={{ textAlign: 'center', fontSize: 13, color: '#64748b', margin: 0 }}>
-                      Didn't receive it?{' '}
-                      <button
-                        type="button"
-                        onClick={handleResendOTP}
-                        disabled={resendTimer > 0}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: resendTimer > 0 ? 'default' : 'pointer',
-                          color: resendTimer > 0 ? '#9ca3af' : '#22c55e',
-                          fontWeight: 600,
-                          fontSize: 13,
-                          padding: 0,
-                        }}
-                      >
-                        Resend OTP{resendTimer > 0 && ` (${resendTimer}s)`}
-                      </button>
-                    </p>
-                  </div>
-                )}
-
-                {phoneStep === 'verified' && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '16px',
-                    background: '#f0fdf4',
-                    borderRadius: 12,
-                    border: '1.5px solid #86efac',
-                  }}>
-                    <span style={{ fontSize: 28 }}>✅</span>
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#16a34a' }}>Phone Verified!</div>
-                      <div style={{ fontSize: 13, color: '#64748b' }}>
-                        +91 {phoneNumber.slice(0, 5)} {phoneNumber.slice(5)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Footer */}
-            <div className="form-footer-modern">
-              <div className="footer-links-modern">
-                <a href="/privacy-policy" className="footer-link">Privacy Policy</a>
-                <span className="link-divider">•</span>
-                <a href="/terms" className="footer-link">Terms of Service</a>
+                  onError={() => setGlobalError('Google sign-in failed')}
+                  useOneTap={false}
+                  shape="rectangular"
+                  size="large"
+                  width="400"
+                  text="continue_with"
+                />
               </div>
             </div>
+            <ActiveScreen />
+            <footer className="auth-footer">
+              <a href="/privacy-policy" className="auth-footer__link">Privacy</a>
+              <span className="auth-footer__dot">·</span>
+              <a href="/terms" className="auth-footer__link">Terms</a>
+              <span className="auth-footer__dot">·</span>
+              <a href="/help" className="auth-footer__link">Help</a>
+            </footer>
           </div>
-        </div>
-      </div>
-
-      {/* Trust badges */}
-      <div className="trust-badges">
-        {[
-          ['🔒', 'Secure & Encrypted'],
-          ['⚡', 'Fast & Reliable'],
-          ['💚', '100% Organic']
-        ].map(([icon, text]) => (
-          <div key={text} className="trust-badge">
-            <span className="trust-icon">{icon}</span>
-            <span className="trust-text">{text}</span>
-          </div>
-        ))}
+        </main>
       </div>
     </div>
   );
-};
-
-export default Auth;
+}

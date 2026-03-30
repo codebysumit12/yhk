@@ -6,13 +6,25 @@ import User from '../models/User.js';
 export const protect = async (req, res, next) => {
   let token;
 
+  console.log('Auth debug - Full auth header:', req.headers.authorization);
+  
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       // Get token from header
       token = req.headers.authorization.split(' ')[1];
       
-      console.log('🔑 Auth token received:', token.substring(0, 20) + '...');
-
+      console.log('Auth debug - Token length:', token ? token.length : 'null');
+      console.log('Auth debug - Token starts with:', token ? token.substring(0, 20) : 'null');
+      console.log('Auth debug - Token ends with:', token ? token.substring(token.length - 20) : 'null');
+      
+      if (!token || token === 'null' || token === 'undefined') {
+        console.log('Auth debug - Invalid token value');
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid token format'
+        });
+      }
+      
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'yhk_secret_key_2024');
 
@@ -26,18 +38,23 @@ export const protect = async (req, res, next) => {
         });
       }
 
+      console.log('Auth debug - User authenticated:', req.user.email);
       next();
     } catch (error) {
       console.error('Auth error:', error.message);
+      console.error('Auth error type:', error.name);
       res.status(401).json({
         success: false,
         error: 'Not authorized, token failed'
       });
     }
+  } else {
+    console.log('No Bearer token in authorization header');
   }
 
   if (!token) {
-    res.status(401).json({
+    console.log('No token provided in authorization header');
+    return res.status(401).json({
       success: false,
       error: 'Not authorized, no token'
     });

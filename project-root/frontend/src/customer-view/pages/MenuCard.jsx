@@ -144,9 +144,12 @@ const MenuCard = () => {
             <div className="menucard-container">
               {visibleCategories.map((category, catIndex) => {
                 const categoryItems = getItemsByCategory(category._id);
+                const categoryKey = category._id
+                  ? `category-${category._id}`
+                  : `category-${catIndex}-${(category.slug || category.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
 
                 return (
-                  <div key={category._id} className="menucard-category">
+                  <div key={categoryKey} className="menucard-category">
 
                     {catIndex > 0 && <Divider />}
 
@@ -167,37 +170,37 @@ const MenuCard = () => {
 
                     {/* Items */}
                     <div className="menucard-items">
-                      {categoryItems.map(item => (
-                        <div
-                          key={item._id}
-                          className="menucard-item"
-                          onClick={() => navigate(`/menu?id=${item._id}`)}
-                        >
-                          {/* Left: type dot + name + description */}
-                          <div className="item-left">
-                            <span className="item-type">{getTypeIcon(item.type)}</span>
-                            <div className="item-details">
-                              <h3>{item.name}</h3>
-                              {item.description && (
-                                <p className="item-description">{item.description}</p>
-                              )}
-                              {item.spiceLevel && item.spiceLevel !== 'none' && (
-                                <span className="spice-indicator">
-                                  {item.spiceLevel === 'mild'   && '🌶️'}
-                                  {item.spiceLevel === 'medium' && '🌶️🌶️'}
-                                  {item.spiceLevel === 'hot'    && '🌶️🌶️🌶️'}
-                                </span>
-                              )}
+                      {categoryItems.map((item, index) => {
+                        const itemKey = item._id
+                          ? `menucard-item-${item._id}`
+                          : `menucard-item-${index}-${(item.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
+
+                        return (
+                          <div
+                            key={itemKey}
+                            className="menucard-item"
+                            onClick={() => navigate('/menu?id=' + item._id)}
+                          >
+                            {/* Left: type dot + name + description */}
+                            <div className="item-left">
+                              <span className="item-type">{getTypeIcon(item.type)}</span>
+                              <div className="item-details">
+                                <h3>{item.name}</h3>
+                                {item.description && (
+                                  <p className="item-description">{item.description}</p>
+                                )}
+                                {item.spiceLevel && item.spiceLevel !== 'none' && (
+                                  <span className="spice-indicator">
+                                    {item.spiceLevel === 'mild'   && '🌶️'}
+                                    {item.spiceLevel === 'medium' && '🌶️🌶️'}
+                                    {item.spiceLevel === 'hot'    && '🌶️🌶️🌶️'}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-
-                          {/* Dotted leader */}
-                          <div className="item-leader" />
-
-                          {/* Right: price */}
-                          <div className="item-right">
-                            <div className="item-price">
-                              {item.discountPrice ? (
+                            {/* Right: price + badge */}
+                            <div className="item-right">
+                              {item.discountPrice && item.discountPrice < item.price ? (
                                 <>
                                   <span className="price-original">₹{item.discountPrice}</span>
                                   <span className="price-strike">₹{item.price}</span>
@@ -207,8 +210,8 @@ const MenuCard = () => {
                               )}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 );

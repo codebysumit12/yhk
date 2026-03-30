@@ -327,7 +327,7 @@ const Menu = () => {
                     <h3><i className="fas fa-heart"></i> Health Benefits</h3>
                     <ul className="benefits-list">
                       {selectedItem.healthBenefits.map((benefit, index) => (
-                        <li key={index}>💚 {benefit}</li>
+                        <li key={`benefit-${index}-${benefit}`}>💚 {benefit}</li>
                       ))}
                     </ul>
                   </div>
@@ -339,7 +339,7 @@ const Menu = () => {
                   {selectedItem.ingredients && selectedItem.ingredients.length > 0 ? (
                     <ul className="ingredients-list">
                       {selectedItem.ingredients.map((ingredient, index) => (
-                        <li key={index}>{ingredient}</li>
+                        <li key={`ingredient-${index}-${ingredient}`}>{ingredient}</li>
                       ))}
                     </ul>
                   ) : (
@@ -355,7 +355,7 @@ const Menu = () => {
                     <h3><i className="fas fa-list-ol"></i> Preparation Steps</h3>
                     <ol className="prep-steps-list">
                       {selectedItem.preparationSteps.map((step, index) => (
-                        <li key={index} className="prep-step-item">
+                        <li key={`prep-step-${index}-${step}`} className="prep-step-item">
                           <span className="step-number">{index + 1}</span>
                           <span className="step-text">{step}</span>
                         </li>
@@ -372,7 +372,7 @@ const Menu = () => {
                       <div className="nutritional-grid">
                         {Object.entries(selectedItem.nutritionInfo).map(([key, value]) =>
                           value ? (
-                            <div key={key} className="nutrient-item">
+                            <div key={`nutrient-${key}-${value}`} className="nutrient-item">
                               <span className="nutrient-name">
                                 {key.charAt(0).toUpperCase() +
                                   key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
@@ -484,7 +484,7 @@ const Menu = () => {
                     <h3><i className="fas fa-exclamation-triangle"></i> Allergens</h3>
                     <div className="allergen-tags">
                       {selectedItem.allergens.map((allergen, index) => (
-                        <span key={index} className="allergen-tag">⚠️ {allergen}</span>
+                        <span key={`allergen-${index}-${allergen}`} className="allergen-tag">⚠️ {allergen}</span>
                       ))}
                     </div>
                   </div>
@@ -496,7 +496,7 @@ const Menu = () => {
                     <h3><i className="fas fa-tags"></i> Tags</h3>
                     <div className="tags-container">
                       {selectedItem.tags.map((tag, index) => (
-                        <span key={index} className="tag-badge">#{tag}</span>
+                        <span key={`tag-${index}-${tag}`} className="tag-badge">#{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -511,14 +511,17 @@ const Menu = () => {
                     <i className="fas fa-utensils"></i> More Items
                   </h3>
                   <div className="related-items-list">
-                    {relatedItems.map(item => {
+                    {relatedItems.map((item, index) => {
                       const relatedImage =
                         item.images?.[0]?.url ||
                         item.image ||
                         'https://via.placeholder.com/200x150.png?text=No+Image';
+                      const relatedKey = item._id
+                        ? `related-${item._id}`
+                        : `related-${index}-${(item.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
                       return (
                         <div
-                          key={item._id}
+                          key={relatedKey}
                           className="related-item-card"
                           onClick={() => handleItemClick(item)}
                         >
@@ -671,15 +674,18 @@ const Menu = () => {
             </div>
           ) : (
             <div className="menu-items-grid">
-              {getFilteredItems().map(item => {
+              {getFilteredItems().map((item, index) => {
                 const itemImage =
                   item.images?.[0]?.url ||
                   item.image ||
                   `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}`;
+                const menuItemKey = item._id
+                  ? `menu-item-${item._id}`
+                  : `menu-item-${index}-${(item.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
 
                 return (
                   <div
-                    key={item._id}
+                    key={menuItemKey}
                     className="menu-item-card clickable"
                     onClick={() => handleItemClick(item)}
                   >

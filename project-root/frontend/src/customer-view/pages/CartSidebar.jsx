@@ -178,7 +178,7 @@ const CartSidebar = ({ isOpen, onClose, cart: externalCart, isUpdatingCart, setI
 
               <div className="cart-items">
                 {cart.map((item, index) => (
-                  <div key={index} className="cart-item">
+                  <div key={`cart-item-${index}-${item._id || item.name}`} className="cart-item">
                     <div className="cart-item-image">
                       {item.image
                         ? <img src={item.image} alt={item.name} />

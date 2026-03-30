@@ -167,8 +167,8 @@ const MyOrders = () => {
           </div>
         ) : (
           <div className="orders-grid">
-            {filteredOrders.map(order => (
-              <div key={order._id} className={`order-card ${order.status === 'cancelled' ? 'order-card-cancelled' : ''}`}>
+            {filteredOrders.map((order, index) => (
+              <div key={`order-${order._id || order.orderNumber || index}`} className={`order-card ${order.status === 'cancelled' ? 'order-card-cancelled' : ''}`}>
 
                 {/* Header */}
                 <div className="order-card-header">
@@ -196,7 +196,7 @@ const MyOrders = () => {
                 {/* Items preview */}
                 <div className="order-items-preview">
                   {order.orderItems.slice(0, 3).map((item, index) => (
-                    <div key={index} className="order-item-preview">
+                    <div key={`order-preview-${index}-${item._id || item.name}`} className="order-item-preview">
                       <div className="item-preview-image">
                         {item.image ? <img src={item.image} alt={item.name} /> : <div className="no-image">🍽️</div>}
                       </div>
@@ -351,7 +351,7 @@ const MyOrders = () => {
                   <h4>📦 Order Items</h4>
                   <div className="modal-order-items">
                     {selectedOrder.orderItems.map((item, index) => (
-                      <div key={index} className="modal-order-item">
+                      <div key={`modal-item-${index}-${item._id || item.name}`} className="modal-order-item">
                         <div className="modal-item-image">
                           {item.image ? <img src={item.image} alt={item.name} /> : <div className="no-image">🍽️</div>}
                         </div>

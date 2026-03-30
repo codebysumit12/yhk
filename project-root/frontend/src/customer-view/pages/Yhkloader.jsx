@@ -82,7 +82,7 @@ const YHKLoader = ({ message, fullPage = false }) => {
 
           {ORBIT_ITEMS.map((item, i) => (
             <div
-              key={i}
+              key={`orbit-${i}`}
               className="yhk-orbit-item"
               ref={el => orbitRefs.current[i] = el}
             >
@@ -99,8 +99,8 @@ const YHKLoader = ({ message, fullPage = false }) => {
         </div>
 
         {/* Message */}
-        <div className="yhk-msg" key={step + '-msg'}>{message || s.msg}</div>
-        <div className="yhk-submsg" key={step + '-sub'}>{s.sub}</div>
+        <div className="yhk-msg" key={`step-${step}-msg`}>{message || s.msg}</div>
+        <div className="yhk-submsg" key={`step-${step}-sub`}>{s.sub}</div>
 
         {/* Progress */}
         <div className="yhk-track">
@@ -110,12 +110,12 @@ const YHKLoader = ({ message, fullPage = false }) => {
         {/* Step dots */}
         <div className="yhk-dots">
           {STEPS.map((_, i) => (
-            <div key={i} className={`yhk-dot ${i === step ? 'yhk-dot--active' : ''}`} />
+            <div key={`step-${i}`} className={`yhk-dot ${i === step ? 'yhk-dot--active' : ''}`} />
           ))}
         </div>
 
         {/* Tip card */}
-        <div className="yhk-tip" key={step + '-tip'}>
+        <div className="yhk-tip" key={`step-${step}-tip`}>
           <div className="yhk-tip__label">{t.label}</div>
           <div className="yhk-tip__text">{t.text}</div>
         </div>

@@ -1,134 +1,76 @@
 import Category from '../models/Category.js';
 import MenuItem from '../models/MenuItem.js';
 import cloudinary from '../config/cloudinary.js';
-import fs from 'fs';
-
-// Upload category image to Cloudinary
-const uploadToCloudinary = async (file) => {
-  const options = {
-    folder: 'yhk-categories',
-    transformation: [
-      { width: 500, height: 500, crop: 'fill' }
-    ]
-  };
-
-  const result = await cloudinary.uploader.upload(file.path, options);
-
-  // Delete temp file
-  fs.unlinkSync(file.path);
-
-  return {
-    url: result.secure_url,
-    publicId: result.public_id
-  };
-};
-
-const calculateCategoryStats = async (categoryId) => {
-  try {
-    // Find all available items in this category
-    const items = await MenuItem.find({ 
-      categoryId: categoryId, 
-      isAvailable: true 
-    });
-    
-    const itemCount = items.length;
-    
-    // Calculate average rating
-    const ratingsSum = items.reduce((sum, item) => {
-      const rating = item.rating || 4.5; // Default to 4.5 if no rating
-      return sum + rating;
-    }, 0);
-    const avgRating = itemCount > 0 
-      ? (ratingsSum / itemCount).toFixed(1) 
-      : '4.5';
-    
-    // Calculate average discount percentage
-    const discountsSum = items.reduce((sum, item) => {
-      if (item.price && item.discountPrice && item.discountPrice < item.price) {
-        const discountPercent = Math.round(
-          ((item.price - item.discountPrice) / item.price) * 100
-        );
-        return sum + discountPercent;
-      }
-      return sum;
-    }, 0);
-    
-    const itemsWithDiscount = items.filter(item => 
-      item.price && item.discountPrice && item.discountPrice < item.price
-    ).length;
-    
-    const avgDiscount = itemsWithDiscount > 0 
-      ? Math.round(discountsSum / itemsWithDiscount) 
-      : 0;
-    
-    return {
-      itemCount,
-      avgRating: parseFloat(avgRating),
-      avgDiscount
-    };
-  } catch (error) {
-    console.error('Error calculating category stats:', error);
-    return {
-      itemCount: 0,
-      avgRating: 4.5,
-      avgDiscount: 0
-    };
-  }
-};
-
 
 // @desc    Get all categories
 // @route   GET /api/categories
 // @access  Public
-export const getCategories = async (req, res) => {
+const getCategories = async (req, res) => {
   try {
-    const { isActive } = req.query;
+    console.log('🔍 getCategories called with query:', req.query);
+    console.log('🔍 Request method:', req.method);
+    console.log('🔍 Request URL:', req.url);
     
-    const filter = {};
-    if (isActive !== undefined) {
-      filter.isActive = isActive === 'true';
-    }
-
-    const categories = await Category.find(filter)
-      .sort({ displayOrder: 1, createdAt: -1 })
-      .populate('createdBy', 'name email');
-
-    res.json({
+    // Simple test - return all categories without item count
+    const categories = await Category.find({}).sort({ displayOrder: 1, name: 1 });
+    console.log('🔍 Found categories:', categories.length);
+    
+    // Log each category for debugging
+    categories.forEach(cat => {
+      console.log('🔍 Category:', cat.name, 'isActive:', cat.isActive, '_id:', cat._id);
+    });
+    
+    const response = {
       success: true,
       count: categories.length,
       data: categories
-    });
+    };
+    
+    console.log('🔍 Sending response:', response);
+    res.json(response);
   } catch (error) {
+    console.error('❌ Error fetching categories:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      error: 'Server error'
     });
   }
 };
 
-// @desc    Get single category
+// @desc    Get single category with items
 // @route   GET /api/categories/:id
 // @access  Public
-export const getCategoryById = async (req, res) => {
+const getCategoryById = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id)
-      .populate('createdBy', 'name email');
-
+    const category = await Category.findById(req.params.id);
+    
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        error: 'Category not found'
       });
     }
-
+    
+    const items = await MenuItem.find({
+      $or: [
+        { categoryId: category._id },
+        { category: category._id.toString() },
+        { category: category.slug }
+      ]
+    }).sort({ displayOrder: 1, createdAt: -1 });
+    
     res.json({
       success: true,
-      data: category
+      data: {
+        ...category.toObject(),
+        items
+      }
     });
   } catch (error) {
+    console.error('Error fetching category:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      error: 'Server error'
     });
   }
 };
@@ -136,271 +78,310 @@ export const getCategoryById = async (req, res) => {
 // @desc    Get category by slug
 // @route   GET /api/categories/slug/:slug
 // @access  Public
-export const getCategoryBySlug = async (req, res) => {
+const getCategoryBySlug = async (req, res) => {
   try {
-    const category = await Category.findOne({ slug: req.params.slug })
-      .populate('createdBy', 'name email');
-
+    const category = await Category.findOne({ slug: req.params.slug, isActive: true });
     if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: 'Category not found'
-      });
+      return res.status(404).json({ success: false, error: 'Category not found' });
     }
+
+    const items = await MenuItem.find({
+      $or: [
+        { categoryId: category._id },
+        { category: category._id.toString() },
+        { category: category.slug }
+      ],
+      isAvailable: true
+    }).sort({ displayOrder: 1, createdAt: -1 });
 
     res.json({
       success: true,
-      data: category
+      data: {
+        ...category.toObject(),
+        items
+      }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    console.error('Error fetching category by slug:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Toggle category active status
+// @route   PATCH /api/categories/:id/toggle-status
+// @access  Admin
+const toggleCategoryStatus = async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ success: false, error: 'Category not found' });
+    }
+
+    category.isActive = !category.isActive;
+    await category.save();
+
+    res.json({ success: true, data: category });
+  } catch (error) {
+    console.error('Error toggling category status:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 };
 
 // @desc    Create new category
 // @route   POST /api/categories
-// @access  Private/Admin
-export const createCategory = async (req, res) => {
+// @access  Private (Admin)
+const createCategory = async (req, res) => {
   try {
-    const { name, description, icon, color, displayOrder } = req.body;
-
+    // Handle FormData or JSON
+    let categoryData;
+    
+    if (req.file || req.headers['content-type']?.includes('multipart/form-data')) {
+      // FormData request with image upload
+      let imageUrl = '';
+      if (req.file) {
+        // Image was uploaded, create URL
+        imageUrl = `/uploads/${req.file.filename}`;
+        console.log('📸 Image uploaded:', req.file.filename);
+      }
+      
+      categoryData = {
+        name: req.body.name,
+        description: req.body.description || '',
+        icon: req.body.icon || '📁',
+        color: req.body.color || '#22c55e',
+        displayOrder: req.body.displayOrder || 0,
+        imageUrl: imageUrl || req.body.imageUrl || ''
+      };
+    } else {
+      // JSON request
+      categoryData = req.body;
+    }
+    
+    const { name, description, icon, color, displayOrder, imageUrl } = categoryData;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Category name is required'
+      });
+    }
+    
     // Check if category already exists
     const existingCategory = await Category.findOne({ 
-      name: { $regex: new RegExp(`^${name}$`, 'i') } 
+      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
     });
-
     if (existingCategory) {
       return res.status(400).json({
         success: false,
-        message: 'Category with this name already exists'
+        error: 'Category with this name already exists'
       });
     }
-
-    let imageUrl = null;
-    let cloudinaryId = null;
-
-    // Upload image if provided
-    if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file);
-      imageUrl = uploadResult.url;
-      cloudinaryId = uploadResult.publicId;
-    }
-
-    // Generate slug
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'category-' + Date.now();
-
-    // Create category
+    
     const category = await Category.create({
-      name,
-      slug,
-      description,
+      name: name.trim(),
+      description: description || '',
       icon: icon || '📁',
       color: color || '#22c55e',
-      imageUrl,
-      cloudinaryId,
       displayOrder: displayOrder || 0,
-      createdBy: req.user.id
+      imageUrl: imageUrl || ''
     });
-
+    
     res.status(201).json({
       success: true,
-      message: 'Category created successfully',
       data: category
     });
   } catch (error) {
-    // Clean up file if upload fails
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-
+    console.error('Error creating category:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      error: 'Server error'
     });
   }
 };
 
 // @desc    Update category
 // @route   PUT /api/categories/:id
-// @access  Private/Admin
-export const updateCategory = async (req, res) => {
+// @access  Private (Admin)
+const updateCategory = async (req, res) => {
   try {
+    // Handle FormData or JSON
+    let categoryData;
+    
+    if (req.file || req.headers['content-type']?.includes('multipart/form-data')) {
+      // FormData request with image upload
+      let imageUrl = '';
+      if (req.file) {
+        // Image was uploaded, create URL
+        imageUrl = `/uploads/${req.file.filename}`;
+        console.log('📸 Image uploaded for update:', req.file.filename);
+      }
+      
+      categoryData = {
+        name: req.body.name,
+        description: req.body.description || '',
+        icon: req.body.icon || '📁',
+        color: req.body.color || '#22c55e',
+        displayOrder: req.body.displayOrder || 0,
+        imageUrl: imageUrl || req.body.imageUrl || '',
+        isActive: req.body.isActive !== undefined ? req.body.isActive === 'true' : undefined
+      };
+    } else {
+      // JSON request
+      categoryData = req.body;
+    }
+    
+    const { name, description, icon, color, displayOrder, imageUrl, isActive } = categoryData;
+    
     const category = await Category.findById(req.params.id);
-
+    
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        error: 'Category not found'
       });
     }
-
-    const { name, description, icon, color, displayOrder, isActive } = req.body;
-
-    // Check if new name conflicts with another category
-    if (name && name !== category.name) {
+    
+    // Check if name is being changed and if it already exists
+    if (name && name.trim() !== category.name) {
       const existingCategory = await Category.findOne({ 
-        name: { $regex: new RegExp(`^${name}$`, 'i') },
-        _id: { $ne: category._id }
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+        _id: { $ne: req.params.id }
       });
-
       if (existingCategory) {
         return res.status(400).json({
           success: false,
-          message: 'Category with this name already exists'
+          error: 'Category with this name already exists'
         });
       }
     }
-
-    // Handle image update
-    if (req.file) {
-      // Delete old image from Cloudinary if exists
-      if (category.cloudinaryId) {
-        await cloudinary.uploader.destroy(category.cloudinaryId);
-      }
-
-      // Upload new image
-      const uploadResult = await uploadToCloudinary(req.file);
-      category.imageUrl = uploadResult.url;
-      category.cloudinaryId = uploadResult.publicId;
+    
+    const updateData = {
+      name: name ? name.trim() : category.name,
+      description: description !== undefined ? description : category.description,
+      icon: icon !== undefined ? icon : category.icon,
+      color: color !== undefined ? color : category.color,
+      displayOrder: displayOrder !== undefined ? displayOrder : category.displayOrder,
+      imageUrl: imageUrl !== undefined ? imageUrl : category.imageUrl
+    };
+    
+    if (isActive !== undefined) {
+      updateData.isActive = isActive;
     }
-
-    // Update fields
-    if (name) category.name = name;
-    if (description !== undefined) category.description = description;
-    if (icon) category.icon = icon;
-    if (color) category.color = color;
-    if (displayOrder !== undefined) category.displayOrder = displayOrder;
-    if (isActive !== undefined) category.isActive = isActive;
-
-    await category.save();
-
+    
+    const updatedCategory = await Category.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
     res.json({
       success: true,
-      message: 'Category updated successfully',
-      data: category
+      data: updatedCategory
     });
   } catch (error) {
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-
+    console.error('Error updating category:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      error: 'Server error'
     });
   }
 };
 
 // @desc    Delete category
 // @route   DELETE /api/categories/:id
-// @access  Private/Admin
-export const deleteCategory = async (req, res) => {
+// @access  Private (Admin)
+const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
-
+    
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        error: 'Category not found'
       });
     }
-
+    
     // Check if category has items
-    if (category.itemCount > 0) {
+    const itemCount = await MenuItem.countDocuments({
+      $or: [
+        { categoryId: category._id },
+        { category: category._id.toString() },
+        { category: category.slug }
+      ]
+    });
+    if (itemCount > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot delete category with existing items. Please move or delete items first.'
+        error: 'Cannot delete category with items. Remove items first.'
       });
     }
-
+    
     // Delete image from Cloudinary if exists
-    if (category.cloudinaryId) {
-      await cloudinary.uploader.destroy(category.cloudinaryId);
+    if (category.imageUrl) {
+      const publicId = category.imageUrl.split('/').pop().split('.')[0];
+      try {
+        await cloudinary.uploader.destroy(`categories/${publicId}`);
+      } catch (cloudError) {
+        console.error('Error deleting image from Cloudinary:', cloudError);
+      }
     }
-
-    // Delete category
-    await category.deleteOne();
-
+    
+    await Category.findByIdAndDelete(req.params.id);
+    
     res.json({
       success: true,
-      message: 'Category deleted successfully'
+      data: {}
     });
   } catch (error) {
+    console.error('Error deleting category:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      error: 'Server error'
     });
   }
 };
 
-// @desc    Toggle category active status
-// @route   PATCH /api/categories/:id/toggle
-// @access  Private/Admin
-export const toggleCategoryStatus = async (req, res) => {
+// @desc    Upload category image
+// @route   POST /api/categories/upload
+// @access  Private (Admin)
+const uploadCategoryImage = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
-
-    if (!category) {
-      return res.status(404).json({
+    if (!req.file) {
+      return res.status(400).json({
         success: false,
-        message: 'Category not found'
+        error: 'Please upload an image'
       });
     }
-
-    category.isActive = !category.isActive;
-    await category.save();
-
+    
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'categories',
+      resource_type: 'image'
+    });
+    
     res.json({
       success: true,
-      message: `Category ${category.isActive ? 'activated' : 'deactivated'}`,
-      data: category
+      data: {
+        imageUrl: result.secure_url,
+        publicId: result.public_id
+      }
     });
   } catch (error) {
+    console.error('Error uploading image:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      error: 'Error uploading image'
     });
   }
 };
 
-// @desc    Update category item count
-// @route   PATCH /api/categories/:id/item-count
-// @access  Private
-export const updateItemCount = async (req, res) => {
-  try {
-    const { increment } = req.body; // true to add, false to subtract
-
-    const category = await Category.findById(req.params.id);
-
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: 'Category not found'
-      });
-    }
-
-    if (increment) {
-      category.itemCount += 1;
-    } else {
-      category.itemCount = Math.max(0, category.itemCount - 1);
-    }
-
-    await category.save();
-
-    res.json({
-      success: true,
-      data: category
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
+export {
+  getCategories,
+  getCategoryById,
+  getCategoryBySlug,
+  createCategory,
+  updateCategory,
+  toggleCategoryStatus,
+  deleteCategory,
+  uploadCategoryImage
 };

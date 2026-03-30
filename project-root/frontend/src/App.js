@@ -22,31 +22,21 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   const token = localStorage.getItem('token') || localStorage.getItem('userToken');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  console.log('🔍 ProtectedRoute DEBUG:');
-  console.log('🔑 Token exists:', !!token);
-  console.log('👤 User data:', user);
-  console.log('🔑 Required role:', requiredRole);
-  console.log('👤 User isAdmin:', user.isAdmin);
-  console.log('👤 User role:', user.role);
-
+  
   if (!token) {
-    console.log('❌ No token found, redirecting to /auth');
-    return <Navigate to="/auth" replace />;
+        return <Navigate to="/auth" replace />;
   }
 
   if (requiredRole) {
     if (requiredRole === 'admin' && !user.isAdmin && user.role !== 'admin') {
-      console.log('❌ User is not admin, redirecting to /');
-      return <Navigate to="/" replace />;
+            return <Navigate to="/" replace />;
     }
     if (requiredRole === 'delivery' && user.role !== 'delivery_partner') {
-      console.log('❌ User is not delivery partner, redirecting to /');
-      return <Navigate to="/" replace />;
+            return <Navigate to="/" replace />;
     }
   }
 
-  console.log('✅ Authentication passed, rendering children');
-  return children;
+    return children;
 };
 
 function App() {

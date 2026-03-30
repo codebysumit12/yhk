@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
-  API_URL: process.env.REACT_APP_API_URL || 'https://yhk-66ta.onrender.com/api',
-  USER_API_URL: process.env.REACT_APP_USER_API_URL || 'https://yhk-66ta.onrender.com/api'
+  API_URL: 'http://localhost:50017/api', // Force local backend for development
+  USER_API_URL: 'http://localhost:50017/api' // Force local backend for development
 };
 
 // Cache-busting helper - forces fresh data
@@ -12,7 +12,14 @@ export const fetchWithCacheBust = async (url, options = {}) => {
 
 // Shared auth headers helper - prevents token inconsistencies
 export const authHeaders = () => {
-  const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+  const token = localStorage.getItem('token');
+  
+  if (!token || token === 'null' || token === 'undefined') {
+    return {
+      'Content-Type': 'application/json'
+    };
+  }
+  
   return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'

@@ -42,8 +42,6 @@ import './models/RestaurantInfo.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
-
 // ✅ CREATE UPLOADS DIRECTORY IF IT DOESN'T EXIST
 const uploadsDir = path.join(__dirname, '..', 'uploads', 'temp');
 if (!fs.existsSync(uploadsDir)) {
@@ -69,17 +67,29 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Handle JSON parsing with multipart detection
+app.use((req, res, next) => {
+  if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
+    // Skip JSON parsing for multipart requests
+    next();
+  } else {
+    // Parse JSON for non-multipart requests
+    express.json({ limit: '50mb' })(req, res, next);
+  }
+});
+
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve uploaded files with error handling
 app.use('/uploads', (req, res, next) => {
-  const filePath = path.join(__dirname, '../../uploads', req.path);
+  const filePath = path.join(__dirname, 'uploads', req.path);
   
   // Check if file exists before serving
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) {
       console.log(`❌ Upload file not found: ${req.path}`);
+      console.log(`❌ Looking for file at: ${filePath}`);
       // Return a placeholder image or 404
       res.status(404).json({ 
         message: 'Upload file not found',
@@ -89,7 +99,7 @@ app.use('/uploads', (req, res, next) => {
     }
     
     // File exists, serve it
-    express.static(path.join(__dirname, '../../uploads'))(req, res, next);
+    express.static(path.join(__dirname, 'uploads'))(req, res, next);
   });
 });
 
@@ -109,15 +119,6 @@ app.use('/api/items', itemRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/settings', settingsRoutes);
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: err.message || 'Server Error'
-  });
-});
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -156,11 +157,20 @@ const seedAdminUser = async () => {
 
 const PORT = process.env.PORT || 50017;
 
-// Add deployment timestamp
-console.log(' Server started at:', new Date().toISOString());
-console.log(' Payment fixes deployed: v2.0');
-
+// Start server
 app.listen(PORT, async () => {
   console.log(` Server running on port ${PORT}`);
   await seedAdminUser();
 });
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Server Error'
+  });
+});
+
+// Export app for testing
+export default app;

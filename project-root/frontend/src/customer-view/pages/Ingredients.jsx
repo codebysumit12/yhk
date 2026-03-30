@@ -118,9 +118,9 @@ const Ingredients = () => {
 
       {/* Ingredients Grid — unchanged */}
       <div className="ingredients-grid">
-        {filteredIngredients.map(ingredient => (
+        {filteredIngredients.map((ingredient, index) => (
           <div 
-            key={ingredient._id} 
+            key={`ingredient-${ingredient._id || ingredient.name || index}`}
             className="ingredient-card"
             onClick={() => setSelectedIngredient(ingredient)}
           >
@@ -155,7 +155,7 @@ const Ingredients = () => {
                   <h4>🥘 Contains:</h4>
                   <div className="mini-tags">
                     {ingredient.ingredients.slice(0, 2).map((ing, index) => (
-                      <span key={index} className="mini-tag">{ing}</span>
+                      <span key={`ing-${index}-${ing}`} className="mini-tag">{ing}</span>
                     ))}
                     {ingredient.ingredients.length > 2 && (
                       <span className="mini-tag more">+{ingredient.ingredients.length - 2}</span>
@@ -203,7 +203,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-heart"></i> Health Benefits</h3>
                       <ul className="benefits-list">
                         {selectedIngredient.healthBenefits.map((benefit, index) => (
-                          <li key={index}>{benefit}</li>
+                          <li key={`benefit-${index}-${benefit}`}>{benefit}</li>
                         ))}
                       </ul>
                     </div>
@@ -245,7 +245,7 @@ const Ingredients = () => {
                       )}
                       <ul className="ingredients-list">
                         {selectedIngredient.ingredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`ingredient-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -260,7 +260,7 @@ const Ingredients = () => {
                       )}
                       <ul className="ingredients-list">
                         {selectedIngredient.chutneyIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`chutney-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -272,7 +272,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-fire"></i> {selectedIngredient.temperingTitle || 'For Tempering'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.temperingIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`tempering-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -284,7 +284,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-carrot"></i> {selectedIngredient.batterTitle || 'Batter Ingredients'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.batterIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`batter-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -296,7 +296,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-leaf"></i> {selectedIngredient.mintTwistTitle || 'Mint Twist'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.mintTwistIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`mint-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -308,7 +308,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-seedling"></i> {selectedIngredient.milletBaseTitle || 'Millet Base'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.milletBaseIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`millet-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -320,7 +320,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-bowl-food"></i> {selectedIngredient.baseTitle || 'Base'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.baseIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`base-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -332,7 +332,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-carrot"></i> {selectedIngredient.saladTitle || 'Salad'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.saladIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`salad-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -344,7 +344,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-carrot"></i> {selectedIngredient.saladBaseTitle || 'Salad Base'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.saladBaseIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`salad-base-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -356,7 +356,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-bread-slice"></i> {selectedIngredient.doughTitle || 'Dough'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.doughIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`dough-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -368,7 +368,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-carrot"></i> {selectedIngredient.stuffingTitle || 'Stuffing'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.stuffingIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`stuffing-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -380,7 +380,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-bread-slice"></i> {selectedIngredient.toastTitle || 'Toast'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.toastIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`toast-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -392,7 +392,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-wine-bottle"></i> {selectedIngredient.dressingTitle || 'Dressing'}</h3>
                       <ul className="ingredients-list">
                         {selectedIngredient.dressingIngredients.map((ingredient, index) => (
-                          <li key={index}>{ingredient}</li>
+                          <li key={`dressing-${index}-${ingredient}`}>{ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -404,7 +404,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-list-ol"></i> {selectedIngredient.part1StepsTitle}</h3>
                       <ol className="steps-list">
                         {selectedIngredient.preparationSteps.map((step, index) => (
-                          <li key={index}>{step}</li>
+                          <li key={`prep-step-${index}-${step}`}>{step}</li>
                         ))}
                       </ol>
                     </div>
@@ -416,7 +416,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-list-ol"></i> {selectedIngredient.part2StepsTitle}</h3>
                       <ol className="steps-list">
                         {selectedIngredient.chutneySteps.map((step, index) => (
-                          <li key={index}>{step}</li>
+                          <li key={`chutney-step-${index}-${step}`}>{step}</li>
                         ))}
                       </ol>
                     </div>
@@ -428,7 +428,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-lightbulb"></i> Variations</h3>
                       <ul className="optional-list">
                         {selectedIngredient.variations.map((item, index) => (
-                          <li key={index}>{item}</li>
+                          <li key={`variation-${index}-${item}`}>{item}</li>
                         ))}
                       </ul>
                     </div>
@@ -440,7 +440,7 @@ const Ingredients = () => {
                       <h3><i className="fas fa-plus-circle"></i> Optional Additions</h3>
                       <ul className="optional-list">
                         {(selectedIngredient.optionalAdditions || selectedIngredient.optionalAddons || []).map((item, index) => (
-                          <li key={index}>{item}</li>
+                          <li key={`optional-${index}-${item}`}>{item}</li>
                         ))}
                       </ul>
                     </div>
@@ -461,7 +461,7 @@ const Ingredients = () => {
                       <div className="nutritional-grid">
                         {Object.entries(selectedIngredient.nutritionPer100g).map(([key, value]) =>
                           value ? (
-                            <div key={key} className="nutrient-item">
+                            <div key={`nutrient-${key}-${value}`} className="nutrient-item">
                               <span className="nutrient-name">
                                 {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
                               </span>

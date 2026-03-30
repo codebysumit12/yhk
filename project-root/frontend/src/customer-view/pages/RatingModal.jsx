@@ -79,7 +79,7 @@ const RatingModal = ({ order, token, onClose, onSubmit }) => {
             >
               {[1, 2, 3, 4, 5].map(star => (
                 <button
-                  key={star}
+                  key={`star-${star}`}
                   className={`star-btn ${star <= activeStar ? 'filled' : ''}`}
                   onMouseEnter={() => !alreadyRated && setHoveredStar(star)}
                   onClick={() => !alreadyRated && setSelectedStar(star)}

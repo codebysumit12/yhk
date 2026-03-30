@@ -1,5 +1,20 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
+
+// Email transporter setup
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+// Store OTPs temporarily
+const otpStore = new Map();
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -281,6 +296,192 @@ export const logout = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+// Send Email OTP
+export const sendEmailOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP with 5-minute expiry
+    otpStore.set(email, {
+      otp,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
+    });
+
+    // Send email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'YHK - Your Verification Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #22c55e;">Yeswanth's Healthy Kitchen</h2>
+          <p>Your verification code is:</p>
+          <h1 style="background: #f0fdf4; padding: 20px; text-align: center; color: #22c55e; letter-spacing: 8px;">
+            ${otp}
+          </h1>
+          <p style="color: #64748b;">This code will expire in 5 minutes.</p>
+          <p style="color: #64748b; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({
+      success: true,
+      message: 'OTP sent to your email'
+    });
+  } catch (error) {
+    console.error('Send email OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP'
+    });
+  }
+};
+
+// Verify Email OTP
+export const verifyEmailOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    const storedData = otpStore.get(email);
+
+    if (!storedData) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP expired or invalid'
+      });
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+      otpStore.delete(email);
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired'
+      });
+    }
+
+    if (storedData.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP'
+      });
+    }
+
+    // OTP verified - remove from store
+    otpStore.delete(email);
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user with email
+      user = await User.create({
+        email,
+        name: email.split('@')[0], // temporary name
+        phone: '', // will be added later if needed
+        password: crypto.randomBytes(32).toString('hex'), // random password
+        role: 'customer'
+      });
+    }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isAdmin: user.role === 'admin'
+      }
+    });
+  } catch (error) {
+    console.error('Verify email OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Verification failed'
+    });
+  }
+};
+
+// Google Login
+export const googleLogin = async (req, res) => {
+  try {
+    const { email, name, googleId, photoURL } = req.body;
+
+    if (!email || !googleId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and Google ID are required'
+      });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        email,
+        name: name || email.split('@')[0],
+        phone: '',
+        password: crypto.randomBytes(32).toString('hex'),
+        role: 'customer',
+        googleId,
+        avatar: photoURL
+      });
+    } else if (!user.googleId) {
+      // Link Google account to existing user
+      user.googleId = googleId;
+      if (photoURL) user.avatar = photoURL;
+      await user.save();
+    }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isAdmin: user.role === 'admin',
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Google login failed'
     });
   }
 };

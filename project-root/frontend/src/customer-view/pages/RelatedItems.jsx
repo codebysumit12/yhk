@@ -172,8 +172,8 @@ const RelatedItems = () => {
 
         {/* Items Grid */}
         <div className="menu-items-grid">
-          {relatedItems.map(item => (
-            <div className="menu-item-card" key={item.id}>
+          {relatedItems.map((item, index) => (
+            <div className="menu-item-card" key={`related-${index}-${item.id || item.name}`}>
               <div className="menu-item-image">
                 <img src={item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/300x200?text=No+Image'} alt={item.name} />
                 <div className="discount-badge">{item.discountPrice || item.discount}% OFF</div>

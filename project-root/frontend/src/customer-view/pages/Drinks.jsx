@@ -297,11 +297,11 @@ const Drinks = () => {
                     <i className="fas fa-glass-cheers"></i> More Drinks
                   </h3>
                   <div className="related-items-list">
-                    {relatedItems.map(item => {
+                    {relatedItems.map((item, index) => {
                       const relatedImage = item.images?.[0]?.url || item.image || item.imageUrl || 'https://via.placeholder.com/200x150.png?text=No+Image';
                       return (
                         <div 
-                          key={item._id} 
+                          key={`drink-related-${item._id || item.name || index}`}
                           className="related-item-card"
                           onClick={() => handleItemClick(item)}
                         >
@@ -435,13 +435,12 @@ const Drinks = () => {
             </div>
           ) : (
             <div className="menu-items-grid">
-              {getFilteredItems().map(item => {
-                const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || 
-                                 `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}`;
+              {getFilteredItems().map((item, index) => {
+                const itemImage = item.images?.[0]?.url || item.image || item.imageUrl || `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(item.name)}`;
                 
                 return (
                   <div 
-                    key={item._id} 
+                    key={`drink-item-${item._id || item.name || index}`}
                     className="menu-item-card clickable"
                     onClick={() => handleItemClick(item)}
                   >
