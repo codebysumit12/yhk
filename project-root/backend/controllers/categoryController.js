@@ -11,22 +11,58 @@ const getCategories = async (req, res) => {
     console.log('🔍 Request method:', req.method);
     console.log('🔍 Request URL:', req.url);
     
-    // Simple test - return all categories without item count
-    const categories = await Category.find({}).sort({ displayOrder: 1, name: 1 });
+    // Build filter based on query parameters
+    const filter = {};
+    
+    if (req.query.isActive === 'true') {
+      filter.isActive = true;
+    } else if (req.query.isActive === 'false') {
+      filter.isActive = false;
+    }
+    // If isActive is not specified, return all categories
+    
+    console.log('🔍 Using filter:', filter);
+    
+    const categories = await Category.find(filter)
+      .sort({ displayOrder: 1, name: 1 });
+    
     console.log('🔍 Found categories:', categories.length);
     
+    // Transform categories to include full image URLs
+    const transformedCategories = categories.map(category => {
+      const categoryObj = category.toObject();
+      
+      // Ensure imageUrl has full URL
+      if (categoryObj.imageUrl) {
+        // If imageUrl already starts with http (Cloudinary), keep as is
+        if (categoryObj.imageUrl.startsWith('http')) {
+          // Keep Cloudinary URLs as they are
+        } 
+        // If imageUrl starts with /uploads/, it's a local file
+        else if (categoryObj.imageUrl.startsWith('/uploads/')) {
+          categoryObj.imageUrl = `${req.protocol}://${req.get('host')}${categoryObj.imageUrl}`;
+        }
+        // If imageUrl doesn't start with http or /uploads/, add /uploads/
+        else {
+          categoryObj.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${categoryObj.imageUrl}`;
+        }
+      }
+      
+      return categoryObj;
+    });
+    
     // Log each category for debugging
-    categories.forEach(cat => {
-      console.log('🔍 Category:', cat.name, 'isActive:', cat.isActive, '_id:', cat._id);
+    transformedCategories.forEach(cat => {
+      console.log('🔍 Category:', cat.name, 'isActive:', cat.isActive, 'imageUrl:', cat.imageUrl);
     });
     
     const response = {
       success: true,
-      count: categories.length,
-      data: categories
+      count: transformedCategories.length,
+      data: transformedCategories
     };
     
-    console.log('🔍 Sending response:', response);
+    console.log('🔍 Sending response with', response.data.length, 'categories');
     res.json(response);
   } catch (error) {
     console.error('❌ Error fetching categories:', error);

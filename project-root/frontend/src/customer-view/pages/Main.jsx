@@ -114,6 +114,8 @@ const Main = ({ restaurants }) => {
           setHeroBanner(bannerData.data[0]);
         }
         if (catData.success) {
+          console.log('🔍 Customer view - Categories received:', catData.data);
+          console.log('🔍 First category image URL:', catData.data[0]?.imageUrl);
           setCategories(catData.data);
         }
       } catch (error) {
@@ -365,7 +367,20 @@ const Main = ({ restaurants }) => {
                 >
                   <div className="restaurant-image">
                     {category.imageUrl ? (
-                      <img src={category.imageUrl} alt={category.name} />
+                      <>
+                        {console.log('🔍 Rendering image for category:', category.name, 'URL:', category.imageUrl)}
+                        <img 
+                          src={category.imageUrl} 
+                          alt={category.name}
+                          onError={(e) => {
+                            console.error('❌ Image failed to load:', category.imageUrl);
+                            e.target.style.display = 'none';
+                          }}
+                          onLoad={(e) => {
+                            console.log('✅ Image loaded successfully:', category.imageUrl);
+                          }}
+                        />
+                      </>
                     ) : (
                       <div 
                         className="category-icon-placeholder" 
