@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import Nav from './Nav';
 import YHKLoader from './Yhkloader';
 import { API_CONFIG } from '../../config/api';
 import './Menu.css';
@@ -134,9 +133,6 @@ const RelatedItems = () => {
 
   return (
     <>
-      {/* Navigation */}
-      <Nav onOpenCart={() => setShowCart(true)} />
-
       {/* Hero Section */}
       <section className="menu-hero">
         <div className="menu-hero-content">

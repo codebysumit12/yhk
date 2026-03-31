@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Nav from './Nav';
 import RatingModal from './RatingModal';
 import YHKLoader from './Yhkloader';
 import { API_CONFIG } from '../../config/api';
@@ -113,15 +112,13 @@ const MyOrders = () => {
     'preparing':        { label: 'Preparing',         color: '#3b82f6', icon: '👨‍🍳' },
     'ready':            { label: 'Ready',             color: '#8b5cf6', icon: '✓'  },
     'out-for-delivery': { label: 'Out for Delivery',  color: '#06b6d4', icon: '🛵' },
-    'delivered':        { label: 'Delivered',         color: '#10b981', icon: '✓'  },
+    'delivered':        { label: 'Delivered',         color: '#10b981', icon: '👍'  },
     'cancelled':        { label: 'Cancelled',         color: '#ef4444', icon: '✕'  },
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="my-orders-page">
-      <Nav onOpenCart={() => {}} />
-
       <div className="my-orders-container">
         {/* Header */}
         <div className="page-header">

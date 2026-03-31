@@ -5,7 +5,6 @@ import { calculateOrderPricing } from '../services/pricingService';
 import './Checkout.css';
 import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { auth } from '../../firebase';
-import Nav from './Nav';
 
 const Checkoutpage = () => {
   const navigate = useNavigate();

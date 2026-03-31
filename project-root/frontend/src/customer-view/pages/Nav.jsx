@@ -58,6 +58,14 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     };
   }, []);
 
+  // Pages where Nav should NOT render
+  const noNavPages = ['/auth', '/register', '/admin', '/delivery-app'];
+  
+  // Don't render Nav on these pages (AFTER all hooks)
+  if (noNavPages.some(page => location.pathname.startsWith(page))) {
+    return null;
+  }
+
   const handleSearch = (e) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);

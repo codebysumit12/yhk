@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Nav from './Nav';
 import YHKLoader from './Yhkloader';
 import { API_CONFIG } from '../../config/api';
 import './MenuCard.css';
+import './Menu.css';
 
 const API_URL = API_CONFIG.API_URL;
 
@@ -74,17 +74,14 @@ const MenuCard = () => {
       case 'veg':     return '🟢';
       case 'non-veg': return '🔴';
       case 'vegan':   return '🟢';
-      case 'egg':     return '🟡';
+      case 'egg':     return '🥚';
       default:        return '⚪';
     }
   };
 
   if (loading) {
     return (
-      <>
-        <Nav />
-        <YHKLoader message="Preparing the menu…" fullPage />
-      </>
+      <YHKLoader message="Preparing the menu…" fullPage />
     );
   }
 
@@ -93,149 +90,124 @@ const MenuCard = () => {
     .filter(c => getItemsByCategory(c._id).length > 0);
 
   return (
-    <>
-      <Nav />
-      <div className="menucard-page">
-        <div className="menucard-shell">
+    <div className="related-page"> 
+      {/* Hero Section like Drinks */}
+      <section className="related-hero" style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(46, 204, 113, 0.8)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+        <div className="related-hero-content">
+          <button className="back-btn" onClick={() => navigate('/customer')}>
+            <i className="fas fa-arrow-left"></i> Back to Home
+          </button>
+          <h1>🍽️ Menu</h1>
+          <p>Explore our delicious menu items</p>
+        </div>
+      </section>
 
-          {/* Corner ornaments */}
-          <div className="menucard-corners">
-            <span>❧</span>
-            <span>❧</span>
-            <span>❧</span>
-            <span>❧</span>
-          </div>
+      {/* Type Filter */}
+      <div className="menucard-filters">
+        {[
+          { value: 'all',     label: 'Full Menu' },
+          { value: 'veg',     label: '🟢 Vegetarian' },
+          { value: 'non-veg', label: '🔴 Non-Veg' },
+        ].map(f => (
+          <button
+            key={f.value}
+            className={`filter-pill ${selectedType === f.value ? 'active' : ''}`}
+            onClick={() => setSelectedType(f.value)}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
-          <div className="menucard-inner">
+      {/* Menu Categories */}
+      <div className="menucard-container">
+        {visibleCategories.map((category, catIndex) => {
+          const categoryItems = getItemsByCategory(category._id);
+          const categoryKey = category._id
+            ? `category-${category._id}`
+            : `category-${catIndex}-${(category.slug || category.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
 
-            {/* ── Header ── */}
-            <div className="menucard-header">
-              <span className="menucard-crest">🪔</span>
+          return (
+            <div key={categoryKey} className="menucard-category">
+              {catIndex > 0 && <Divider />}
 
-              <div className="menucard-title">
-                <h1>Yeswanth's</h1>
-                <div className="menucard-subtitle-line">
-                  <span>Healthy Kitchen</span>
+              {/* Category heading */}
+              <div className="category-header">
+                <div className="category-icon">{category.icon || '🍽️'}</div>
+                <div className="category-header-text">
+                  <div className="category-name-row">
+                    <h2>{category.name}</h2>
+                  </div>
+                  {category.description && (
+                    <p>{category.description}</p>
+                  )}
                 </div>
-                <p>Pure Vegetarian · South Indian Cuisine</p>
               </div>
 
-              <Divider />
+              <CategoryRule />
 
-              {/* Type Filter */}
-              <div className="menucard-filters">
-                {[
-                  { value: 'all',     label: 'Full Menu' },
-                  { value: 'veg',     label: '🟢 Vegetarian' },
-                  { value: 'non-veg', label: '🔴 Non-Veg' },
-                ].map(f => (
-                  <button
-                    key={f.value}
-                    className={`filter-pill ${selectedType === f.value ? 'active' : ''}`}
-                    onClick={() => setSelectedType(f.value)}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+              {/* Items */}
+              <div className="menucard-items">
+                {categoryItems.map((item, index) => {
+                  const itemKey = item._id
+                    ? `menucard-item-${item._id}`
+                    : `menucard-item-${index}-${(item.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
 
-            {/* ── Menu Categories ── */}
-            <div className="menucard-container">
-              {visibleCategories.map((category, catIndex) => {
-                const categoryItems = getItemsByCategory(category._id);
-                const categoryKey = category._id
-                  ? `category-${category._id}`
-                  : `category-${catIndex}-${(category.slug || category.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
-
-                return (
-                  <div key={categoryKey} className="menucard-category">
-
-                    {catIndex > 0 && <Divider />}
-
-                    {/* Category heading */}
-                    <div className="category-header">
-                      <div className="category-icon">{category.icon || '🍽️'}</div>
-                      <div className="category-header-text">
-                        <div className="category-name-row">
-                          <h2>{category.name}</h2>
+                  return (
+                    <div
+                      key={itemKey}
+                      className="menucard-item"
+                      onClick={() => navigate('/menu?id=' + item._id)}
+                    >
+                      {/* Left: type dot + name + description */}
+                      <div className="item-left">
+                        <span className="item-type">{getTypeIcon(item.type)}</span>
+                        <div className="item-details">
+                          <h3>{item.name}</h3>
+                          {item.description && (
+                            <p className="item-description">{item.description}</p>
+                          )}
+                          {item.spiceLevel && item.spiceLevel !== 'none' && (
+                            <span className="spice-indicator">
+                              {item.spiceLevel === 'mild'   && '🌶️'}
+                              {item.spiceLevel === 'medium' && '🌶️🌶️'}
+                              {item.spiceLevel === 'hot'    && '🌶️🌶️🌶️'}
+                            </span>
+                          )}
                         </div>
-                        {category.description && (
-                          <p>{category.description}</p>
+                      </div>
+                      {/* Right: price + badge */}
+                      <div className="item-right">
+                        {item.discountPrice && item.discountPrice < item.price ? (
+                          <>
+                            <span className="price-original">₹{item.discountPrice}</span>
+                            <span className="price-strike">₹{item.price}</span>
+                          </>
+                        ) : (
+                          <span className="price-original">₹{item.price}</span>
                         )}
                       </div>
                     </div>
-
-                    <CategoryRule />
-
-                    {/* Items */}
-                    <div className="menucard-items">
-                      {categoryItems.map((item, index) => {
-                        const itemKey = item._id
-                          ? `menucard-item-${item._id}`
-                          : `menucard-item-${index}-${(item.name || '').replace(/\s+/g, '-').substring(0, 30)}`;
-
-                        return (
-                          <div
-                            key={itemKey}
-                            className="menucard-item"
-                            onClick={() => navigate('/menu?id=' + item._id)}
-                          >
-                            {/* Left: type dot + name + description */}
-                            <div className="item-left">
-                              <span className="item-type">{getTypeIcon(item.type)}</span>
-                              <div className="item-details">
-                                <h3>{item.name}</h3>
-                                {item.description && (
-                                  <p className="item-description">{item.description}</p>
-                                )}
-                                {item.spiceLevel && item.spiceLevel !== 'none' && (
-                                  <span className="spice-indicator">
-                                    {item.spiceLevel === 'mild'   && '🌶️'}
-                                    {item.spiceLevel === 'medium' && '🌶️🌶️'}
-                                    {item.spiceLevel === 'hot'    && '🌶️🌶️🌶️'}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            {/* Right: price + badge */}
-                            <div className="item-right">
-                              {item.discountPrice && item.discountPrice < item.price ? (
-                                <>
-                                  <span className="price-original">₹{item.discountPrice}</span>
-                                  <span className="price-strike">₹{item.price}</span>
-                                </>
-                              ) : (
-                                <span className="price-original">₹{item.price}</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Empty state */}
-              {visibleCategories.length === 0 && (
-                <div className="menucard-empty">
-                  No items available for the selected filter.
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
+          );
+        })}
 
-            {/* ── Footer ── */}
-            <Divider />
-            <div className="menucard-footer">
-              <p>🟢 Vegetarian &nbsp;|&nbsp; 🔴 Non-Vegetarian &nbsp;|&nbsp; 🟡 Contains Egg &nbsp;|&nbsp; 🌶️ Spicy</p>
-              <p>All prices are inclusive of taxes &nbsp;·&nbsp; Subject to availability</p>
-            </div>
-
-          </div>{/* /menucard-inner */}
-        </div>{/* /menucard-shell */}
+        {/* Empty state */}
+        {visibleCategories.length === 0 && (
+          <div className="menucard-empty">
+            No items available for the selected filter.
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

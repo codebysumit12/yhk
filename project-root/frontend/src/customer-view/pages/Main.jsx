@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Nav from './Nav';
 import CartSidebar from './CartSidebar';
 import CartNotification from './CartNotification';
 import YHKLoader from './Yhkloader';
@@ -203,12 +202,6 @@ const Main = ({ restaurants }) => {
   return (
 
     <React.Fragment>
-
-      {/* Navigation */}
-
-      <Nav onOpenCart={() => setIsCartOpen(true)} cartCount={cart.reduce((total, item) => total + (item.quantity || 1), 0)} />
-
-
 
       {/* ✅ Cart Notification */}
 

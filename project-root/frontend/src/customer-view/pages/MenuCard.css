@@ -21,7 +21,70 @@
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Page ── */
+/* ── Content-only wrapper (like Drinks) ── */
+.menucard-content {
+  background: transparent;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* ── Override related-page to be content-only ── */
+.related-page {
+  min-height: auto !important;
+  background: transparent !important;
+}
+
+/* ── Hero Section (like Drinks) ── */
+.menu-hero {
+  min-height: 400px;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  margin-bottom: 0;
+}
+
+.menu-hero-content {
+  padding: 60px 50px 40px;
+  color: white;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+}
+
+.menu-hero h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.menu-hero p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ── Page (full layout - kept for reference) ── */
 .menucard-page {
   min-height: 100vh;
   background-color: #2a1f0e;
@@ -205,8 +268,17 @@
   display: flex;
   gap: 10px;
   justify-content: center;
-  margin-top: 20px;
+  margin: 30px 50px;
   flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+/* ── Container ── */
+.menucard-container {
+  padding: 0 50px 50px;
 }
 
 .filter-pill {
@@ -234,7 +306,11 @@
 
 /* ── Category section ── */
 .menucard-category {
-  margin-bottom: 48px;
+  margin-bottom: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .category-header {
@@ -444,12 +520,21 @@
 
 /* ── Responsive ── */
 @media (max-width: 700px) {
+  .menu-hero-content { padding: 40px 20px 30px; }
+  .menu-hero h1 { font-size: 2rem; }
+  .menu-hero p { font-size: 1rem; }
+  .menucard-filters { margin: 20px; }
+  .menucard-container { padding: 0 20px 30px; }
   .menucard-page { padding: 12px 6px 40px; }
   .menucard-inner { padding: 36px 24px 36px; }
   .menucard-title h1 { font-size: 34px; }
   .category-header h2 { font-size: 22px; }
   .item-leader { display: none; }
   .menucard-item { gap: 8px; }
+  .menucard-category { 
+    padding: 15px; 
+    margin-bottom: 25px; 
+  }
 }
 
 /* ── Print ── */

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Nav from './Nav';
 import YHKLoader from './Yhkloader';
 import './MyProfile.css';
 import { API_CONFIG } from '../../config/api';
@@ -177,8 +176,6 @@ const MyProfile = () => {
 
   return (
     <div className="my-profile-page">
-      <Nav onOpenCart={() => {}} />
-      
       <div className="my-profile-container">
         {/* Header */}
         <div className="page-header">

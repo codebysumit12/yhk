@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
-import Nav from './Nav';
+import { useSearchParams, useNavigate, useParams, useLocation } from 'react-router-dom';
 import CartSidebar from './CartSidebar';
 import CartNotification from './CartNotification';
 import YHKLoader from './Yhkloader';
@@ -27,7 +26,6 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('popular');
   const [searchTerm, setSearchTerm] = useState('');
-
   const [showNotification, setShowNotification] = useState(false);
   const [addedItemName, setAddedItemName] = useState('');
 
@@ -201,8 +199,6 @@ const Menu = () => {
 
     return (
       <>
-        <Nav onOpenCart={() => setShowCart(true)} />
-
         <CartNotification
           show={showNotification}
           itemName={addedItemName}
@@ -576,8 +572,6 @@ const Menu = () => {
   // ========================================
   return (
     <>
-      <Nav onOpenCart={() => setShowCart(true)} />
-
       <CartNotification
         show={showNotification}
         itemName={addedItemName}

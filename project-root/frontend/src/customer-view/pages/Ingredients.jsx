@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Nav from './Nav';
 import YHKLoader from './Yhkloader';
 import { API_CONFIG } from '../../config/api';
 import './Ingredients.css';
@@ -68,7 +67,6 @@ const Ingredients = () => {
   if (loading) {
     return (
       <div className="ingredients-page">
-        <Nav onOpenCart={() => {}} />
         <YHKLoader message="Loading fresh ingredients..." />
       </div>
     );
@@ -76,8 +74,6 @@ const Ingredients = () => {
 
   return (
     <div className="ingredients-page">
-      <Nav onOpenCart={() => {}} />
-      
       <div className="page-header">
         <div>
           <h1>🥬 Fresh Ingredients</h1>

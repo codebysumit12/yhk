@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './pages/Auth';
+import CustomerLayout from './customer-view/layout/CustomerLayout';
 import Main from './customer-view/pages/Main';
 import Menu from './customer-view/pages/Menu';
 import MenuCard from './customer-view/pages/MenuCard';
@@ -43,67 +44,67 @@ function App() {
   return (
     <Router>
       <div className="App">
-          <Routes>
+        <Routes>
 
-             
-                {/* ✅ FIXED: Main landing page at / */}
-                <Route path="/" element={<Main />} />
-                  
-                {/* ✅ FIXED: Auth at /auth */}
-                <Route path="/auth" element={<Auth />} />
-                  
-                {/* ✅ FIXED: Register page */}
-                <Route path="/register" element={<Auth />} />
-                  
-                {/* Customer Routes */}
-                <Route path="/menu/:categorySlug" element={<Menu />} />
-                <Route path="/menu" element={<Menu />} />
-                <Route path="/menucard" element={<MenuCard />} />
-                <Route path="/drinks" element={<Drinks />} />
-                <Route path="/smoothies" element={<Smoothies />} />
-                <Route path="/desserts" element={<Desserts />} />
-                <Route path="/checkout" element={<Checkoutpage />} />
-                <Route path="/track-order" element={<TrackOrder />} />
-                <Route path="/my-orders" element={<MyOrders />} />
-                  
-                <Route 
-                  path="/profile" 
-                  element={
-                    <ProtectedRoute>
-                      <MyProfile />
-                    </ProtectedRoute>
-                  } 
-                />
-                  
-                {/* Admin Routes */}
-                <Route 
-                  path="/admin/*" 
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  } 
-                />
-                  
-                {/* Delivery Partner Direct Access */}
-                <Route 
-                  path="/delivery-app" 
-                  element={
-                    <ProtectedRoute requiredRole="delivery">
-                      <DeliveryBoyApp />
-                    </ProtectedRoute>
-                  } 
-                />
-                  
-                {/* ✅ FIXED: Privacy Policy & Terms */}
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                  
-                {/* Redirect unknown routes */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </Router>
+          {/* Admin Routes - MUST come first */}
+          <Route 
+            path="/admin/*" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Delivery Partner Direct Access */}
+          <Route 
+            path="/delivery-app" 
+            element={
+              <ProtectedRoute requiredRole="delivery">
+                <DeliveryBoyApp />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Auth Routes - MUST come before customer routes */}
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/register" element={<Auth />} />
+          
+          {/* Privacy Policy & Terms */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          
+          {/* Customer Routes with Nav - MUST come last */}
+          <Route path="/" element={<CustomerLayout />}>
+            {/* ✅ FIXED: Main landing page at / */}
+            <Route index element={<Main />} />
+              
+            {/* Customer Routes */}
+            <Route path="menu/:categorySlug" element={<Menu />} />
+            <Route path="menu" element={<Menu />} />
+            <Route path="menucard" element={<MenuCard />} />
+            <Route path="drinks" element={<Drinks />} />
+            <Route path="smoothies" element={<Smoothies />} />
+            <Route path="desserts" element={<Desserts />} />
+            <Route path="checkout" element={<Checkoutpage />} />
+            <Route path="track-order" element={<TrackOrder />} />
+            <Route path="my-orders" element={<MyOrders />} />
+              
+            <Route 
+              path="profile" 
+              element={
+                <ProtectedRoute>
+                  <MyProfile />
+                </ProtectedRoute>
+              } 
+            />
+          </Route>
+          
+          {/* Redirect unknown routes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

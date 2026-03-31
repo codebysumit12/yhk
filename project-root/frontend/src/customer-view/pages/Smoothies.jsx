@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Nav from './Nav';
 import CartSidebar from './CartSidebar';
 import YHKLoader from './Yhkloader';
 import { API_CONFIG } from '../../config/api';
@@ -12,7 +11,11 @@ const Smoothies = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    // Initialize cart from localStorage
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
   const [showCart, setShowCart] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [items, setItems] = useState([]);
@@ -20,6 +23,11 @@ const Smoothies = () => {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('popular');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Sync cart changes to localStorage
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
 
   // Fetch items and banners
   useEffect(() => {
@@ -148,9 +156,7 @@ const Smoothies = () => {
     const primaryImage = selectedItem.images?.[0]?.url || selectedItem.image || selectedItem.imageUrl || 'https://via.placeholder.com/1200x400.png?text=No+Image';
     
     return (
-      <>
-        <Nav onOpenCart={() => setShowCart(true)} />
-        <div className="menu-page">
+      <div className="menu-page">
           <section className="menu-hero" style={{
             backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(46, 204, 113, 0.8)), url('${primaryImage}')`,
             backgroundSize: 'cover',
@@ -337,15 +343,12 @@ const Smoothies = () => {
             getCartTotal={getCartTotal}
           />
         </div>
-      </>
-    );
+      );
   }
 
   // MAIN GRID VIEW
   return (
-    <>
-      <Nav onOpenCart={() => setShowCart(true)} />
-      <div className="related-page">
+    <div className="related-page">
         {heroBanner?.mediaType === 'video' ? (
           <section className="related-hero related-hero-video">
             <video 
@@ -507,7 +510,6 @@ const Smoothies = () => {
           cart={cart}
         />
       </div>
-    </>
   );
 };
 
