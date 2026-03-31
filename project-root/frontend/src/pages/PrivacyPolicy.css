@@ -1,0 +1,134 @@
+.privacy-policy-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.privacy-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.privacy-header {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  padding: 40px 30px;
+  text-align: center;
+  color: white;
+}
+
+.privacy-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.last-updated {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.privacy-content {
+  padding: 40px 30px;
+}
+
+.policy-section {
+  margin-bottom: 40px;
+}
+
+.policy-section h2 {
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  border-bottom: 3px solid #f093fb;
+  padding-bottom: 10px;
+}
+
+.policy-section p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.policy-section ul {
+  margin: 20px 0;
+  padding-left: 20px;
+}
+
+.policy-section li {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.contact-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 15px;
+}
+
+.contact-info p {
+  margin: 5px 0;
+  font-weight: 500;
+  color: #333;
+}
+
+.privacy-footer {
+  padding: 30px;
+  text-align: center;
+  background: #f8f9fa;
+}
+
+.back-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .privacy-policy-page {
+    padding: 10px;
+  }
+  
+  .privacy-header {
+    padding: 30px 20px;
+  }
+  
+  .privacy-header h1 {
+    font-size: 2rem;
+  }
+  
+  .privacy-content {
+    padding: 30px 20px;
+  }
+  
+  .policy-section h2 {
+    font-size: 1.3rem;
+  }
+  
+  .policy-section p,
+  .policy-section li {
+    font-size: 0.9rem;
+  }
+}

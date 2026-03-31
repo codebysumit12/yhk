@@ -1,0 +1,25 @@
+# Fresh Render Configuration - v2.0.0
+services:
+  - type: web
+    name: yhk-backend-v2
+    env: node
+    plan: free
+    buildCommand: npm install --force
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: NPM_VERSION
+        value: 9
+      - key: NODE_ENV
+        value: production
+    buildFilter:
+      paths:
+        - project-root/backend/**
+        - server.js
+        - package.json
+        - .env.example
+
+# Force new deployment
+version: "2.0.0"
+buildID: "fresh-build-20260328175000"

@@ -1,0 +1,296 @@
+/* ─────────────────────────────────────────────────────────────
+   Append these to MyOrders.css
+───────────────────────────────────────────────────────────── */
+
+/* Rate / Rated action button on card */
+.action-btn.rate {
+  padding: 8px 14px;
+  background: #fefce8;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.action-btn.rate:hover {
+  background: #fef08a;
+  border-color: #fcd34d;
+}
+
+.action-btn.rated {
+  padding: 8px 14px;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.action-btn.rated:hover {
+  background: #dcfce7;
+}
+
+/* Rate button inside modal footer */
+.btn-rate-modal {
+  padding: 10px 20px;
+  background: #fefce8;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-rate-modal:hover { background: #fef08a; border-color: #fcd34d; }
+
+.btn-rate-modal.already-rated {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.btn-rate-modal.already-rated:hover { background: #dcfce7; }
+
+/* ── Rating Modal ── */
+.rating-modal {
+  max-width: 480px;
+  width: 92%;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.rating-order-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rating-order-summary::before {
+  content: '⭐';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 60px;
+  opacity: 0.1;
+  transform: rotate(-15deg);
+}
+
+.rating-order-number {
+  font-size: 14px;
+  font-weight: 700;
+  color: #92400e;
+  letter-spacing: 0.5px;
+}
+
+.rating-order-items {
+  font-size: 13px;
+  color: #78350f;
+  line-height: 1.4;
+}
+
+/* Stars */
+.rating-stars-section {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.rating-prompt {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+  letter-spacing: 0.2px;
+}
+
+.rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.star-btn {
+  font-size: 44px;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #d1d5db;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 4px 6px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.star-btn:hover:not(:disabled) {
+  transform: scale(1.2) rotate(5deg);
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.star-btn.filled {
+  color: #f59e0b;
+  animation: starPop 0.3s ease-out;
+}
+
+@keyframes starPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.star-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.rating-star-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #92400e;
+  margin-top: 8px;
+  min-height: 24px;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+}
+
+/* Comment */
+.rating-comment-section {
+  margin-bottom: 20px;
+}
+
+.rating-comment-section label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.optional-label {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.rating-comment-input {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #111827;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.rating-comment-input:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+/* Already rated display */
+.rating-existing-comment {
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.existing-comment-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 6px;
+}
+
+.existing-comment-text {
+  font-size: 14px;
+  color: #78350f;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.already-rated-note {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* Error */
+.rating-error {
+  font-size: 13px;
+  color: #ef4444;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+/* Actions */
+.rating-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-submit-rating {
+  padding: 10px 22px;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-submit-rating:hover:not(:disabled) {
+  background: #d97706;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-submit-rating:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}

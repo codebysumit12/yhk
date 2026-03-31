@@ -1,0 +1,358 @@
+
+/* ========================================
+   FILTER BAR SECTION
+   ======================================== */
+
+/* Filters Container */
+.menu-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+/* Filter Groups */
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-group label {
+    font-size: 14px;
+    color: #828282;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.filter-group select,
+.filter-group input {
+    padding: 10px 15px;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1c1c1c;
+    outline: none;
+    background: white;
+    min-width: 180px;
+    transition: border-color 0.3s;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+    border-color: #22c55e; /* ← Green */
+}
+
+.filter-group input::placeholder {
+    color: #9ca3af;
+}
+
+/* Item Count Display */
+.item-count {
+    margin-left: auto;
+    font-size: 14px;
+    color: #828282;
+    font-weight: 500;
+}
+
+/* ========================================
+   MENU CONTENT SECTION
+   ======================================== */
+
+.menu-content {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    width: 100%;
+}
+
+/* ========================================
+   ITEMS GRID LAYOUT
+   ======================================== */
+
+.menu-items-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+}
+
+/* ========================================
+   ITEM CARD
+   ======================================== */
+
+.menu-item-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    cursor: pointer;
+    border: 1px solid #e8e8e8;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border-color: #22c55e; /* ← Green */
+}
+
+/* Clickable Card Style */
+.menu-item-card.clickable:hover {
+    border-color: #22c55e; /* ← Green */
+    background: rgba(34, 197, 94, 0.05); /* ← Green tint */
+}
+
+/* ========================================
+   ITEM IMAGE
+   ======================================== */
+
+.menu-item-image {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.menu-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+    display: block;
+}
+
+.menu-item-card:hover .menu-item-image img {
+    transform: scale(1.1);
+}
+
+/* Discount Badge - Small Button Style */
+.menu-item-image .discount-badge {
+    position: absolute;
+    bottom: 10px; /* ← Bottom left like categories */
+    left: 10px;
+    background: #22c55e; /* ← Green */
+    color: white;
+    padding: 6px 12px; /* ← Small compact padding */
+    border-radius: 5px;
+    font-size: 12px; /* ← Small text */
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+}
+
+/* ========================================
+   ITEM INFO
+   ======================================== */
+
+.menu-item-info {
+    padding: 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: left !important; /* ← Force left align */
+}
+
+.menu-item-info h4 {
+    font-size: 16px;
+    color: #1c1c1c;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left !important; /* ← Force left align */
+}
+
+.menu-item-info p {
+    font-size: 13px;
+    color: #828282;
+    line-height: 1.5;
+    margin: 0 0 12px 0;
+    flex: 1;
+    text-align: left !important; /* ← Force left align */
+}
+
+/* ========================================
+   PRICING SECTION
+   ======================================== */
+
+.menu-item-pricing {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.price-info {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    text-align: left !important; /* ← Force left align */
+}
+
+.original-price {
+    font-size: 13px;
+    color: #828282;
+    text-decoration: line-through;
+    line-height: 1;
+    text-align: left !important; /* ← Force left align */
+}
+
+.discounted-price {
+    font-size: 18px;
+    color: hsl(0, 0%, 0%); /* ← Green */
+    font-weight: 700;
+    line-height: 1;
+    text-align: left !important; /* ← Force left align */
+}
+
+/* ========================================
+   ADD BUTTON
+   ======================================== */
+
+.add-btn {
+    background: #22c55e; /* ← Green */
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.add-btn:hover {
+    background: #16a34a; /* ← Darker green on hover */
+    transform: scale(1.05);
+}
+
+/* ========================================
+   NO ITEMS STATE
+   ======================================== */
+
+.no-items {
+    text-align: center;
+    padding: 60px 20px;
+    color: #828282;
+}
+
+.no-items i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.no-items p {
+    font-size: 18px;
+    margin: 0;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1200px) {
+    .menu-items-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .menu-items-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    
+    .menu-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu-items-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .menu-content {
+        padding: 15px;
+    }
+    
+    .menu-item-image {
+        height: 160px;
+    }
+    
+    .menu-item-info h4 {
+        font-size: 15px;
+    }
+    
+    .discounted-price {
+        font-size: 16px;
+    }
+    
+    .add-btn {
+        padding: 6px 16px;
+        font-size: 13px;
+    }
+}
+
+
+/* ========================================
+   RESPONSIVE FILTER BAR
+   ======================================== */
+
+@media (max-width: 768px) {
+    .menu-filters {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 15px;
+    }
+    
+    .filter-group {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-group label {
+        font-size: 13px;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .item-count {
+        margin-left: 0;
+        text-align: center;
+        padding: 8px;
+        background: #f8f8f8;
+        border-radius: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu-filters {
+        gap: 10px;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}
