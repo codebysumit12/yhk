@@ -1,3 +1,57 @@
+
+
+
+ 
+/* ─────────────────────────────────────────────────────────────
+   Append these to MyOrders.css
+───────────────────────────────────────────────────────────── */
+ 
+/* Cancelled card gets a subtle red left border */
+.order-card-cancelled {
+  border-left: 3px solid #fca5a5;
+  opacity: 0.9;
+}
+ 
+/* Cancellation reason pill shown on the card */
+.cancellation-reason-pill {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #7f1d1d;
+  line-height: 1.4;
+}
+.cancellation-reason-pill .reason-label {
+  font-weight: 600;
+  margin-right: 4px;
+}
+ 
+/* Danger action button */
+.action-btn.danger {
+  padding: 8px 16px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.action-btn.danger:hover { background: #fee2e2; border-color: #fca5a5; }
+ 
+/* Cancellation detail block in modal */
+.cancellation-detail-block {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+}
+.cancellation-detail-block h4 { margin-bottom: 12px; color: #ef4444; }
+ 
+
 /* ========================================
    MY ORDERS PAGE - CUSTOMER VIEW
    ======================================== */

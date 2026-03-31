@@ -17,9 +17,6 @@ const uploadToCloudinary = async (file, mediaType) => {
 
   const result = await cloudinary.uploader.upload(file.path, options);
 
-  // Delete temp file
-  fs.unlinkSync(file.path);
-
   return {
     url: result.secure_url,
     publicId: result.public_id,

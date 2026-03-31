@@ -372,3 +372,167 @@
   padding: 60px 20px;
   color: var(--text-muted);
 }
+
+/* Cancel Button */
+.table-action-btn.cancel {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+}
+
+.table-action-btn.cancel:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Cancelled Badge */
+.cancelled-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Cancel Modal */
+.cancel-modal {
+  max-width: 550px;
+}
+
+.cancel-warning {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: #fef3c7;
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.warning-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.warning-text strong {
+  display: block;
+  color: #78350f;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.warning-text p {
+  margin: 0;
+  color: #92400e;
+  font-size: 13px;
+}
+
+.cancel-order-info {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.cancel-order-info .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cancel-order-info .info-row:last-child {
+  border-bottom: none;
+}
+
+.cancel-reason-section {
+  margin-bottom: 20px;
+}
+
+.cancel-reason-section label {
+  display: block;
+  margin-bottom: 8px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.cancel-reason-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.cancel-reason-input:focus {
+  outline: none;
+  border-color: #ef4444;
+}
+
+.cancel-reason-input:disabled {
+  background: #f9fafb;
+  cursor: not-allowed;
+}
+
+.input-hint {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.cancel-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  padding: 10px 20px;
+  background: #ef4444;
+  color: white;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
