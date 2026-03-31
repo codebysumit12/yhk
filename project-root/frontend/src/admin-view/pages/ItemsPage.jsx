@@ -335,7 +335,12 @@ const removePrepStep = (index) => {
       console.log('🔍 Appending name:', formData.name);
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('categoryId', formData.category);
+      
+      // Only append categoryId if it's provided or if type is not drinks/smoothies/desserts
+      if (formData.category || !['drinks', 'smoothies', 'desserts'].includes(formData.type)) {
+        formDataToSend.append('categoryId', formData.category);
+      }
+      
       formDataToSend.append('price', formData.price);
       if (formData.discountPrice) formDataToSend.append('discountPrice', formData.discountPrice);
       formDataToSend.append('rating', formData.rating);
@@ -1092,12 +1097,12 @@ const removePrepStep = (index) => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Category *</label>
+                    <label>Category {['drinks', 'smoothies', 'desserts'].includes(formData.type) ? '(Optional)' : '*'}</label>
                     <select
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
-                      required
+                      required={!['drinks', 'smoothies', 'desserts'].includes(formData.type)}
                     >
                       <option value="">Select Category</option>
                       {categories.map(cat => (
@@ -1106,6 +1111,11 @@ const removePrepStep = (index) => {
                         </option>
                       ))}
                     </select>
+                    {['drinks', 'smoothies', 'desserts'].includes(formData.type) && (
+                      <small style={{ color: '#666', fontSize: '12px' }}>
+                        Category is optional for {formData.type} items
+                      </small>
+                    )}
                   </div>
 
                   <div className="form-group">

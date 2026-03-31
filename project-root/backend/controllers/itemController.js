@@ -222,11 +222,23 @@ export const createItem = async (req, res) => {
       });
     }
 
+    // Category validation - only required for non-beverage items
     if (!categoryId || categoryId === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Category is required'
-      });
+      if (!['drinks', 'smoothies', 'desserts'].includes(type)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Category is required for food items'
+        });
+      }
+    } else {
+      // Validate categoryId exists if provided
+      const categoryExists = await Category.findById(categoryId);
+      if (!categoryExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid category'
+        });
+      }
     }
 
     if (!price || isNaN(price) || parseFloat(price) <= 0) {
