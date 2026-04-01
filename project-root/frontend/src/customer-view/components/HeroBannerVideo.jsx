@@ -92,13 +92,13 @@ const HeroBannerVideo = ({ heroBanner, onError }) => {
             <a href="/menu" className="quick-link">
               <i className="fas fa-birthday-cake"></i> Birthday Party
             </a>
-            <a href="/menu" className="quick-link">
-              <i className="fas fa-leaf"></i> Healthy Food
+            <a href="/onlyveg?type=vegan" className="quick-link">
+              <i className="fas fa-leaf"></i> Vegan
             </a>
-            <a href="/menu" className="quick-link">
+            <a href="/onlyveg?type=veg" className="quick-link">
               <i className="fas fa-pizza-slice"></i> Veg
             </a>
-            <a href="/menu" className="quick-link">
+            <a href="/onlyveg?type=non-veg" className="quick-link">
               <i className="fas fa-drumstick-bite"></i> Non-Veg
             </a>
           </div>

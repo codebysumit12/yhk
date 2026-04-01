@@ -255,19 +255,19 @@ const Main = ({ restaurants }) => {
 
                 </Link>
 
-                <Link to="/menu" className="quick-link">
+                <Link to="/onlyveg?type=vegan" className="quick-link">
 
-                  <i className="fas fa-leaf"></i> Healthy Food
+                  <i className="fas fa-leaf"></i> Vegan
 
                 </Link>
 
-                <Link to="/menu" className="quick-link">
+                <Link to="/onlyveg?type=veg" className="quick-link">
 
                   <i className="fas fa-pizza-slice"></i> Veg
 
                 </Link>
 
-                <Link to="/menu" className="quick-link">
+                <Link to="/onlyveg?type=non-veg" className="quick-link">
 
                   <i className="fas fa-drumstick-bite"></i> Non-Veg
 

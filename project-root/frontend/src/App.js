@@ -8,6 +8,7 @@ import MenuCard from './customer-view/pages/MenuCard';
 import Drinks from './customer-view/pages/Drinks';
 import Smoothies from './customer-view/pages/Smoothies';
 import Desserts from './customer-view/pages/Desserts';
+import OnlyVeg from './customer-view/pages/OnlyVeg';
 import Checkoutpage from './customer-view/pages/Checkoutpage';
 import TrackOrder from './customer-view/pages/TrackMyOrder';
 import MyOrders from './customer-view/pages/MyOrders';
@@ -86,8 +87,10 @@ function App() {
             <Route path="drinks" element={<Drinks />} />
             <Route path="smoothies" element={<Smoothies />} />
             <Route path="desserts" element={<Desserts />} />
+            <Route path="onlyveg" element={<OnlyVeg />} />
             <Route path="checkout" element={<Checkoutpage />} />
             <Route path="track-order" element={<TrackOrder />} />
+            
             <Route path="my-orders" element={<MyOrders />} />
               
             <Route 
