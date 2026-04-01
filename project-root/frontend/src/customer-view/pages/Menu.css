@@ -1271,7 +1271,6 @@
 
 /* Dynamic Hero Section */
 .dynamic-hero {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), var(--hero-image);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -1288,7 +1287,6 @@
 }
 
 .menu-hero {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), var(--hero-image);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -1433,18 +1431,15 @@
 }
 
 .related-hero {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(46, 204, 113, 0.4)),
-                url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     padding: 40px 50px;
     text-align: center;
-}
-
-.related-hero-content {
-    max-width: 800px;
-    margin: 0 auto;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .back-btn {
