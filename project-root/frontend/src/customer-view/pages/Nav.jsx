@@ -250,26 +250,25 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
         </div>
         
         <nav className="nav">
-          {/* Helper function to check if link is active */}
           <Link to="/customer" className={isActive('/customer') ? 'active' : ''}>
             <i className="fas fa-home"></i> Home
           </Link>
           <Link to="/menucard" className={isActive('/menucard') ? 'active' : ''}>
             <i className="fas fa-utensils"></i> Menu
           </Link>
+          <Link to="/trending" className={isActive('/trending') ? 'active' : ''}>
+            <i className="fas fa-fire"></i> Trending
+          </Link>
           <Link to="/offers" className={isActive('/offers') ? 'active' : ''}>
             <i className="fas fa-percent"></i> Offers
           </Link>
-          <Link to="/food" className={isActive('/food') ? 'active' : ''}>
-            <i className="fas fa-hamburger"></i> Food
-          </Link>
-          <Link to="/drinks" className={isActive('/drinks') ? 'active' : ''}>
+          <Link to="/onlyveg?type=drinks" className={isActive('/onlyveg?type=drinks') ? 'active' : ''}>
             <i className="fas fa-mug-hot"></i> Drinks
           </Link>
-          <Link to="/smoothies" className={isActive('/smoothies') ? 'active' : ''}>
+          <Link to="/onlyveg?type=smoothies" className={isActive('/onlyveg?type=smoothies') ? 'active' : ''}>
             <i className="fas fa-blender"></i> Smoothies
           </Link>
-          <Link to="/desserts" className={isActive('/desserts') ? 'active' : ''}>
+          <Link to="/onlyveg?type=desserts" className={isActive('/onlyveg?type=desserts') ? 'active' : ''}>
             <i className="fas fa-birthday-cake"></i> Desserts
           </Link>
         </nav>

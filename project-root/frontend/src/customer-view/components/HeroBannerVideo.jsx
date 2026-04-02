@@ -89,7 +89,7 @@ const HeroBannerVideo = ({ heroBanner, onError }) => {
         {/* Quick Links */}
         <div className="hero-links">
           <div className="quick-links">
-            <a href="/menu" className="quick-link">
+            <a href="/onlyveg?type=desserts" className="quick-link">
               <i className="fas fa-birthday-cake"></i> Birthday Party
             </a>
             <a href="/onlyveg?type=vegan" className="quick-link">

@@ -561,9 +561,6 @@ const VegOnly = () => {
             </video>
             <div className="related-hero-overlay"></div>
             <div className="related-hero-content">
-              <button className="back-btn" onClick={() => navigate('/')}>
-                <i className="fas fa-arrow-left"></i> Back to Home
-              </button>
               <h1>{currentConfig.title}</h1>
               <p>{currentConfig.description}</p>
             </div>
@@ -579,9 +576,6 @@ const VegOnly = () => {
             }}
           >
             <div className="related-hero-content">
-              <button className="back-btn" onClick={() => navigate('/')}>
-                <i className="fas fa-arrow-left"></i> Back to Home
-              </button>
               <h1>{currentConfig.title}</h1>
               <p>{currentConfig.description}</p>
             </div>
@@ -650,7 +644,6 @@ const VegOnly = () => {
 
                     <div className="menu-item-info">
                       <h4>{item.name}</h4>
-                      <p>{item.description || currentConfig.itemDescription}</p>
 
                       <div className="menu-item-pricing">
                         <div className="price-info">

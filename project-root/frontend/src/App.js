@@ -5,10 +5,9 @@ import CustomerLayout from './customer-view/layout/CustomerLayout';
 import Main from './customer-view/pages/Main';
 import Menu from './customer-view/pages/Menu';
 import MenuCard from './customer-view/pages/MenuCard';
-import Drinks from './customer-view/pages/Drinks';
-import Smoothies from './customer-view/pages/Smoothies';
-import Desserts from './customer-view/pages/Desserts';
 import OnlyVeg from './customer-view/pages/OnlyVeg';
+import Trending from './customer-view/pages/Trending';
+import Offers from './customer-view/pages/Offers';
 import Checkoutpage from './customer-view/pages/Checkoutpage';
 import TrackOrder from './customer-view/pages/TrackMyOrder';
 import MyOrders from './customer-view/pages/MyOrders';
@@ -84,10 +83,9 @@ function App() {
             <Route path="menu/:categorySlug" element={<Menu />} />
             <Route path="menu" element={<Menu />} />
             <Route path="menucard" element={<MenuCard />} />
-            <Route path="drinks" element={<Drinks />} />
-            <Route path="smoothies" element={<Smoothies />} />
-            <Route path="desserts" element={<Desserts />} />
             <Route path="onlyveg" element={<OnlyVeg />} />
+            <Route path="trending" element={<Trending />} />
+            <Route path="offers" element={<Offers />} />
             <Route path="checkout" element={<Checkoutpage />} />
             <Route path="track-order" element={<TrackOrder />} />
             

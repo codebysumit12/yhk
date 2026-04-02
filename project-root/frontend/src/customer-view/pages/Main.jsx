@@ -17,6 +17,7 @@ const Main = ({ restaurants }) => {
   const [heroVideoError, setHeroVideoError] = useState(false);
 
   const [categories, setCategories] = useState([]);
+  const [categoriesWithStats, setCategoriesWithStats] = useState([]);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -124,6 +125,142 @@ const Main = ({ restaurants }) => {
     
     fetchData();
   }, []);
+
+  // Function to fetch items for each category and calculate real stats
+  const fetchCategoryStats = async (categories) => {
+    const categoriesWithStats = await Promise.all(
+      categories.map(async (category) => {
+        console.log(`🔍 Fetching stats for category: ${category.name} (ID: ${category._id})`);
+        
+        try {
+          // Try multiple possible API endpoints to find items for this category
+          let itemsData = null;
+          
+          // Method 1: Query by category ID
+          let itemsResponse = await fetch(
+            `${API_CONFIG.API_URL}/items?category=${category._id}&isAvailable=true`
+          );
+          
+          if (itemsResponse.ok) {
+            const data = await itemsResponse.json();
+            if (data.success && data.data.length > 0) {
+              itemsData = data;
+              console.log(`✅ Method 1 worked: Found ${data.data.length} items for category ${category.name}`);
+            }
+          }
+          
+          // Method 2: Query by category slug
+          if (!itemsData && category.slug) {
+            itemsResponse = await fetch(
+              `${API_CONFIG.API_URL}/items?category=${category.slug}&isAvailable=true`
+            );
+            
+            if (itemsResponse.ok) {
+              const data = await itemsResponse.json();
+              if (data.success && data.data.length > 0) {
+                itemsData = data;
+                console.log(`✅ Method 2 worked: Found ${data.data.length} items for category ${category.name}`);
+              }
+            }
+          }
+          
+          // Method 3: Query all items and filter by category
+          if (!itemsData) {
+            itemsResponse = await fetch(`${API_CONFIG.API_URL}/items?isAvailable=true`);
+            
+            if (itemsResponse.ok) {
+              const data = await itemsResponse.json();
+              if (data.success) {
+                const filteredItems = data.data.filter(item => 
+                  item.category === category._id || 
+                  item.category?._id === category._id ||
+                  item.category === category.slug ||
+                  item.category?.slug === category.slug
+                );
+                
+                if (filteredItems.length > 0) {
+                  itemsData = { success: true, data: filteredItems };
+                  console.log(`✅ Method 3 worked: Found ${filteredItems.length} items for category ${category.name}`);
+                }
+              }
+            }
+          }
+          
+          if (itemsData && itemsData.success && itemsData.data.length > 0) {
+            const items = itemsData.data;
+            console.log(`📦 Found ${items.length} items for category ${category.name}:`, items.map(i => ({ 
+              name: i.name, 
+              rating: i.rating, 
+              ratings: i.ratings,
+              category: i.category 
+            })));
+            
+            // Calculate real average rating from items
+            let totalRating = 0;
+            let ratingCount = 0;
+            let availableItemsCount = 0;
+            
+            items.forEach(item => {
+              if (item.isAvailable !== false) {
+                availableItemsCount++;
+                
+                // Use item.ratings.average if available, otherwise fall back to item.rating
+                if (item.ratings && item.ratings.average && item.ratings.count > 0) {
+                  console.log(`⭐ Item ${item.name} has ratings:`, item.ratings);
+                  totalRating += item.ratings.average * item.ratings.count;
+                  ratingCount += item.ratings.count;
+                } else if (item.rating) {
+                  console.log(`⭐ Item ${item.name} has single rating:`, item.rating);
+                  totalRating += parseFloat(item.rating);
+                  ratingCount += 1;
+                } else {
+                  console.log(`❌ Item ${item.name} has no rating data`);
+                }
+              }
+            });
+            
+            const avgRating = ratingCount > 0 ? (totalRating / ratingCount) : 0;
+            console.log(`📊 Category ${category.name} stats:`, {
+              availableItemsCount,
+              ratingCount,
+              totalRating,
+              avgRating: avgRating.toFixed(1)
+            });
+            
+            return {
+              ...category,
+              realAvgRating: avgRating.toFixed(1),
+              realItemCount: availableItemsCount,
+              totalRatings: ratingCount
+            };
+          } else {
+            console.log(`❌ No items found for category ${category.name} with any method`);
+          }
+        } catch (error) {
+          console.error(`Error fetching stats for category ${category.name}:`, error);
+        }
+        
+        // Return original category with fallback values
+        console.log(`⚠️ Using fallback values for category ${category.name}`);
+        return {
+          ...category,
+          realAvgRating: category.avgRating || '0.0',
+          realItemCount: category.itemCount || 0,
+          totalRatings: 0
+        };
+      })
+    );
+    
+    console.log('🎯 Final categories with stats:', categoriesWithStats);
+    setCategoriesWithStats(categoriesWithStats);
+  };
+
+  // Fetch category stats when categories are loaded
+  useEffect(() => {
+    if (categories.length > 0) {
+      fetchCategoryStats(categories);
+    }
+  }, [categories]);
 
   const handleFilterClick = (filter) => {
 
@@ -249,7 +386,7 @@ const Main = ({ restaurants }) => {
 
               <div className="quick-links">
 
-                <Link to="/menu" className="quick-link">
+                <Link to="/onlyveg?type=desserts" className="quick-link">
 
                   <i className="fas fa-birthday-cake"></i> Birthday Party
 
@@ -348,11 +485,11 @@ const Main = ({ restaurants }) => {
         {/* Categories */}
 
         <div className="categories">
-          {categories.length === 0 ? (
+          {categoriesWithStats.length === 0 ? (
             <YHKLoader message="Loading menu categories..." />
           ) : (
             <div className="restaurant-grid">
-              {categories.map((category, index) => (
+              {categoriesWithStats.map((category, index) => (
                 <div 
                   key={`${category._id || category.slug || 'category'}-${index}`} 
                   className="restaurant-card"
@@ -396,8 +533,17 @@ const Main = ({ restaurants }) => {
                       {category.description || 'Delicious food options'}
                     </div>
                     <div className="restaurant-details">
-                      <span className="rating">★ {category.avgRating || '4.5'}</span>
-                      <span className="delivery-time">🍽️ {category.itemCount || 0} items</span>
+                      <span className="rating">
+                        ★ {category.realAvgRating > 0 ? category.realAvgRating : 'New'}
+                        {category.totalRatings > 0 && (
+                          <small style={{ opacity: 0.7, fontSize: '0.8em' }}>
+                            ({category.totalRatings})
+                          </small>
+                        )}
+                      </span>
+                      <span className="delivery-time">
+                        🍽️ {category.realItemCount} {category.realItemCount === 1 ? 'item' : 'items'}
+                      </span>
                     </div>
                   </div>
                 </div>
