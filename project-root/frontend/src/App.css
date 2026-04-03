@@ -50,11 +50,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-}
-
-html {
-    font-size: clamp(14px, 4vw, 16px);
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 :root {
@@ -95,10 +91,9 @@ i, .fas, .far, .fab, .fa {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: clamp(12px, 4vw, 20px) clamp(15px, 5vw, 50px);
-    max-width: min(1400px, 95vw);
+    padding: 15px 50px;
+    max-width: 1400px;
     margin: 0 auto;
-    gap: clamp(10px, 3vw, 20px);
 }
 
 .logo {
@@ -131,7 +126,7 @@ i, .fas, .far, .fab, .fa {
 .header-search {
     flex: 1;
     max-width: 500px;
-    margin: 0 clamp(15px, 4vw, 30px);
+    margin: 0 30px;
 }
 
 .search-bar {
@@ -271,13 +266,12 @@ i, .fas, .far, .fab, .fa {
 }
 .nav {
     display: flex;
-    gap: clamp(15px, 4vw, 30px);
-    padding: clamp(8px, 2vw, 12px) clamp(15px, 5vw, 50px);
+    gap: 30px;
+    padding: 12px 50px;
     border-bottom: 1px solid var(--zomato-border);
-    max-width: min(1400px, 95vw);
+    max-width: 1400px;
     margin: 0 auto;
     overflow-x: auto;
-    flex-wrap: wrap;
 }
 
 .nav a {
@@ -309,7 +303,7 @@ i, .fas, .far, .fab, .fa {
                 url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80');
     background-size: cover;
     background-position: center;
-padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
+    padding: 60px 50px;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -323,17 +317,16 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 
 .hero h1 {
     color: white;
-    font-size: clamp(28px, 8vw, 48px);
+    font-size: 42px;
     font-weight: 700;
-    margin-bottom: clamp(10px, 3vw, 15px);
-    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    line-height: 1.2;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .hero p {
-    color: rgba(255,255,255,0.95);
-    font-size: clamp(16px, 4vw, 20px);
-    margin-bottom: clamp(20px, 5vw, 30px);
+    color: rgba(255,255,255,0.9);
+    font-size: 18px;
+    margin-bottom: 30px;
 }
 
 /* Quick Links */
@@ -384,23 +377,23 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 
 /* Main Content */
 .main-content {
-    max-width: min(1400px, 95vw);
+    max-width: 1400px;
     margin: 0 auto;
-    padding: clamp(20px, 6vw, 40px) clamp(15px, 5vw, 50px);
+    padding: 40px 50px;
 }
 
 .section-title {
-    font-size: clamp(1.5rem, 4vw, 1.5rem);
+    font-size: 24px;
     font-weight: 600;
-    margin-bottom: clamp(1.25rem, 3vw, 1.5625rem);
+    margin-bottom: 25px;
     color: var(--zomato-dark);
 }
 
 /* Filters */
 .filters {
     display: flex;
-    gap: clamp(8px, 2vw, 15px);
-    margin-bottom: clamp(20px, 4vw, 30px);
+    gap: 15px;
+    margin-bottom: 30px;
     flex-wrap: wrap;
 }
 
@@ -430,17 +423,17 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 /* Restaurant Grid */
 .restaurant-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(clamp(250px, 45vw, 300px), 1fr));
-    gap: clamp(15px, 4vw, 25px);
-    margin-bottom: clamp(30px, 6vw, 40px);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
 }
 
 /* Categories Grid */
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(clamp(250px, 45vw, 300px), 1fr));
-    gap: clamp(15px, 4vw, 25px);
-    margin-bottom: clamp(30px, 6vw, 40px);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
 }
 
 .restaurant-card {
@@ -492,9 +485,8 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 }
 
 .restaurant-image img {
-    max-width: 100%;
-    height: auto;
     width: 100%;
+    height: 100%;
     object-fit: cover;
     transition: transform 0.3s;
 }
@@ -516,7 +508,7 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 }
 
 .restaurant-info {
-    padding: clamp(0.9375rem, 2vw, 1rem);
+    padding: 15px;
 }
 
 .restaurant-name {
@@ -564,14 +556,14 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 
 /* Location Section */
 .location-section {
-    max-width: min(1400px, 95vw);
+    max-width: 1400px;
     margin: 0 auto;
-    padding: clamp(20px, 6vw, 40px) clamp(15px, 5vw, 50px);
+    padding: 40px 50px;
 }
 
 .location-section .section-title {
-    font-size: clamp(1.75rem, 5vw, 1.875rem);
-    margin-bottom: clamp(1.5rem, 4vw, 2rem);
+    font-size: 28px;
+    margin-bottom: 30px;
     color: var(--zomato-dark);
 }
 
@@ -592,8 +584,6 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 }
 
 .location-map iframe {
-    max-width: 100%;
-    height: auto;
     width: 100%;
     height: 100%;
 }
@@ -668,8 +658,8 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
 .footer {
     background: var(--zomato-dark);
     color: white;
-    padding: clamp(40px, 10vw, 60px) clamp(15px, 5vw, 50px) clamp(20px, 5vw, 30px);
-    margin-top: clamp(40px, 8vw, 60px);
+    padding: 60px 50px 30px;
+    margin-top: 60px;
 }
 
 .footer-content {
@@ -748,66 +738,35 @@ padding: clamp(3rem, 10vw, 4rem) clamp(2rem, 8vw, 3.125rem);
     color: var(--zomato-red);
 }
 
-/* Enhanced Mobile-First Responsive */
+/* Responsive */
 @media (max-width: 1024px) {
-    .header-top, .nav, .main-content, .location-section {
-        padding-left: clamp(1rem, 4vw, 2rem);
-        padding-right: clamp(1rem, 4vw, 2rem);
+    .header-top {
+        padding: 15px 20px;
     }
-}
-
-@media (max-width: 1024px) {
-    .footer-content {
-        grid-template-columns: repeat(2, 1fr);
-        gap: clamp(1.25rem, 5vw, 2.5rem);
+    
+    .hero {
+        padding: 40px 20px;
+    }
+    
+    .main-content {
+        padding: 30px 20px;
+    }
+    
+    .location-section {
+        padding: 30px 20px;
     }
     
     .location-container {
         grid-template-columns: 1fr;
-        gap: clamp(1.25rem, 5vw, 1.875rem);
     }
     
     .location-map {
-        height: clamp(18.75rem, 40vh, 25rem);
+        height: 350px;
         border-radius: 20px 20px 0 0;
-    }
-}
-
-@media (max-width: 768px) {
-    .quick-links {
-        gap: clamp(10px, 4vw, 20px);
-    }
-    
-    .restaurant-grid,
-    .categories-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .filters {
-        justify-content: center;
     }
     
     .footer-content {
         grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .quick-links {
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .footer-content {
-        grid-template-columns: 1fr;
-        gap: 25px;
-    }
-    
-    .footer-bottom {
-        flex-direction: column;
-        gap: clamp(12px, 3vw, 15px);
-        padding-top: 25px;
     }
 }
 

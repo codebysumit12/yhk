@@ -1,46 +1,19 @@
-/* Layout styles for sticky navigation */
-body {
-  margin: 0;
+/* Layout styles for fixed navigation */
+.main-content.with-nav {
+  margin-top: 0; /* Adjust based on nav height */
+  padding-top: 0;
 }
 
-main {
-  padding-top: clamp(80px, 18vh, 160px); /* Fluid nav spacing */
-  min-height: calc(100vh - clamp(80px, 18vh, 160px));
+.main-content.full-page {
+  margin-top: 0;
+  padding-top: 0;
 }
 
-@media (max-width: 1024px) {
-  main {
-    padding-top: clamp(5rem, 15vh, 7rem);
-  }
-}
-
-@media (max-width: 768px) {
-  main {
-    padding-top: clamp(5rem, 15vh, 6rem);
-  }
-}
-
-@media (max-width: 480px) {
-  main {
-    padding-top: clamp(4.5rem, 14vh, 5.5rem);
-  }
-}
-
-/* Page content */
-.page-content {
-  padding: clamp(1.25rem, 5vw, 2.5rem);
-  max-width: min(1400px, 95vw);
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(2rem, 5vw, 4rem);
-}
-
-/* Ensure nav stays sticky */
+/* Ensure nav stays fixed */
 .header {
   position: sticky;
   top: 0;
   z-index: 1000;
   background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }

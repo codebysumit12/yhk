@@ -6,10 +6,8 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const dropdownRef = useRef(null);
-  const mobileMenuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,17 +58,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     };
   }, []);
 
-  // Close mobile menu on resize to desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   // Pages where Nav should NOT render
   const noNavPages = ['/auth', '/register', '/admin', '/delivery-app'];
   
@@ -95,21 +82,12 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
   const toggleProfileDropdown = () => {
     setShowProfileDropdown(!showProfileDropdown);
-    setIsMobileMenuOpen(false); // Close mobile menu when opening profile
-  };
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
   };
 
   const handleDropdownClick = (path) => {
     setShowProfileDropdown(false);
-    closeMobileMenu();
     if (path === '/cart') {
+      // Handle cart opening specially
       if (onOpenCart) {
         onOpenCart();
       }
@@ -128,10 +106,10 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     return names[0][0];
   };
 
-  // ✅ Helper function to check if link is active
+  // Helper function to check if link is active
   const isActive = (path) => {
-    if (path === '/customer') {
-      return location.pathname === '/customer' || location.pathname === '/';
+    if (path === '/app') {
+      return location.pathname === '/app' || location.pathname === '/';
     }
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
@@ -140,7 +118,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     <>
       <header className="header">
         <div className="header-top">
-          <Link to="/" className="logo">
+          <Link to="/app" className="logo">
             <div className="logo-icon">
               <i className="fas fa-carrot"></i>
             </div>
@@ -164,16 +142,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           </div>
           
           <div className="header-actions">
-              <button 
-                className={`hamburger-btn ${isMobileMenuOpen ? 'active' : ''}`}
-                onClick={toggleMobileMenu}
-                aria-label="Toggle menu"
-                ref={mobileMenuRef}
-              >
-                <span></span>
-                <span></span>
-                <span></span>
-              </button>
             {user ? (
               <div className="profile-section" ref={dropdownRef}>
                 <button 
@@ -215,7 +183,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
                     <div className="dropdown-menu">
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/track-order')}
+                        onClick={() => handleDropdownClick('/app/track-order')}
                       >
                         <i className="fas fa-map-marker-alt"></i>
                         <span>Track My Order</span>
@@ -223,7 +191,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/my-orders')}
+                        onClick={() => handleDropdownClick('/app/my-orders')}
                       >
                         <i className="fas fa-receipt"></i>
                         <span>My Orders</span>
@@ -242,7 +210,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/profile')}
+                        onClick={() => handleDropdownClick('/app/profile')}
                       >
                         <i className="fas fa-user-circle"></i>
                         <span>My Profile</span>
@@ -281,36 +249,29 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           </div>
         </div>
         
-        <nav className={`nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-          <Link to="/customer" className={isActive('/customer') ? 'active' : ''} onClick={closeMobileMenu}>
+        <nav className="nav">
+          <Link to="/app" className={isActive('/app') ? 'active' : ''}>
             <i className="fas fa-home"></i> Home
           </Link>
-          <Link to="/menucard" className={isActive('/menucard') ? 'active' : ''} onClick={closeMobileMenu}>
+          <Link to="/app/menucard" className={isActive('/app/menucard') ? 'active' : ''}>
             <i className="fas fa-utensils"></i> Menu
           </Link>
-          <Link to="/trending" className={isActive('/trending') ? 'active' : ''} onClick={closeMobileMenu}>
+          <Link to="/app/trending" className={isActive('/app/trending') ? 'active' : ''}>
             <i className="fas fa-fire"></i> Trending
           </Link>
-          <Link to="/offers" className={isActive('/offers') ? 'active' : ''} onClick={closeMobileMenu}>
+          <Link to="/app/offers" className={isActive('/app/offers') ? 'active' : ''}>
             <i className="fas fa-percent"></i> Offers
           </Link>
-          <Link to="/onlyveg?type=drinks" className={isActive('/onlyveg?type=drinks') ? 'active' : ''} onClick={closeMobileMenu}>
+          <Link to="/app/onlyveg?type=drinks" className={isActive('/app/onlyveg?type=drinks') ? 'active' : ''}>
             <i className="fas fa-mug-hot"></i> Drinks
           </Link>
-          <Link to="/onlyveg?type=smoothies" className={isActive('/onlyveg?type=smoothies') ? 'active' : ''} onClick={closeMobileMenu}>
+          <Link to="/app/onlyveg?type=smoothies" className={isActive('/app/onlyveg?type=smoothies') ? 'active' : ''}>
             <i className="fas fa-blender"></i> Smoothies
           </Link>
-          <Link to="/onlyveg?type=desserts" className={isActive('/onlyveg?type=desserts') ? 'active' : ''} onClick={closeMobileMenu}>
+          <Link to="/app/onlyveg?type=desserts" className={isActive('/app/onlyveg?type=desserts') ? 'active' : ''}>
             <i className="fas fa-birthday-cake"></i> Desserts
           </Link>
         </nav>
-
-        {isMobileMenuOpen && (
-          <div 
-            className="mobile-menu-backdrop" 
-            onClick={closeMobileMenu}
-          />
-        )}
       </header>
     </>
   );

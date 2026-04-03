@@ -21,23 +21,70 @@ import './App.css';
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const token = localStorage.getItem('token') || localStorage.getItem('userToken');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userStr = localStorage.getItem('user');
 
-  
+  // No token → redirect to auth
   if (!token) {
-        return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
-  if (requiredRole) {
-    if (requiredRole === 'admin' && !user.isAdmin && user.role !== 'admin') {
-            return <Navigate to="/auth" replace />;
-    }
-    if (requiredRole === 'delivery' && user.role !== 'delivery_partner') {
-            return <Navigate to="/" replace />;
-    }
+  // Has token but no user data → clear and redirect
+  if (!userStr) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userToken');
+    return <Navigate to="/auth" replace />;
   }
+
+  try {
+    const user = JSON.parse(userStr);
+
+    // Role-based access control
+    if (requiredRole) {
+      if (requiredRole === 'admin' && !user.isAdmin && user.role !== 'admin') {
+        return <Navigate to="/app" replace />;
+      }
+      if (requiredRole === 'delivery' && user.role !== 'delivery_partner') {
+        return <Navigate to="/app" replace />;
+      }
+    }
 
     return children;
+  } catch (error) {
+    // Invalid user data → clear and redirect
+    console.error('Invalid user data:', error);
+    localStorage.removeItem('token');
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('user');
+    return <Navigate to="/auth" replace />;
+  }
+};
+
+// Public Route - Redirect if already logged in
+const PublicRoute = ({ children }) => {
+  const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+  const userStr = localStorage.getItem('user');
+
+  if (token && userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      
+      // Redirect based on role
+      if (user.isAdmin || user.role === 'admin') {
+        return <Navigate to="/admin" replace />;
+      } else if (user.role === 'delivery_partner') {
+        return <Navigate to="/delivery-app" replace />;
+      } else {
+        return <Navigate to="/app" replace />;
+      }
+    } catch (error) {
+      // Invalid data, let them access auth
+      localStorage.removeItem('token');
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('user');
+    }
+  }
+
+  return children;
 };
 
 function App() {
@@ -66,10 +113,31 @@ function App() {
             } 
           />
           
-          {/* Auth as First Page */}
-          <Route path="/" element={<Auth />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/register" element={<Auth />} />
+          {/* Auth Routes - Public (redirect if already logged in) */}
+          <Route 
+            path="/" 
+            element={
+              <PublicRoute>
+                <Auth />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/auth" 
+            element={
+              <PublicRoute>
+                <Auth />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              <PublicRoute>
+                <Auth />
+              </PublicRoute>
+            } 
+          />
           
           {/* Privacy Policy & Terms */}
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
