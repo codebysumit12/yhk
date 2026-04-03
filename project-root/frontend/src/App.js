@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (requiredRole) {
     if (requiredRole === 'admin' && !user.isAdmin && user.role !== 'admin') {
-            return <Navigate to="/" replace />;
+            return <Navigate to="/auth" replace />;
     }
     if (requiredRole === 'delivery' && user.role !== 'delivery_partner') {
             return <Navigate to="/" replace />;
@@ -66,7 +66,8 @@ function App() {
             } 
           />
           
-          {/* Auth Routes - MUST come before customer routes */}
+          {/* Auth as First Page */}
+          <Route path="/" element={<Auth />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
           
@@ -74,9 +75,9 @@ function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           
-          {/* Customer Routes with Nav - MUST come last */}
-          <Route path="/" element={<CustomerLayout />}>
-            {/* ✅ FIXED: Main landing page at / */}
+          {/* Customer Routes with Nav */}
+          <Route path="/app" element={<CustomerLayout />}>
+            {/* Main app page moved to /app */}
             <Route index element={<Main />} />
               
             {/* Customer Routes */}
