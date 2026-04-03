@@ -1,0 +1,618 @@
+import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
+
+// Email transporter setup
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+// Store OTPs temporarily
+const otpStore = new Map();
+
+// Generate JWT Token
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'yhk_secret_key_2024', {
+    expiresIn: '30d'
+  });
+};
+
+// @desc    Register new user
+// @route   POST /api/auth/register
+// @access  Public
+export const register = async (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+
+    // Validation
+    if (!name || !email || !phone || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide all required fields'
+      });
+    }
+
+    // Check if user exists
+    const userExists = await User.findOne({ 
+      $or: [{ email }, { phone }] 
+    });
+
+    if (userExists) {
+      return res.status(400).json({
+        success: false,
+        message: userExists.email === email 
+          ? 'Email already registered' 
+          : 'Phone number already registered'
+      });
+    }
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      phone,
+      password,
+      role: 'customer' // Default role
+    });
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isVerified: user.isVerified
+      }
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password'
+      });
+    }
+
+    // Find user with password field
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact support.'
+      });
+    }
+
+    // Check if user has password (Firebase users might not)
+    if (!user.password) {
+      return res.status(401).json({
+        success: false,
+        message: 'This account uses phone login. Please use OTP to sign in.'
+      });
+    }
+
+    // Check password
+    const isPasswordCorrect = await user.matchPassword(password);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isAdmin: user.role === 'admin',
+        isVerified: user.isVerified,
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Get current user profile
+// @route   GET /api/auth/me
+// @access  Private
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isVerified: user.isVerified,
+        avatar: user.avatar,
+        addresses: user.addresses,
+        preferences: user.preferences
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, phone, preferences, addresses } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update fields
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (preferences) user.preferences = { ...user.preferences, ...preferences };
+    if (addresses) user.addresses = addresses;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current and new password'
+      });
+    }
+
+    const user = await User.findById(req.user.id).select('+password');
+
+    // Check current password
+    const isPasswordCorrect = await user.matchPassword(currentPassword);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Set new password
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+export const logout = async (req, res) => {
+  try {
+    // In a JWT-based auth, logout is handled client-side by removing the token
+    // But we can add logic here for token blacklisting if needed
+    
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Send Email OTP
+export const sendEmailOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP with 5-minute expiry
+    otpStore.set(email, {
+      otp,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
+    });
+
+    // Send email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'YHK - Your Verification Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #22c55e;">Yeswanth's Healthy Kitchen</h2>
+          <p>Your verification code is:</p>
+          <h1 style="background: #f0fdf4; padding: 20px; text-align: center; color: #22c55e; letter-spacing: 8px;">
+            ${otp}
+          </h1>
+          <p style="color: #64748b;">This code will expire in 5 minutes.</p>
+          <p style="color: #64748b; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({
+      success: true,
+      message: 'OTP sent to your email'
+    });
+  } catch (error) {
+    console.error('Send email OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP'
+    });
+  }
+};
+
+// Verify Email OTP
+export const verifyEmailOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    const storedData = otpStore.get(email);
+
+    if (!storedData) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP expired or invalid'
+      });
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+      otpStore.delete(email);
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired'
+      });
+    }
+
+    if (storedData.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP'
+      });
+    }
+
+    // OTP verified - remove from store
+    otpStore.delete(email);
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user with email
+      user = await User.create({
+        email,
+        name: email.split('@')[0], // temporary name
+        phone: '', // will be added later if needed
+        password: crypto.randomBytes(32).toString('hex'), // random password
+        role: 'customer'
+      });
+    }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isAdmin: user.role === 'admin'
+      }
+    });
+  } catch (error) {
+    console.error('Verify email OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Verification failed'
+    });
+  }
+};
+
+// Google Login
+export const googleLogin = async (req, res) => {
+  try {
+    const { email, name, googleId, photoURL } = req.body;
+
+    if (!email || !googleId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and Google ID are required'
+      });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        email,
+        name: name || email.split('@')[0],
+        phone: '',
+        password: crypto.randomBytes(32).toString('hex'),
+        role: 'customer',
+        googleId,
+        avatar: photoURL
+      });
+    } else if (!user.googleId) {
+      // Link Google account to existing user
+      user.googleId = googleId;
+      if (photoURL) user.avatar = photoURL;
+      await user.save();
+    }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isAdmin: user.role === 'admin',
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Google login failed'
+    });
+  }
+};
+
+// @desc    Firebase phone authentication
+// @route   POST /api/auth/firebase-login
+// @access  Public
+export const firebaseLogin = async (req, res) => {
+  try {
+    const { uid, phone, name, email } = req.body;
+
+    // Validation
+    if (!uid || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Firebase UID and phone number are required'
+      });
+    }
+
+    console.log('Firebase login attempt:', { uid, phone: phone.replace(/\D/g, ''), name });
+
+    // Normalize phone number (remove all non-digits)
+    const normalizedPhone = phone.replace(/\D/g, '');
+    
+    // Generate possible phone number variations to check for conflicts
+    const phoneVariations = [
+      normalizedPhone, // Full number with country code (e.g., 918106961510)
+      normalizedPhone.replace(/^91/, ''), // Without country code (e.g., 8106961510)
+      normalizedPhone.length === 10 ? `91${normalizedPhone}` : null // With country code added (e.g., 918106961510)
+    ].filter(Boolean);
+    
+    // Check if user exists with this Firebase UID
+    let user = await User.findOne({ firebaseUid: uid });
+
+    if (!user) {
+      // Check for existing user with any phone variation
+      for (const phoneVar of phoneVariations) {
+        user = await User.findOne({ phone: phoneVar });
+        if (user) {
+          console.log(`Found existing user with phone variation: ${phoneVar} (original: ${user.phone})`);
+          break;
+        }
+      }
+      
+      if (user) {
+        // Update existing user with Firebase UID and normalize phone
+        user.firebaseUid = uid;
+        user.phone = normalizedPhone; // Normalize to consistent format
+        if (name && user.name !== name) user.name = name;
+        if (email && user.email !== email) user.email = email;
+        user.isPhoneVerified = true;
+        user.isEmailVerified = email ? true : user.isEmailVerified;
+        await user.save();
+        console.log('Updated existing user with Firebase UID and normalized phone:', user._id);
+      } else {
+        // Create new user
+        try {
+          user = new User({
+            firebaseUid: uid,
+            phone: normalizedPhone,
+            name: name || 'User',
+            email: email || `${uid}@firebase.user`,
+            role: 'customer',
+            isPhoneVerified: true,
+            isEmailVerified: email ? true : false,
+            isActive: true
+          });
+          
+          await user.save();
+          console.log('New Firebase user created successfully:', user._id);
+        } catch (saveError) {
+          console.error('User creation failed:', saveError);
+          return res.status(500).json({
+            success: false,
+            message: 'User creation failed: ' + saveError.message,
+            error: saveError.message
+          });
+        }
+      }
+    } else {
+      // Update existing Firebase user if needed
+      let needsUpdate = false;
+      if (name && user.name !== name) {
+        user.name = name;
+        needsUpdate = true;
+      }
+      if (email && user.email !== email) {
+        user.email = email;
+        needsUpdate = true;
+      }
+      if (user.phone !== normalizedPhone) {
+        user.phone = normalizedPhone;
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
+        await user.save();
+        console.log('Updated existing Firebase user:', user._id);
+      }
+    }
+
+    // Generate JWT token with consistent structure
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'yhk_secret_key_2024',
+      { expiresIn: '7d' }
+    );
+
+    console.log('Firebase login successful for user:', user._id);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isAdmin: user.role === 'admin',
+        isPhoneVerified: user.isPhoneVerified,
+        isEmailVerified: user.isEmailVerified
+      }
+    });
+  } catch (error) {
+    console.error('Firebase login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during login',
+      error: error.message
+    });
+  }
+};
