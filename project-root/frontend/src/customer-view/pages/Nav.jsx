@@ -9,7 +9,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   const [cartCount, setCartCount] = useState(0);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ Get current location
+  const location = useLocation();
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -106,10 +106,10 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     return names[0][0];
   };
 
-  // ✅ Helper function to check if link is active
+  // Helper function to check if link is active
   const isActive = (path) => {
-    if (path === '/customer') {
-      return location.pathname === '/customer' || location.pathname === '/';
+    if (path === '/app') {
+      return location.pathname === '/app' || location.pathname === '/';
     }
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
@@ -118,7 +118,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     <>
       <header className="header">
         <div className="header-top">
-          <Link to="/" className="logo">
+          <Link to="/app" className="logo">
             <div className="logo-icon">
               <i className="fas fa-carrot"></i>
             </div>
@@ -183,7 +183,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
                     <div className="dropdown-menu">
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/track-order')}
+                        onClick={() => handleDropdownClick('/app/track-order')}
                       >
                         <i className="fas fa-map-marker-alt"></i>
                         <span>Track My Order</span>
@@ -191,7 +191,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/my-orders')}
+                        onClick={() => handleDropdownClick('/app/my-orders')}
                       >
                         <i className="fas fa-receipt"></i>
                         <span>My Orders</span>
@@ -210,7 +210,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/profile')}
+                        onClick={() => handleDropdownClick('/app/profile')}
                       >
                         <i className="fas fa-user-circle"></i>
                         <span>My Profile</span>
@@ -250,25 +250,25 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
         </div>
         
         <nav className="nav">
-          <Link to="/customer" className={isActive('/customer') ? 'active' : ''}>
+          <Link to="/app" className={isActive('/app') ? 'active' : ''}>
             <i className="fas fa-home"></i> Home
           </Link>
-          <Link to="/menucard" className={isActive('/menucard') ? 'active' : ''}>
+          <Link to="/app/menucard" className={isActive('/app/menucard') ? 'active' : ''}>
             <i className="fas fa-utensils"></i> Menu
           </Link>
-          <Link to="/trending" className={isActive('/trending') ? 'active' : ''}>
+          <Link to="/app/trending" className={isActive('/app/trending') ? 'active' : ''}>
             <i className="fas fa-fire"></i> Trending
           </Link>
-          <Link to="/offers" className={isActive('/offers') ? 'active' : ''}>
+          <Link to="/app/offers" className={isActive('/app/offers') ? 'active' : ''}>
             <i className="fas fa-percent"></i> Offers
           </Link>
-          <Link to="/onlyveg?type=drinks" className={isActive('/onlyveg?type=drinks') ? 'active' : ''}>
+          <Link to="/app/onlyveg?type=drinks" className={isActive('/app/onlyveg?type=drinks') ? 'active' : ''}>
             <i className="fas fa-mug-hot"></i> Drinks
           </Link>
-          <Link to="/onlyveg?type=smoothies" className={isActive('/onlyveg?type=smoothies') ? 'active' : ''}>
+          <Link to="/app/onlyveg?type=smoothies" className={isActive('/app/onlyveg?type=smoothies') ? 'active' : ''}>
             <i className="fas fa-blender"></i> Smoothies
           </Link>
-          <Link to="/onlyveg?type=desserts" className={isActive('/onlyveg?type=desserts') ? 'active' : ''}>
+          <Link to="/app/onlyveg?type=desserts" className={isActive('/app/onlyveg?type=desserts') ? 'active' : ''}>
             <i className="fas fa-birthday-cake"></i> Desserts
           </Link>
         </nav>

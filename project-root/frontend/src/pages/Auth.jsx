@@ -34,7 +34,7 @@ const FieldError = ({ msg }) => msg
 /* ─── SCREENS ─────────────────────────────────────────────────────── */
 
 /* Landing: Phone + Email option, Google button — Swiggy exact */
-const LandingScreen = ({ globalError, globalSuccess, goTo, onGoogleSuccess }) => (
+const LandingScreen = ({ globalError, globalSuccess, goTo, onGoogleSuccess, handleTermsClick, handlePrivacyClick }) => (
   <div className="sa-screen">
     <h2 className="sa-title">Sign in or Sign up</h2>
     <Alert type="error" msg={globalError} />
@@ -75,8 +75,8 @@ const LandingScreen = ({ globalError, globalSuccess, goTo, onGoogleSuccess }) =>
 
     <div className="sa-tnc">
       By continuing, you agree to our{' '}
-      <a href="/terms">Terms of Service</a> and{' '}
-      <a href="/privacy">Privacy Policy</a>.
+      <button onClick={handleTermsClick} className="sa-text-btn">Terms of Service</button> and{' '}
+      <button onClick={handlePrivacyClick} className="sa-text-btn">Privacy Policy</button>.
     </div>
 
     <div className="sa-register-prompt">
@@ -89,7 +89,7 @@ const LandingScreen = ({ globalError, globalSuccess, goTo, onGoogleSuccess }) =>
 );
 
 /* Phone number entry */
-const PhoneScreen = ({ phone, setPhone, phoneError, setPhoneError, isSendingOTP, handleSendOTP, goTo }) => (
+const PhoneScreen = ({ phone, setPhone, phoneError, setPhoneError, isSendingOTP, handleSendOTP, goTo, handleTermsClick, handlePrivacyClick }) => (
   <div className="sa-screen">
     <BackBtn to="landing" goTo={goTo} />
     <h2 className="sa-title">Enter your mobile number</h2>
@@ -129,7 +129,7 @@ const PhoneScreen = ({ phone, setPhone, phoneError, setPhoneError, isSendingOTP,
     </button>
 
     <div className="sa-tnc">
-      By continuing, you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.
+      By continuing, you agree to our <button onClick={handleTermsClick} className="sa-text-btn">Terms</button> and <button onClick={handlePrivacyClick} className="sa-text-btn">Privacy Policy</button>.
     </div>
   </div>
 );
@@ -251,7 +251,7 @@ const EmailScreen = ({
 const RegisterScreen = ({
   globalError, globalSuccess, reg, setReg, regErrors, setRegErrors,
   isRegistering, showRegPass, setShowRegPass, showRegConf, setShowRegConf,
-  handleRegister, goTo
+  handleRegister, goTo, handleTermsClick, handlePrivacyClick
 }) => (
   <div className="sa-screen">
     <BackBtn to="landing" goTo={goTo} />
@@ -352,7 +352,7 @@ const RegisterScreen = ({
       <button type="button" className="sa-text-btn" onClick={() => goTo('email')}>Sign in</button>
     </p>
     <div className="sa-tnc">
-      By creating an account, you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.
+      By creating an account, you agree to our <button onClick={handleTermsClick} className="sa-text-btn">Terms</button> and <button onClick={handlePrivacyClick} className="sa-text-btn">Privacy Policy</button>.
     </div>
   </div>
 );
@@ -373,6 +373,49 @@ function AuthInner() {
   const [screen, setScreen]               = useState('landing');
   const [globalError, setGlobalError]     = useState('');
   const [globalSuccess, setGlobalSuccess] = useState('');
+
+  // Check if user is already authenticated and redirect
+  useEffect(() => {
+    const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+    const userStr = localStorage.getItem('user');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.isAdmin || user.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else if (user.role === 'delivery_partner') {
+          navigate('/delivery-app', { replace: true });
+        } else {
+          navigate('/app', { replace: true });
+        }
+      } catch (error) {
+        // Invalid user data, clear storage and continue
+        localStorage.removeItem('token');
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('user');
+      }
+    }
+  }, [navigate]);
+
+  // Navigation handlers
+  const handleTermsClick = useCallback(() => {
+    window.open('/terms', '_blank');
+  }, []);
+
+  const handlePrivacyClick = useCallback(() => {
+    window.open('/privacy-policy', '_blank');
+  }, []);
+
+  const handleHelpClick = useCallback((e) => {
+    e.preventDefault();
+    window.open('/help', '_blank');
+  }, []);
+
+  const handleLogoClick = useCallback((e) => {
+    e.preventDefault();
+    navigate('/', { replace: true });
+  }, [navigate]);
 
   const [emailVal, setEmailVal]           = useState('');
   const [passVal, setPassVal]             = useState('');
@@ -642,11 +685,11 @@ function AuthInner() {
   const ActiveScreen = SCREENS[screen] || LandingScreen;
 
   const screenProps = {
-    landing:  { globalError, globalSuccess, goTo, onGoogleSuccess: handleGoogleSuccess },
-    phone:    { phone, setPhone, phoneError, setPhoneError, isSendingOTP, handleSendOTP, goTo },
+    landing:  { globalError, globalSuccess, goTo, onGoogleSuccess: handleGoogleSuccess, handleTermsClick, handlePrivacyClick },
+    phone:    { phone, setPhone, phoneError, setPhoneError, isSendingOTP, handleSendOTP, goTo, handleTermsClick, handlePrivacyClick },
     otp:      { phone, otpDigits, otpError, otpTimer, resendTimer, isVerifyingOTP, otpExpired:otpExpiredState, handleOtpChange, handleOtpKeyDown, handleVerifyOTP, handleResendOTP, globalSuccess, goTo, otpRefs },
     email:    { globalError, globalSuccess, setGlobalError, emailVal, setEmailVal, passVal, setPassVal, showPass, setShowPass, emailLoading, handleEmailLogin, goTo },
-    register: { globalError, globalSuccess, reg, setReg, regErrors, setRegErrors, isRegistering, showRegPass, setShowRegPass, showRegConf, setShowRegConf, handleRegister, goTo },
+    register: { globalError, globalSuccess, reg, setReg, regErrors, setRegErrors, isRegistering, showRegPass, setShowRegPass, showRegConf, setShowRegConf, handleRegister, goTo, handleTermsClick, handlePrivacyClick },
   };
 
   return (
@@ -655,13 +698,13 @@ function AuthInner() {
 
       {/* ── LEFT: full-height food image panel ── */}
       <div className="sa-left">
-        <a href="/" className="sa-brand-link">
+        <button onClick={handleLogoClick} className="sa-brand-link">
           <div className="sa-brand-logo">YK</div>
           <div>
             <div className="sa-brand-name">Yeswanth's Healthy Kitchen</div>
             <div className="sa-brand-tag">Fresh food. Fast delivery.</div>
           </div>
-        </a>
+        </button>
 
         {/* Big food illustration area */}
         <div className="sa-food-display">
@@ -692,11 +735,9 @@ function AuthInner() {
           <ActiveScreen {...screenProps[screen]} />
         </div>
         <div className="sa-right-footer">
-          <a href="/terms">Terms</a>
+          <button onClick={handleTermsClick} className="sa-text-btn">Terms</button>
           <span>·</span>
-          <a href="/privacy">Privacy</a>
-          <span>·</span>
-          <a href="/help">Help</a>
+          <button onClick={handlePrivacyClick} className="sa-text-btn">Privacy</button>
         </div>
       </div>
     </div>
