@@ -80,7 +80,7 @@ const HeroBannerVideo = ({ heroBanner, onError }) => {
       </div>
 
       {/* Hero Content */}
-      <div className="hero-content">
+<div className="hero-content with-top-gap">
         <div className="hero-text">
           <h1>Yeswanth's Healthy Kitchen</h1>
           <p>Delicious healthy food delivered to your doorstep</p>

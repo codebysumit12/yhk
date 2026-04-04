@@ -299,11 +299,11 @@ i, .fas, .far, .fab, .fa {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6)), 
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(46, 204, 113, 0.8)),
                 url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80');
     background-size: cover;
     background-position: center;
-    padding: 60px 50px;
+    padding: 80px 50px;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -321,6 +321,17 @@ i, .fas, .far, .fab, .fa {
     font-weight: 700;
     margin-bottom: 15px;
     text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.hero-subtitle {
+    color: rgba(255,255,255,0.95);
+    font-size: 24px;
+    font-weight: 400;
+    margin: 10px 0 40px 0;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .hero p {
@@ -782,12 +793,26 @@ i, .fas, .far, .fab, .fa {
         margin: 0;
     }
     
+    /* Keep header-actions visible for hamburger */
     .header-actions {
-        display: none;
+        display: flex !important;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .header-actions .profile-section,
+    .header-actions .login-btn {
+        display: none !important;
     }
     
     .hamburger-btn {
-        display: block;
+        display: flex !important;
+        order: -1;
+        margin-right: auto;
+    }
+    
+    .nav {
+        display: none;
     }
     
     .hero h1 {

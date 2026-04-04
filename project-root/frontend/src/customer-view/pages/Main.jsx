@@ -111,7 +111,8 @@ const Main = ({ restaurants }) => {
           backgroundRepeat: 'no-repeat'
         }}>
           <div className="hero-content">
-            <h1>Yeswanth's Healthy Kitchen</h1>
+<h1>Yeswanth's Healthy Kitchen</h1>
+            <p className="hero-subtitle">Delicious healthy food delivered to your doorstep</p>
 
             {/* Quick Links Section */}
           <div className="quick-links-section">
