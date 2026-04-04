@@ -1,0 +1,19 @@
+/* Layout styles for fixed navigation */
+.main-content.with-nav {
+  margin-top: 0; /* Adjust based on nav height */
+  padding-top: 0;
+}
+
+.main-content.full-page {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Ensure nav stays fixed */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

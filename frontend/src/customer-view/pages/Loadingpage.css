@@ -1,0 +1,503 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ── Design tokens ── */
+:root {
+  --yhk-green:      #15803d;
+  --yhk-green-mid:  #22c55e;
+  --yhk-green-pale: #f0fdf4;
+  --yhk-cream:      #fefce8;
+  --yhk-text:       #1c3829;
+  --yhk-muted:      #6b8f74;
+}
+
+/* ── Full-page overlay ── */
+.loading-page {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #f0fdf4 0%, #fefce8 60%, #ecfdf5 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  overflow: hidden;
+}
+
+.loading-page--visible {
+  opacity: 1;
+}
+
+/* ── Floating background leaves ── */
+.loading-bg-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bg-leaf {
+  position: absolute;
+  font-size: 32px;
+  opacity: 0.08;
+  animation: leafDrift 12s ease-in-out infinite;
+}
+
+.bg-leaf--1 { top: 8%;  left: 6%;   animation-delay: 0s;   font-size: 48px; }
+.bg-leaf--2 { top: 15%; right: 8%;  animation-delay: -3s;  font-size: 36px; transform: scaleX(-1); }
+.bg-leaf--3 { bottom: 12%; left: 10%; animation-delay: -6s; font-size: 40px; }
+.bg-leaf--4 { bottom: 20%; right: 6%; animation-delay: -9s; font-size: 28px; transform: rotate(45deg); }
+
+@keyframes leafDrift {
+  0%, 100% { transform: translateY(0)  rotate(0deg); }
+  33%       { transform: translateY(-12px) rotate(6deg); }
+  66%       { transform: translateY(8px)  rotate(-4deg); }
+}
+
+/* ── Central card ── */
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 48px 36px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+  border-radius: 28px;
+  box-shadow:
+    0 4px 40px rgba(21, 128, 61, 0.08),
+    0 1px 0 rgba(255,255,255,0.9) inset;
+  max-width: 360px;
+  width: 88vw;
+}
+
+/* ── Brand ── */
+.loading-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-brand__icon {
+  width: 46px;
+  height: 46px;
+  background: var(--yhk-green);
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 3px 12px rgba(21, 128, 61, 0.3);
+}
+
+.loading-brand__name {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--yhk-text);
+  line-height: 1;
+}
+
+.loading-brand__tagline {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--yhk-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ── Animation stage ── */
+.loading-stage {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Orbiting food items ── */
+.food-orbit {
+  position: absolute;
+  inset: 0;
+  animation: orbitSpin var(--orbit-dur, 10s) linear infinite;
+}
+
+.food-orbit--reverse {
+  animation-direction: reverse;
+}
+
+.food-orbit__item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Rotate to position on the orbit ring, translate outward, counter-rotate to keep upright */
+  transform:
+    rotate(calc(var(--item-angle) + (var(--orbit-dur, 10s) / 1s * 0deg)))
+    translateX(var(--orbit-r))
+    rotate(calc(-1 * var(--item-angle)));
+  margin-top: -0.5em;
+  margin-left: -0.5em;
+  display: block;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));
+  animation: itemCounter var(--orbit-dur, 10s) linear infinite;
+  animation-delay: var(--item-delay, 0s);
+}
+
+.food-orbit--reverse .food-orbit__item {
+  animation-direction: reverse;
+}
+
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Counter-rotation keeps emoji upright */
+@keyframes itemCounter {
+  from { transform: translateX(var(--orbit-r)) rotate(0deg); }
+  to   { transform: translateX(var(--orbit-r)) rotate(-360deg); }
+}
+
+/* ── Scene container ── */
+.loading-scene-wrap {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--yhk-green-pale);
+  border: 2px solid rgba(34, 197, 94, 0.2);
+  border-radius: 50%;
+}
+
+/* ── Pan scene ── */
+.scene--pan {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pan {
+  position: relative;
+  z-index: 2;
+}
+
+.pan__handle {
+  width: 22px;
+  height: 6px;
+  background: #4b5563;
+  border-radius: 3px;
+  margin-left: -14px;
+  margin-bottom: -2px;
+}
+
+.pan__body {
+  width: 38px;
+  height: 18px;
+  background: #374151;
+  border-radius: 0 0 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  animation: panSizzle 0.18s ease-in-out infinite alternate;
+}
+
+@keyframes panSizzle {
+  from { transform: rotate(-1deg); }
+  to   { transform: rotate(1deg); }
+}
+
+.pan__food {
+  animation: foodBounce 0.36s ease-in-out infinite alternate;
+}
+
+@keyframes foodBounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-2px); }
+}
+
+.steam {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+}
+
+.steam__puff {
+  display: block;
+  width: 5px;
+  height: 14px;
+  background: rgba(134, 239, 172, 0.5);
+  border-radius: 10px;
+  animation: steamRise 1.2s ease-in-out infinite;
+}
+
+.steam__puff--1 { animation-delay: 0s; }
+.steam__puff--2 { animation-delay: 0.4s; height: 18px; }
+.steam__puff--3 { animation-delay: 0.8s; }
+
+@keyframes steamRise {
+  0%   { opacity: 0; transform: translateY(0) scaleX(1); }
+  40%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(-20px) scaleX(1.6); }
+}
+
+.flame {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.flame__inner {
+  display: block;
+  font-size: 16px;
+  animation: flameDance 0.5s ease-in-out infinite alternate;
+}
+
+.flame__inner::before { content: '🔥'; }
+
+@keyframes flameDance {
+  from { transform: scaleY(0.85) scaleX(1.1); }
+  to   { transform: scaleY(1.15) scaleX(0.9); }
+}
+
+/* ── Chop scene ── */
+.scene--chop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.board {
+  width: 44px;
+  height: 12px;
+  background: #d97706;
+  border-radius: 3px;
+  opacity: 0.7;
+}
+
+.veggies {
+  font-size: 10px;
+  display: flex;
+  gap: 2px;
+  margin-bottom: -2px;
+}
+
+.knife {
+  font-size: 18px;
+  animation: chopDown 0.6s ease-in-out infinite;
+  transform-origin: top right;
+}
+
+@keyframes chopDown {
+  0%, 100% { transform: rotate(-30deg) translateY(-4px); }
+  50%       { transform: rotate(10deg)  translateY(4px); }
+}
+
+/* ── Pack scene ── */
+.scene--pack {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.box {
+  position: relative;
+  width: 40px;
+}
+
+.box__body {
+  width: 40px;
+  height: 32px;
+  background: #f59e0b;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.box__flap {
+  position: absolute;
+  top: -8px;
+  width: 18px;
+  height: 10px;
+  background: #d97706;
+  border-radius: 2px;
+  transform-origin: bottom center;
+}
+
+.box__flap--left  { left: 0;  animation: flapLeft  1.2s ease-in-out infinite; }
+.box__flap--right { right: 0; animation: flapRight 1.2s ease-in-out infinite; }
+
+@keyframes flapLeft  {
+  0%, 100% { transform: rotate(-30deg); }
+  50%      { transform: rotate(0deg);  }
+}
+@keyframes flapRight {
+  0%, 100% { transform: rotate(30deg); }
+  50%      { transform: rotate(0deg);  }
+}
+
+.box__food { animation: popIn 0.6s ease-in-out infinite alternate; }
+
+@keyframes popIn {
+  from { transform: scale(0.9); }
+  to   { transform: scale(1.1); }
+}
+
+/* ── Deliver scene ── */
+.scene--deliver {
+  position: relative;
+  width: 72px;
+  overflow: hidden;
+}
+
+.scooter {
+  font-size: 26px;
+  display: block;
+  animation: scooterBounce 0.4s ease-in-out infinite alternate;
+  filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.15));
+}
+
+@keyframes scooterBounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-3px); }
+}
+
+.road {
+  height: 2px;
+  background: rgba(21, 128, 61, 0.3);
+  border-radius: 1px;
+  margin-top: 2px;
+}
+
+.dash {
+  position: absolute;
+  bottom: 4px;
+  height: 2px;
+  width: 10px;
+  background: rgba(21, 128, 61, 0.3);
+  border-radius: 1px;
+  animation: dashMove 0.8s linear infinite;
+}
+
+.dash--1 { left: 20%; animation-delay: 0s; }
+.dash--2 { left: 50%; animation-delay: -0.27s; }
+.dash--3 { left: 80%; animation-delay: -0.53s; }
+
+@keyframes dashMove {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(-60px); opacity: 0; }
+}
+
+/* ── Message ── */
+.loading-message {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--yhk-muted);
+  text-align: center;
+  min-height: 1.5em;
+  margin: 0;
+  animation: messageFade 0.5s ease;
+}
+
+@keyframes messageFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Progress bar ── */
+.progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(34, 197, 94, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Dot indicators ── */
+.loading-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.loading-dots span {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--yhk-green-mid);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .loading-card {
+    padding: 28px 24px 26px;
+    gap: 16px;
+    border-radius: 20px;
+    max-width: 320px;
+  }
+
+  .loading-stage {
+    width: 200px;
+    height: 200px;
+  }
+
+  .loading-brand__name { font-size: 18px; }
+  .loading-message { font-size: 13px; }
+
+  .bg-leaf { display: none; }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .food-orbit,
+  .food-orbit__item,
+  .pan__body,
+  .pan__food,
+  .steam__puff,
+  .flame__inner,
+  .knife,
+  .box__flap--left,
+  .box__flap--right,
+  .box__food,
+  .scooter,
+  .dash,
+  .bg-leaf,
+  .loading-dots span {
+    animation: none !important;
+    transition: none !important;
+  }
+}
