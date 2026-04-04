@@ -4,6 +4,7 @@ import './Nav.css';
 
 const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
@@ -142,6 +143,12 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           </div>
           
           <div className="header-actions">
+            <button 
+              className={`hamburger-btn ${mobileMenuOpen ? 'open' : ''}`} 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+☰
+            </button>
             {user ? (
               <div className="profile-section" ref={dropdownRef}>
                 <button 
@@ -273,6 +280,48 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           </Link>
         </nav>
       </header>
+
+      {mobileMenuOpen && (
+        <>
+          <div 
+            className="mobile-menu-backdrop" 
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+            <div className="mobile-menu-content">
+              <div className="mobile-menu-header">
+                <a href="/" className="mobile-logo">
+                  <i className="fas fa-carrot"></i>
+                  Yeswanth's Healthy Kitchen
+                </a>
+                <button 
+                  className="close-btn"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              {/* No nav links in hamburger menu per request */}
+              <div className="mobile-menu-actions">
+                {user ? (
+                  <button 
+                    className="mobile-profile-btn"
+                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/profile'); }}
+                  >
+                    <i className="fas fa-user-circle"></i>
+                    Profile
+                  </button>
+                ) : (
+                  <Link to="/auth" className="mobile-login-btn" onClick={() => setMobileMenuOpen(false)}>
+                    <i className="fas fa-user"></i>
+                    Login / Sign Up
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };
