@@ -12,6 +12,7 @@ import Checkoutpage from './customer-view/pages/Checkoutpage';
 import TrackOrder from './customer-view/pages/TrackMyOrder';
 import MyOrders from './customer-view/pages/MyOrders';
 import MyProfile from './customer-view/pages/MyProfile';
+import ItemDetailPage from './customer-view/pages/ItemDetailPage'; // NEW - Item detail page
 import AdminLayout from './admin-view/layout/AdminLayout';
 import DeliveryBoyApp from './admin-view/pages/DeliveryBoyApp';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -205,6 +206,14 @@ function App() {
             <ProtectedRoute>
               <CustomerLayout>
                 <MyProfile />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/item/:id" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <ItemDetailPage />
               </CustomerLayout>
             </ProtectedRoute>
           } />

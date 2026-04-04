@@ -12,7 +12,6 @@ const CustomerLayout = ({ children }) => {
   // Sync cart with localStorage
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('storage'));
   }, [cart]);
 
   // Listen for storage events from other tabs/components

@@ -18,12 +18,10 @@ import bannerRoutes from './routes/bannerRoutes.js';
 import ingredientRoutes from './routes/ingredientRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
+import searchRoutes from './routes/searchRoutes.js'; // NEW - Search routes
+import simpleSearchRoutes from './routes/simpleSearchRoutes.js'; // NEW - Simple search routes
 
-
-
-
-
-
+// ... rest of the code remains the same ...
 import User from './models/User.js';
 
 // Import cleanup script
@@ -119,6 +117,8 @@ app.use('/api/items', itemRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api', searchRoutes); // NEW - Search routes (add after existing routes)
+app.use('/api', simpleSearchRoutes); // NEW - Simple search routes (standalone)
 
 // Health check route
 app.get('/api/health', (req, res) => {
