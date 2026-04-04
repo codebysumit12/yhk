@@ -33,6 +33,11 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     }
   };
 
+  // Update cart count when cart prop changes
+  useEffect(() => {
+    updateCartCount();
+  }, [cart]);
+
   // Listen for storage changes (when cart is updated)
   useEffect(() => {
     const handleStorageChange = () => {

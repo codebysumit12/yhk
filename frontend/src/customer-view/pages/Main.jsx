@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import CartSidebar from './CartSidebar';
-import CartNotification from './CartNotification';
 import YHKLoader from './Yhkloader';
 import HeroBannerVideo from '../components/HeroBannerVideo';
 import { API_CONFIG } from '../../config/api';
@@ -14,38 +12,13 @@ const Main = ({ restaurants }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [heroBanner, setHeroBanner] = useState(null);
   const [heroVideoError, setHeroVideoError] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   
   // Categories state
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
-
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
-
   const navigate = useNavigate();
-
-  // Sync cart with localStorage
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('storage'));
-  }, [cart]);
-
-  // Listen for storage events from other tabs/components
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
 
   // Fetch hero banner on mount
@@ -106,19 +79,8 @@ const Main = ({ restaurants }) => {
     navigate(`/menu/${category.slug}`);
   };
 
-  const handleViewCart = () => {
-    setShowNotification(false);
-    setIsCartOpen(true);
-  };
-
   return (
     <React.Fragment>
-      <CartNotification
-        show={showNotification}
-        onViewCart={handleViewCart}
-        onClose={() => setShowNotification(false)}
-      />
-
       {heroBanner && heroBanner.mediaType === 'video' && !heroVideoError ? (
         <HeroBannerVideo
           heroBanner={heroBanner}
@@ -365,24 +327,7 @@ const Main = ({ restaurants }) => {
         </div>
       </footer>
 
-      {cart.length > 0 && (
-        <button
-          className="floating-cart"
-          onClick={() => setIsCartOpen(true)}
-        >
-          <i className="fas fa-shopping-cart"></i>
-          <span className="cart-count-badge">
-            {cart.reduce((total, item) => total + (item.quantity || 1), 0)}
-          </span>
-        </button>
-      )}
-
-      <CartSidebar
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cart={cart}
-      />
-    </React.Fragment>
+      </React.Fragment>
   );
 };
 
