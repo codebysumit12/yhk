@@ -3,6 +3,7 @@ import './trackmyorder.css';
 import { API_CONFIG } from '../../config/api';
 
 const TrackOrder = () => {
+  console.log(' TrackOrder component mounted!');
   const [trackingMode, setTrackingMode] = useState('loading'); // 'loading', 'orders', 'tracking'
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);

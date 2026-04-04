@@ -7,6 +7,7 @@ import './MyOrders.css';
 import './rating-feature.css';
 
 const MyOrders = () => {
+  console.log('🚀 MyOrders component mounted!');
   const [orders, setOrders]               = useState([]);
   const [loading, setLoading]             = useState(false);
   const [filterStatus, setFilterStatus]   = useState('all');

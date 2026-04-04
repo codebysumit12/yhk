@@ -21,7 +21,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
     // Get cart count from localStorage or from prop
     updateCartCount();
-  }, [cart]);
+  }, []); // Only run on mount, not when cart changes
 
   // Update cart count
   const updateCartCount = () => {
@@ -91,6 +91,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   };
 
   const handleDropdownClick = (path) => {
+    console.log('🔍 Navigation clicked:', path);
     setShowProfileDropdown(false);
     if (path === '/cart') {
       // Handle cart opening specially
@@ -98,6 +99,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
         onOpenCart();
       }
     } else if (path) {
+      console.log('🚀 Navigating to:', path);
       navigate(path);
     }
   };
