@@ -1,31 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './MobileTabs.css';
 
 const MobileTabs = () => {
   const [activeTab, setActiveTab] = useState('home');
   const tabsRef = useRef(null);
+  const navigate = useNavigate();
 
   const categories = [
-    { id: 'home', label: 'Home' },
-    { id: 'menu', label: 'Menu' },
-    { id: 'trending', label: 'Trending' },
-    { id: 'offers', label: 'Offers' },
-    { id: 'drinks', label: 'Drinks' },
-    { id: 'smoothies', label: 'Smoothies' },
-    { id: 'desserts', label: 'Desserts' }
+    { id: 'home', label: 'Home', route: '/' },
+    { id: 'menu', label: 'Menu', route: '/menucard' },
+    { id: 'trending', label: 'Trending', route: '/trending' },
+    { id: 'offers', label: 'Offers', route: '/offers' },
+    { id: 'drinks', label: 'Drinks', route: '/onlyveg?type=drinks' },
+    { id: 'smoothies', label: 'Smoothies', route: '/onlyveg?type=smoothies' },
+    { id: 'desserts', label: 'Desserts', route: '/onlyveg?type=desserts' }
   ];
 
-  const handleTabClick = (categoryId) => {
-    setActiveTab(categoryId);
-    
-    // Scroll to section if it exists
-    const section = document.getElementById(categoryId);
-    if (section) {
-      section.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
+  const handleTabClick = (category) => {
+    setActiveTab(category.id);
+    console.log(`Navigating to: ${category.route}`);
+    navigate(category.route);
   };
 
   // Handle scroll wheel for horizontal scrolling
@@ -54,7 +49,7 @@ const MobileTabs = () => {
           <button
             key={category.id}
             className={`mobile-tab ${activeTab === category.id ? 'active' : ''}`}
-            onClick={() => handleTabClick(category.id)}
+            onClick={() => handleTabClick(category)}
           >
             {category.label}
           </button>

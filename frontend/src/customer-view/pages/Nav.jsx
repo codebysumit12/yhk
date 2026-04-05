@@ -289,15 +289,53 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
                   <i className="fas fa-times"></i>
                 </button>
               </div>
-              {/* No nav links in hamburger menu per request */}
-              <div className="mobile-menu-actions">
-                {user ? (
+              
+              <div className="mobile-nav">
+                <button 
+                  className="mobile-nav-link track-order-btn"
+                  onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/track-order'); }}
+                >
+                  <i className="fas fa-map-marker-alt"></i>
+                  Track My Order
+                </button>
+                {user && (
                   <button 
-                    className="mobile-profile-btn"
+                    className="mobile-nav-link my-orders-btn"
+                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/my-orders'); }}
+                  >
+                    <i className="fas fa-receipt"></i>
+                    My Orders
+                  </button>
+                )}
+                <button 
+                  className="mobile-nav-link cart-btn"
+                  onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/cart'); }}
+                >
+                  <i className="fas fa-shopping-cart"></i>
+                  Cart
+                  {cartCount > 0 && (
+                    <span className="cart-count-badge">{cartCount}</span>
+                  )}
+                </button>
+                {user && (
+                  <button 
+                    className="mobile-nav-link"
                     onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/profile'); }}
                   >
                     <i className="fas fa-user-circle"></i>
                     Profile
+                  </button>
+                )}
+              </div>
+              
+              <div className="mobile-menu-actions">
+                {user ? (
+                  <button 
+                    className="mobile-logout-btn"
+                    onClick={handleLogout}
+                  >
+                    <i className="fas fa-sign-out-alt"></i>
+                    Logout
                   </button>
                 ) : (
                   <Link to="/auth" className="mobile-login-btn" onClick={() => setMobileMenuOpen(false)}>
