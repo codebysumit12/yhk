@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import SearchComponent from '../components/SearchComponent';
 import './Nav.css';
 
 const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -11,6 +11,16 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Update cart count
+  const updateCartCount = useCallback(() => {
+    if (cart && Array.isArray(cart)) {
+      setCartCount(cart.reduce((total, item) => total + (item.quantity || 1), 0));
+    } else {
+      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartCount(cartData.reduce((total, item) => total + (item.quantity || 1), 0));
+    }
+  }, [cart]);
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -21,17 +31,12 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
     // Get cart count from localStorage or from prop
     updateCartCount();
-  }, [cart]);
+  }, [updateCartCount]);
 
-  // Update cart count
-  const updateCartCount = () => {
-    if (cart && Array.isArray(cart)) {
-      setCartCount(cart.reduce((total, item) => total + (item.quantity || 1), 0));
-    } else {
-      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
-      setCartCount(cartData.reduce((total, item) => total + (item.quantity || 1), 0));
-    }
-  };
+  // Update cart count when cart prop changes
+  useEffect(() => {
+    updateCartCount();
+  }, [updateCartCount]);
 
   // Listen for storage changes (when cart is updated)
   useEffect(() => {
@@ -43,7 +48,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [updateCartCount]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -66,11 +71,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   if (noNavPages.some(page => location.pathname.startsWith(page))) {
     return null;
   }
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log('Searching for:', searchQuery);
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('userToken');
@@ -97,7 +97,15 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     }
   };
 
-  // Get user initials for avatar
+  // Helper function to check if link is active
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname === '/';
+    }
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  // Helper function to get user initials
   const getUserInitials = () => {
     if (!user?.name) return '?';
     const names = user.name.split(' ');
@@ -105,14 +113,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
       return names[0][0] + names[names.length - 1][0];
     }
     return names[0][0];
-  };
-
-  // Helper function to check if link is active
-  const isActive = (path) => {
-    if (path === '/') {
-      return location.pathname === '/' || location.pathname === '/';
-    }
-    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (
@@ -127,19 +127,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           </Link>
           
           <div className="header-search">
-            <div className="search-bar">
-              <input 
-                type="text" 
-                id="searchInput" 
-                placeholder="Search for the best food..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
-              />
-              <button className="search-btn" onClick={handleSearch}>
-                <i className="fas fa-search"></i>
-              </button>
-            </div>
+            <SearchComponent placeholder="Search for the best food..." />
           </div>
           
           <div className="header-actions">
