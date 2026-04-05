@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import SearchComponent from '../components/SearchComponent'; // NEW - Import search component
 import './Nav.css';
 
 const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -21,24 +21,29 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
     // Get cart count from localStorage or from prop
     updateCartCount();
-  }, []); // Only run on mount, not when cart changes
-
-  // Update cart count
-  const updateCartCount = useCallback(() => {
-    if (cart && Array.isArray(cart)) {
-      const newCount = cart.reduce((total, item) => total + (item.quantity || 1), 0);
-      setCartCount(newCount);
-    } else {
-      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
-      const newCount = cartData.reduce((total, item) => total + (item.quantity || 1), 0);
-      setCartCount(newCount);
-    }
   }, [cart]);
 
-  // Update cart count when cart prop changes
+  // Update cart count
+  const updateCartCount = () => {
+    if (cart && Array.isArray(cart)) {
+      setCartCount(cart.reduce((total, item) => total + (item.quantity || 1), 0));
+    } else {
+      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartCount(cartData.reduce((total, item) => total + (item.quantity || 1), 0));
+    }
+  };
+
+  // Listen for storage changes (when cart is updated)
   useEffect(() => {
-    updateCartCount();
-  }, [updateCartCount]);
+    const handleStorageChange = () => {
+      updateCartCount();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -62,6 +67,11 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     return null;
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log('Searching for:', searchQuery);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('userToken');
     localStorage.removeItem('user');
@@ -76,7 +86,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   };
 
   const handleDropdownClick = (path) => {
-    console.log('🔍 Navigation clicked:', path);
     setShowProfileDropdown(false);
     if (path === '/cart') {
       // Handle cart opening specially
@@ -84,7 +93,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
         onOpenCart();
       }
     } else if (path) {
-      console.log('🚀 Navigating to:', path);
       navigate(path);
     }
   };
@@ -119,7 +127,19 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           </Link>
           
           <div className="header-search">
-            <SearchComponent placeholder="Search for the best food..." />
+            <div className="search-bar">
+              <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search for the best food..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
+              />
+              <button className="search-btn" onClick={handleSearch}>
+                <i className="fas fa-search"></i>
+              </button>
+            </div>
           </div>
           
           <div className="header-actions">
