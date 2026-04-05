@@ -738,10 +738,15 @@
 /* ========================================
    RESPONSIVE - HIDE DESKTOP ELEMENTS
    ======================================== */
-
+/* Mobile-only visibility */
 @media (max-width: 768px) {
-  .hamburger-btn {
-    display: flex;
+  .mobile-tabs-container {
+    display: block; /* Show only on mobile */
+  }
+  
+  /* Hide desktop navigation on mobile */
+  .nav {
+    display: none !important;
   }
   
   .header-actions {

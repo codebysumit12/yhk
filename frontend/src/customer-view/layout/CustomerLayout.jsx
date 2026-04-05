@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Nav from '../pages/Nav';
 import CartSidebar from '../pages/CartSidebar';
+import MobileTabs from '../components/MobileTabs';
 
 const CustomerLayout = ({ children }) => {
   const [cart, setCart] = useState(() => {
@@ -38,6 +39,7 @@ const CustomerLayout = ({ children }) => {
         showCart={isCartOpen} 
         setShowCart={setIsCartOpen} 
       />
+      <MobileTabs />
       {children}
       <CartSidebar
         isOpen={isCartOpen}
