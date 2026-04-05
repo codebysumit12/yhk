@@ -1,5 +1,5 @@
 /* ========================================
-   PROFILE SECTION
+   PROFILE SECTION after push
    ======================================== */
 
 .profile-section {
@@ -307,11 +307,11 @@
   font-size: 24px;
   color: #0f2d1a;
   cursor: pointer;
-  padding: 8px ;
+  padding: 8px;
   border-radius: 8px;
   transition: all 0.3s ease;
   z-index: 1002;
-  
+  margin-left: auto;
 }
 
 .hamburger-btn:hover {
@@ -501,12 +501,12 @@
   
   .header-actions {
     position: absolute;
-    top: 50%;
     right: 20px;
+    top: 50%;
     transform: translateY(-50%);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    z-index: 1003;
   }
 
   .header-actions .profile-section,
@@ -519,6 +519,20 @@
   }
   
   .nav {
+    display: flex !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 12px 20px;
+    gap: 12px;
+    border-top: 1px solid #e8e8e8;
+    background: white;
+  }
+
+  .nav::-webkit-scrollbar {
     display: none;
   }
   
@@ -527,22 +541,29 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     padding: 15px 20px;
     position: relative;
   }
 
-  .header-logo {
-    flex-shrink: 0;
+  .logo {
+    align-self: center;
+    font-size: 1.4rem;
   }
 
   .header-search {
     flex: 1;
-    max-width: 400px;
-    margin: 0 20px;
-    order: 2;
+    max-width: none;
+    margin: 0 100px 0 20px;
+    order: 0;
   }
   
-  /* Adjusted above in .header-top */
+  .nav a {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
 
   .profile-dropdown {
     width: 280px;
@@ -740,22 +761,27 @@
 }
 
 @media (max-width: 480px) {
+  .header-top {
+    padding: 12px 15px;
+    gap: 10px;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
   .nav {
-    gap: 5px;
-    padding: 0 10px;
+    padding: 10px 15px;
+    gap: 8px;
   }
   
   .nav a {
     font-size: 12px;
-    padding: 6px 8px;
+    padding: 8px 12px;
   }
   
   .nav a i {
     font-size: 12px;
-  }
-  
-  .track-order-nav i {
-    font-size: 14px !important;
   }
 }
 
