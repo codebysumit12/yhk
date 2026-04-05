@@ -749,9 +749,9 @@
     top: 50%;
     right: 20px;
     transform: translateY(-50%);
-    display: flex;
+    display: flex !important;
     align-items: center;
-    justify-content: flex-end;
+    z-index: 1003;
   }
 
   .header-actions .profile-section,
