@@ -5,10 +5,10 @@
   "main": "project-root/backend/server.js",
   "type": "module",
   "scripts": {
-    "start": "cd project-root/backend && node server.js",
-    "dev": "cd project-root/backend && nodemon server.js",
-    "build": "cd project-root/backend && npm install --production",
-    "postinstall": "cd project-root/backend && npm install nodemailer@latest"
+    "start": "node project-root/backend/server.js",
+    "dev": "nodemon project-root/backend/server.js",
+    "build": "npm install --production",
+    "postinstall": "npm install nodemailer@latest"
   },
   "engines": {
     "node": ">=18.0.0"
