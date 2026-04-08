@@ -3,22 +3,48 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
-// Import nodemailer with fallback
-import nodemailer from 'nodemailer';
+// Dynamic import with fallback for deployment compatibility
+let transporter;
+let emailService = null;
 
-// Email transporter setup with fallback
-const transporter = nodemailer ? nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-}) : {
-  sendMail: async (options) => {
-    console.log('Email sending disabled (nodemailer not available):', options);
-    return { messageId: 'fallback-id' };
+// Initialize email service
+const initializeEmailService = async () => {
+  try {
+    // Try dynamic import first
+    const nodemailerModule = await import('nodemailer');
+    emailService = nodemailerModule.default || nodemailerModule;
+    
+    transporter = emailService.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+    
+    console.log('✅ Email service initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize email service:', error);
+    
+    // Create fallback transport
+    transporter = {
+      sendMail: async (options) => {
+        console.log('📧 Email sending disabled (nodemailer not available):', {
+          to: options.to,
+          subject: options.subject,
+          text: options.text
+        });
+        return { messageId: 'fallback-id', accepted: [] };
+      }
+    };
+    
+    return false;
   }
 };
+
+// Initialize email service at module level
+initializeEmailService();
 
 // Store OTPs temporarily
 const otpStore = new Map();
