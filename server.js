@@ -38,16 +38,93 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
+
 // Connect to MongoDB
 connectDB();
 
-// Auth Routes
-app.post('/api/auth/register', register);
-app.post('/api/auth/login', login);
-app.get('/api/auth/me', getMe);
-app.put('/api/auth/profile', updateProfile);
-app.post('/api/auth/logout', logout);
-app.post('/api/auth/dropdown', handleDropdownClick);
+// Auth Routes with better error handling
+app.post('/api/auth/register', async (req, res, next) => {
+  try {
+    await register(req, res);
+  } catch (error) {
+    console.error('Register route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during registration',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+app.post('/api/auth/login', async (req, res, next) => {
+  try {
+    await login(req, res);
+  } catch (error) {
+    console.error('Login route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during login',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+app.get('/api/auth/me', async (req, res, next) => {
+  try {
+    await getMe(req, res);
+  } catch (error) {
+    console.error('Get user route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error getting user profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+app.put('/api/auth/profile', async (req, res, next) => {
+  try {
+    await updateProfile(req, res);
+  } catch (error) {
+    console.error('Update profile route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res, next) => {
+  try {
+    await logout(req, res);
+  } catch (error) {
+    console.error('Logout route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during logout',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+app.post('/api/auth/dropdown', async (req, res, next) => {
+  try {
+    await handleDropdownClick(req, res);
+  } catch (error) {
+    console.error('Dropdown route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error handling dropdown action',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -57,6 +134,18 @@ app.get('/api/health', (req, res) => {
 // Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
+});
+
+// Debug route to check server status
+app.get('/api/debug', (req, res) => {
+  res.json({
+    message: 'Debug info',
+    nodeVersion: process.version,
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+    mongodb: process.env.MONGODB_URI ? 'configured' : 'not configured',
+    port: process.env.PORT || 50017
+  });
 });
 
 // Seed Admin User
@@ -88,15 +177,17 @@ const PORT = process.env.PORT || 50017;
 // Start server
 app.listen(PORT, async () => {
   console.log(` Server running on port ${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
   await seedAdminUser();
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Global error handler:', err);
   res.status(500).json({
     success: false,
-    message: err.message || 'Server Error'
+    message: err.message || 'Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
