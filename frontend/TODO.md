@@ -1,10 +1,15 @@
-# Main.jsx Categories Integration
-✅ [DONE] Plan approved and TODO created
+# Mobile Hamburger Menu Fix - TODO
 
-## Implementation Steps:
-✅ Step 1: Update App.js routing (/app → Main.jsx)
-✅ Step 2: Add categories fetch + preview section to Main.jsx (ESLint fixed)
-- [ ] Step 3: Test in browser
-- [ ] Step 4: Mark complete
+## Plan Breakdown (Approved)
+- [x] Step 1: Create TODO.md ✓
+- [x] Step 2: Edit Nav.jsx - Remove debug button and debug div ✓
+- [x] Step 3: Add hamburger button in header-actions ✓
+- [x] Step 4: Reorder/fix mobile menu & backdrop rendering ✓
+- [x] Step 5: Update Nav.css backdrop class ✓
 
-**Current Progress:** Step 1✅ Step 2✅ (ESLint fixed), Ready for Step 3 test
+## Next Steps
+- Test mobile responsiveness in browser dev tools
+- Verify hamburger toggle, backdrop close, profile compatibility
+
+**Reverted hamburger menu code per feedback (no mobile menu for Windows/desktop). Nav now desktop-only.**
+- [ 
