@@ -3,49 +3,18 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import connectDB from './project-root/backend/config/db.js';
+import connectDB from './config/db.js';
 import fs from 'fs';
 
 // Load environment variables
 dotenv.config();
 
-import userRoutes from './project-root/backend/routes/userRoutes.js';
-import orderRoutes from './project-root/backend/routes/orderRoutes.js';   // Import once
-import paymentRoutes from './project-root/backend/routes/paymentRoutes.js';
-import categoryRoutes from './project-root/backend/routes/categoryRoutes.js';
-import itemRoutes from './project-root/backend/routes/itemRoutes.js';
-import bannerRoutes from './project-root/backend/routes/bannerRoutes.js';
-import ingredientRoutes from './project-root/backend/routes/ingredientRoutes.js';
-import authRoutes from './project-root/backend/routes/authRoutes.js';
-import settingsRoutes from './project-root/backend/routes/settingsRoutes.js';
-import searchRoutes from './project-root/backend/routes/searchRoutes.js'; // NEW - Search routes
-import simpleSearchRoutes from './project-root/backend/routes/simpleSearchRoutes.js'; // NEW - Simple search routes
-
-// ... rest of the code remains the same ...
-import User from './project-root/backend/models/User.js';
-
-// Import cleanup script
-// import { cleanupTempFiles } from './utils/cleanupTempFiles.js';
-
-// Import all models to sync with MongoDB
-import './project-root/backend/models/MenuItem.js';
-import './project-root/backend/models/Category.js';
-import './project-root/backend/models/Item.js';
-import './project-root/backend/models/Order.js';
-import './project-root/backend/models/Reservation.js';
-import './project-root/backend/models/Review.js';
-import './project-root/backend/models/Payment.js';
-import './project-root/backend/models/RestaurantInfo.js';
+// Import auth controller with nodemailer fix
+import { register, login, getMe, updateProfile, logout, handleDropdownClick } from './controllers/authController.js';
+import User from './models/User.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads', 'temp');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log(' Created uploads/temp directory');
-}
 
 const app = express();
 
@@ -66,59 +35,19 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Handle JSON parsing with multipart detection
-app.use((req, res, next) => {
-  if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
-    // Skip JSON parsing for multipart requests
-    next();
-  } else {
-    // Parse JSON for non-multipart requests
-    express.json({ limit: '50mb' })(req, res, next);
-  }
-});
-
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// Serve uploaded files with error handling
-app.use('/uploads', (req, res, next) => {
-  const filePath = path.join(__dirname, 'uploads', req.path);
-  
-  // Check if file exists before serving
-  fs.access(filePath, fs.constants.F_OK, (err) => {
-    if (err) {
-      console.log(` Upload file not found: ${req.path}`);
-      console.log(` Looking for file at: ${filePath}`);
-      // Return a placeholder image or 404
-      res.status(404).json({ 
-        message: 'Upload file not found',
-        path: req.path 
-      });
-      return;
-    }
-    
-    // File exists, serve it
-    express.static(path.join(__dirname, 'uploads'))(req, res, next);
-  });
-});
-
-// Serve frontend static files
-app.use(express.static(path.join(__dirname, 'project-root/frontend/build')));
 
 // Connect to MongoDB
 connectDB();
 
-// ROUTES (Use each route ONCE only) - Updated with Razorpay
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/orders', orderRoutes);        
-app.use('/api/payments', paymentRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/items', itemRoutes);
-app.use('/api/ingredients', ingredientRoutes);
-app.use('/api/banners', bannerRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api', searchRoutes); // NEW - Search routes (add after existing routes)
-app.use('/api', simpleSearchRoutes); // NEW - Simple search routes (standalone)
+// Auth Routes
+app.post('/api/auth/register', register);
+app.post('/api/auth/login', login);
+app.get('/api/auth/me', getMe);
+app.put('/api/auth/profile', updateProfile);
+app.post('/api/auth/logout', logout);
+app.post('/api/auth/dropdown', handleDropdownClick);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -133,7 +62,6 @@ app.get('/api/test', (req, res) => {
 // Seed Admin User
 const seedAdminUser = async () => {
   try {
-    // Wait a bit for MongoDB to be fully connected
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     const adminExists = await User.findOne({ email: 'admin@yhk.com' });
@@ -172,5 +100,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Export app for testing
 export default app;

@@ -123,7 +123,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
             <div className="logo-icon">
               <i className="fas fa-carrot"></i>
             </div>
-            Yeswanth's Healthy Kitchensss
+            Yeswanth's Healthy Kitchens
           </Link>
           
           <div className="header-search">
