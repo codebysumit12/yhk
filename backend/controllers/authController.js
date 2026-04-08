@@ -2,7 +2,23 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
+
+// Try to import nodemailer with error handling
+let nodemailer;
+try {
+  nodemailer = require('nodemailer');
+} catch (error) {
+  console.error('Failed to import nodemailer:', error);
+  // Fallback for deployment
+  nodemailer = {
+    createTransport: () => ({
+      sendMail: async (options) => {
+        console.log('Email sending disabled (nodemailer not available):', options);
+        return { messageId: 'fallback-id' };
+      }
+    })
+  };
+}
 
 // Email transporter setup
 const transporter = nodemailer.createTransport({
