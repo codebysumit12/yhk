@@ -47,6 +47,216 @@ app.use((req, res, next) => {
 // Connect to MongoDB
 connectDB();
 
+// Mock data for frontend
+const mockBanners = [
+  {
+    _id: '1',
+    title: 'Welcome to Yashwanth\'s Healthy Kitchen',
+    subtitle: 'Fresh, Healthy, Delicious',
+    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
+    position: 'hero',
+    isActive: true,
+    createdAt: new Date()
+  }
+];
+
+const mockCategories = [
+  {
+    _id: '1',
+    name: 'Starters',
+    description: 'Fresh appetizers to begin your meal',
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
+    isActive: true,
+    order: 1
+  },
+  {
+    _id: '2',
+    name: 'Main Course',
+    description: 'Hearty and satisfying main dishes',
+    image: 'https://images.unsplash.com/photo-1546833999-b03f31985c5e?w=400',
+    isActive: true,
+    order: 2
+  },
+  {
+    _id: '3',
+    name: 'Desserts',
+    description: 'Sweet endings to your meal',
+    image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400',
+    isActive: true,
+    order: 3
+  },
+  {
+    _id: '4',
+    name: 'Beverages',
+    description: 'Refreshing drinks and beverages',
+    image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400',
+    isActive: true,
+    order: 4
+  }
+];
+
+const mockItems = [
+  {
+    _id: '1',
+    name: 'Garden Fresh Salad',
+    description: 'Mixed greens with seasonal vegetables',
+    price: 8.99,
+    category: 'Starters',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
+    isAvailable: true,
+    isPopular: true,
+    isFeatured: true,
+    preparationTime: 10,
+    dietary: ['vegetarian', 'gluten-free']
+  },
+  {
+    _id: '2',
+    name: 'Grilled Chicken',
+    description: 'Tender grilled chicken with herbs',
+    price: 15.99,
+    category: 'Main Course',
+    image: 'https://images.unsplash.com/photo-1546833999-b03f31985c5e?w=400',
+    isAvailable: true,
+    isPopular: true,
+    isFeatured: false,
+    preparationTime: 25,
+    dietary: ['non-vegetarian']
+  },
+  {
+    _id: '3',
+    name: 'Chocolate Cake',
+    description: 'Rich chocolate cake with ganache',
+    price: 6.99,
+    category: 'Desserts',
+    image: 'https://images.unsplash.com/photo-1578985545062-69928311d6c7?w=400',
+    isAvailable: true,
+    isPopular: false,
+    isFeatured: true,
+    preparationTime: 5,
+    dietary: ['vegetarian']
+  },
+  {
+    _id: '4',
+    name: 'Fresh Orange Juice',
+    description: 'Freshly squeezed orange juice',
+    price: 4.99,
+    category: 'Beverages',
+    image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400',
+    isAvailable: true,
+    isPopular: true,
+    isFeatured: false,
+    preparationTime: 5,
+    dietary: ['vegan', 'gluten-free']
+  }
+];
+
+// Banners endpoint
+app.get('/api/banners', (req, res) => {
+  try {
+    const { position, isActive } = req.query;
+    let filteredBanners = mockBanners;
+    
+    if (position) {
+      filteredBanners = filteredBanners.filter(b => b.position === position);
+    }
+    
+    if (isActive !== undefined) {
+      filteredBanners = filteredBanners.filter(b => b.isActive === (isActive === 'true'));
+    }
+    
+    res.json({
+      success: true,
+      data: filteredBanners,
+      count: filteredBanners.length
+    });
+  } catch (error) {
+    console.error('Banners endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching banners'
+    });
+  }
+});
+
+// Categories endpoint
+app.get('/api/categories', (req, res) => {
+  try {
+    const { isActive } = req.query;
+    let filteredCategories = mockCategories;
+    
+    if (isActive !== undefined) {
+      filteredCategories = filteredCategories.filter(c => c.isActive === (isActive === 'true'));
+    }
+    
+    res.json({
+      success: true,
+      data: filteredCategories.sort((a, b) => a.order - b.order),
+      count: filteredCategories.length
+    });
+  } catch (error) {
+    console.error('Categories endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching categories'
+    });
+  }
+});
+
+// Items endpoint
+app.get('/api/items', (req, res) => {
+  try {
+    const { isAvailable, isPopular, isFeatured, category } = req.query;
+    let filteredItems = mockItems;
+    
+    if (isAvailable !== undefined) {
+      filteredItems = filteredItems.filter(i => i.isAvailable === (isAvailable === 'true'));
+    }
+    
+    if (isPopular !== undefined) {
+      filteredItems = filteredItems.filter(i => i.isPopular === (isPopular === 'true'));
+    }
+    
+    if (isFeatured !== undefined) {
+      filteredItems = filteredItems.filter(i => i.isFeatured === (isFeatured === 'true'));
+    }
+    
+    if (category) {
+      filteredItems = filteredItems.filter(i => i.category === category);
+    }
+    
+    res.json({
+      success: true,
+      data: filteredItems,
+      count: filteredItems.length
+    });
+  } catch (error) {
+    console.error('Items endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching items'
+    });
+  }
+});
+
+// Orders endpoint
+app.get('/api/orders', (req, res) => {
+  try {
+    // Return empty orders array for now
+    res.json({
+      success: true,
+      data: [],
+      count: 0,
+      message: 'No orders found'
+    });
+  } catch (error) {
+    console.error('Orders endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching orders'
+    });
+  }
+});
+
 // Auth Routes with better error handling
 app.post('/api/auth/register', async (req, res, next) => {
   try {
@@ -144,7 +354,16 @@ app.get('/api/debug', (req, res) => {
     environment: process.env.NODE_ENV,
     timestamp: new Date().toISOString(),
     mongodb: process.env.MONGODB_URI ? 'configured' : 'not configured',
-    port: process.env.PORT || 50017
+    port: process.env.PORT || 50017,
+    endpoints: [
+      '/api/banners',
+      '/api/categories', 
+      '/api/items',
+      '/api/orders',
+      '/api/auth/register',
+      '/api/auth/login',
+      '/api/auth/me'
+    ]
   });
 });
 
@@ -178,6 +397,7 @@ const PORT = process.env.PORT || 50017;
 app.listen(PORT, async () => {
   console.log(` Server running on port ${PORT}`);
   console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` Available endpoints: /api/banners, /api/categories, /api/items, /api/orders`);
   await seedAdminUser();
 });
 
