@@ -3,31 +3,22 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
-// Try to import nodemailer with error handling
-let nodemailer;
-try {
-  nodemailer = require('nodemailer');
-} catch (error) {
-  console.error('Failed to import nodemailer:', error);
-  // Fallback for deployment
-  nodemailer = {
-    createTransport: () => ({
-      sendMail: async (options) => {
-        console.log('Email sending disabled (nodemailer not available):', options);
-        return { messageId: 'fallback-id' };
-      }
-    })
-  };
-}
+// Import nodemailer with fallback
+import nodemailer from 'nodemailer';
 
-// Email transporter setup
-const transporter = nodemailer.createTransport({
+// Email transporter setup with fallback
+const transporter = nodemailer ? nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
   }
-});
+}) : {
+  sendMail: async (options) => {
+    console.log('Email sending disabled (nodemailer not available):', options);
+    return { messageId: 'fallback-id' };
+  }
+};
 
 // Store OTPs temporarily
 const otpStore = new Map();
