@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import CartSidebar from './CartSidebar';
-import CartNotification from './CartNotification';
-import YHKLoader from './Yhkloader';
 import HeroBannerVideo from '../components/HeroBannerVideo';
 import { API_CONFIG } from '../../config/api';
 import './Main.css';
+import './Menu.css';
 
 const Main = ({ restaurants }) => {
   console.log('🚀 Main component mounted!');
@@ -13,33 +11,14 @@ const Main = ({ restaurants }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [heroBanner, setHeroBanner] = useState(null);
   const [heroVideoError, setHeroVideoError] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
-
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  
+  // Categories state
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
   const navigate = useNavigate();
 
-  // Sync cart with localStorage
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('storage'));
-  }, [cart]);
-
-  // Listen for storage events from other tabs/components
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   // Fetch hero banner on mount
   useEffect(() => {
@@ -70,32 +49,37 @@ const Main = ({ restaurants }) => {
     fetchHeroBanner();
   }, []);
 
-  // FIX: handleFilterClick was missing entirely — called in JSX but never defined
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        console.log('🔍 Main: Fetching categories...');
+        const response = await fetch(`${API_CONFIG.API_URL}/categories?isActive=true`);
+        const data = await response.json();
+        console.log('✅ Main: Categories loaded:', data.data?.length || 0);
+        if (data.success) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error('❌ Main: Categories fetch error:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const handleFilterClick = (filter) => {
     setActiveFilter(filter);
   };
 
-  // FIX: handleCategoryClick was trapped inside useEffect before — moved here
   const handleCategoryClick = (category) => {
-    navigate(`/app/menu/${category.slug}`);
-  };
-
-  // FIX: handleViewCart was also trapped inside useEffect before — moved here
-  const handleViewCart = () => {
-    setShowNotification(false);
-    setIsCartOpen(true);
+    navigate(`/menu/${category.slug}`);
   };
 
   return (
     <React.Fragment>
-      {/* Cart Notification */}
-      <CartNotification
-        show={showNotification}
-        onViewCart={handleViewCart}
-        onClose={() => setShowNotification(false)}
-      />
-
-      {/* Hero Section */}
       {heroBanner && heroBanner.mediaType === 'video' && !heroVideoError ? (
         <HeroBannerVideo
           heroBanner={heroBanner}
@@ -113,73 +97,142 @@ const Main = ({ restaurants }) => {
           <div className="hero-content">
             <h1>Yeswanth's Healthy Kitchen</h1>
 
-            {/* Quick Links Section */}
-          <div className="quick-links-section">
-            <div className="quick-links">
-              <Link to="/app/onlyveg?type=desserts" className="quick-link">
-                <i className="fas fa-birthday-cake"></i> Birthday Party
-              </Link>
-              <Link to="/app/onlyveg?type=vegan" className="quick-link">
-                <i className="fas fa-leaf"></i> Vegan
-              </Link>
-              <Link to="/app/onlyveg?type=veg" className="quick-link">
-                <i className="fas fa-pizza-slice"></i> Veg
-              </Link>
-              <Link to="/app/onlyveg?type=non-veg" className="quick-link">
-                <i className="fas fa-drumstick-bite"></i> Non-Veg
+            <div className="quick-links-section">
+              <div className="quick-links">
+                <Link to="/onlyveg?type=desserts" className="quick-link">
+                  <i className="fas fa-birthday-cake"></i> Birthday Party
+                </Link>
+                <Link to="/onlyveg?type=vegan" className="quick-link">
+                  <i className="fas fa-leaf"></i> Vegan
+                </Link>
+                <Link to="/onlyveg?type=veg" className="quick-link">
+                  <i className="fas fa-pizza-slice"></i> Veg
+                </Link>
+                <Link to="/onlyveg?type=non-veg" className="quick-link">
+                  <i className="fas fa-drumstick-bite"></i> Non-Veg
+                </Link>
+              </div>
+            </div>
+
+            <div className="filter-buttons">
+              <button
+                className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
+                onClick={() => handleFilterClick('all')}
+              >
+                <i className="fas fa-border-all"></i> All
+              </button>
+
+              <button
+                className={`filter-btn ${activeFilter === 'rating' ? 'active' : ''}`}
+                onClick={() => handleFilterClick('rating')}
+              >
+                <i className="fas fa-star"></i> Top Rated
+              </button>
+
+              <button
+                className={`filter-btn ${activeFilter === 'fast' ? 'active' : ''}`}
+                onClick={() => handleFilterClick('fast')}
+              >
+                <i className="fas fa-bolt"></i> Fast Delivery
+              </button>
+
+              <button
+                className={`filter-btn ${activeFilter === 'new' ? 'active' : ''}`}
+                onClick={() => handleFilterClick('new')}
+              >
+                <i className="fas fa-plus"></i> New Arrivals
+              </button>
+
+              <button
+                className={`filter-btn ${activeFilter === 'offer' ? 'active' : ''}`}
+                onClick={() => handleFilterClick('offer')}
+              >
+                <i className="fas fa-tag"></i> Offers
+              </button>
+            </div>
+
+            <div className="menu-navigation">
+              <Link to="/menu" className="menu-btn">
+                <i className="fas fa-utensils"></i> View Full Menu
               </Link>
             </div>
-          </div>
-
-          {/* Filter Buttons */}
-          <div className="filter-buttons">
-            <button
-              className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
-              onClick={() => handleFilterClick('all')}
-            >
-              <i className="fas fa-border-all"></i> All
-            </button>
-
-            <button
-              className={`filter-btn ${activeFilter === 'rating' ? 'active' : ''}`}
-              onClick={() => handleFilterClick('rating')}
-            >
-              <i className="fas fa-star"></i> Top Rated
-            </button>
-
-            <button
-              className={`filter-btn ${activeFilter === 'fast' ? 'active' : ''}`}
-              onClick={() => handleFilterClick('fast')}
-            >
-              <i className="fas fa-bolt"></i> Fast Delivery
-            </button>
-
-            <button
-              className={`filter-btn ${activeFilter === 'new' ? 'active' : ''}`}
-              onClick={() => handleFilterClick('new')}
-            >
-              <i className="fas fa-plus"></i> New Arrivals
-            </button>
-
-            <button
-              className={`filter-btn ${activeFilter === 'offer' ? 'active' : ''}`}
-              onClick={() => handleFilterClick('offer')}
-            >
-              <i className="fas fa-tag"></i> Offers
-            </button>
-          </div>
-
-          {/* Navigate to Menu Button */}
-          <div className="menu-navigation">
-            <Link to="/app/menu" className="menu-btn">
-              <i className="fas fa-utensils"></i> View Full Menu
-            </Link>
-          </div>
           </div>
         </section>
       )}
 
-      {/* Location Section */}
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Filters */}
+        <div className="filters">
+          <button 
+            className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`} 
+            onClick={() => handleFilterClick('all')}
+          >
+            <i className="fas fa-border-all"></i> All
+          </button>
+          <button 
+            className={`filter-btn ${activeFilter === 'rating' ? 'active' : ''}`} 
+            onClick={() => handleFilterClick('rating')}
+          >
+            <i className="fas fa-star"></i> Top Rated
+          </button>
+          <button 
+            className={`filter-btn ${activeFilter === 'fast' ? 'active' : ''}`} 
+            onClick={() => handleFilterClick('fast')}
+          >
+            <i className="fas fa-bolt"></i> Fast Delivery
+          </button>
+          <button 
+            className={`filter-btn ${activeFilter === 'offer' ? 'active' : ''}`} 
+            onClick={() => handleFilterClick('offer')}
+          >
+            <i className="fas fa-tag"></i> Offers
+          </button>
+        </div>
+
+        {/* Categories Grid */}
+        <div className="restaurant-grid">
+          {categories.map(category => (
+            <div 
+              key={category._id} 
+              className="restaurant-card"
+              onClick={() => handleCategoryClick(category)}
+            >
+              <div className="restaurant-image">
+                {category.imageUrl ? (
+                  <img src={category.imageUrl} alt={category.name} />
+                ) : (
+                  <div 
+                    className="category-icon-placeholder" 
+                    style={{ 
+                      background: (category.color || '#22c55e') + '20', 
+                      color: category.color || '#22c55e' 
+                    }}
+                  >
+                    <span className="category-icon">{category.icon || '🍽️'}</span>
+                  </div>
+                )}
+                {/* Discount Badge */}
+                {category.avgDiscount > 0 && (
+                  <div className="discount-badge">{category.avgDiscount}% OFF</div>
+                )}
+              </div>
+              
+              <div className="restaurant-info">
+                <div className="restaurant-name">{category.name}</div>
+                <div className="restaurant-cuisine">
+                  {category.description || 'Delicious food options'}
+                </div>
+                <div className="restaurant-details">
+                  <span className="rating">★ {category.avgRating || '4.5'}</span>
+                  <span className="delivery-time">🍽️ {category.itemCount || 0} items</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
       <section className="location-section">
         <div className="location-container">
           <div className="location-map">
@@ -224,7 +277,8 @@ const Main = ({ restaurants }) => {
         </div>
       </section>
 
-      {/* Footer */}
+      
+
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-section">
@@ -272,27 +326,9 @@ const Main = ({ restaurants }) => {
         </div>
       </footer>
 
-      {/* Floating Cart Button */}
-      {cart.length > 0 && (
-        <button
-          className="floating-cart"
-          onClick={() => setIsCartOpen(true)}
-        >
-          <i className="fas fa-shopping-cart"></i>
-          <span className="cart-count-badge">
-            {cart.reduce((total, item) => total + (item.quantity || 1), 0)}
-          </span>
-        </button>
-      )}
-
-      {/* Cart Sidebar */}
-      <CartSidebar
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cart={cart}
-      />
-    </React.Fragment>
+      </React.Fragment>
   );
 };
 
 export default Main;
+

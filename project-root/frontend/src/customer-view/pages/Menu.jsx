@@ -40,6 +40,8 @@ const Menu = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        console.log('🔍 Menu: Fetching data from', API_URL);
+
         const bannersResponse = await fetch(`${API_URL}/banners?position=hero&isActive=true`);
         const bannersData = await bannersResponse.json();
         if (bannersData.success) {
@@ -48,9 +50,12 @@ const Menu = () => {
 
         const categoriesResponse = await fetch(`${API_URL}/categories?isActive=true`);
         const categoriesData = await categoriesResponse.json();
+        console.log('Categories loaded:', categoriesData.data?.length || 0);
+        
+        let matchedCategory = null;
         if (categoriesData.success) {
           setCategories(categoriesData.data);
-          const matchedCategory = categoriesData.data.find(c => c.slug === categorySlug);
+          matchedCategory = categoriesData.data.find(c => c.slug === categorySlug);
           if (matchedCategory) {
             setActiveCategory(matchedCategory._id);
           } else if (categoriesData.data.length > 0 && !activeCategory) {
@@ -63,7 +68,12 @@ const Menu = () => {
 
         let itemsUrl = `${API_URL}/items?isAvailable=true`;
         if (activeCategory) {
-          itemsUrl += `&categoryId=${activeCategory}`;
+          const activeCategoryObj = matchedCategory || categoriesData.data?.find(c => c._id === activeCategory);
+          if (activeCategoryObj && (activeCategoryObj.slug === 'smoothies' || activeCategoryObj.slug === 'desserts')) {
+            itemsUrl += `&type=${activeCategoryObj.slug}`;
+          } else {
+            itemsUrl += `&categoryId=${activeCategory}`;
+          }
         }
         const itemsResponse = await fetchWithCacheBust(itemsUrl);
         const itemsData = await itemsResponse.json();
@@ -71,7 +81,7 @@ const Menu = () => {
           setItems(itemsData.data);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('❌ Menu fetch error:', error);
       } finally {
         setLoading(false);
       }
@@ -93,16 +103,24 @@ const Menu = () => {
   }, [searchParams, items]);
 
   const getFilteredItems = () => {
-    let filtered = items.filter(item => {
-      if (!activeCategory) return true;
-      let itemCategoryId;
-      if (item.categoryId) {
-        itemCategoryId = typeof item.categoryId === 'object' && item.categoryId !== null
-          ? item.categoryId._id
-          : item.categoryId;
+    let filtered = items;
+    
+    // Only filter by categoryId for regular categories, not food types
+    if (activeCategory) {
+      const activeCategoryObj = categories.find(c => c._id === activeCategory);
+      // Don't filter food types - API already returns correct items
+      if (!activeCategoryObj || (activeCategoryObj.slug !== 'smoothies' && activeCategoryObj.slug !== 'desserts')) {
+        filtered = items.filter(item => {
+          let itemCategoryId;
+          if (item.categoryId) {
+            itemCategoryId = typeof item.categoryId === 'object' && item.categoryId !== null
+              ? item.categoryId._id
+              : item.categoryId;
+          }
+          return itemCategoryId && String(itemCategoryId) === String(activeCategory);
+        });
       }
-      return itemCategoryId && String(itemCategoryId) === String(activeCategory);
-    });
+    }
 
     if (searchTerm) {
       filtered = filtered.filter(item =>
@@ -658,6 +676,7 @@ const Menu = () => {
           </div>
         </div>
 
+        
         <main className="menu-content">
           {loading ? (
             <YHKLoader message="Preparing the menu…" />
