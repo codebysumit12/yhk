@@ -5,7 +5,7 @@ import Nav from '../pages/Nav';
 const CustomerLayout = () => {
   return (
     <>
-      <Nav onOpenCart={() => {}} />
+      <Nav onOpenCart={() => {}} cart={[]} />
       <Outlet />
     </>
   );

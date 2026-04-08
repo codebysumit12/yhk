@@ -1,9 +1,16 @@
-# Task: Fix Babel syntax error in Drinks.jsx - COMPLETED
+# Hamburger Menu Right Alignment Task
 
-## Steps:
-- [x] 1. Create TODO.md with plan steps
-- [x] 2. Fix syntax error in video style object (add missing comma)
-- [x] 3. Test the build after restart dev server
-- [x] 4. Update TODO with completion status
+- [x] Create TODO.md with plan steps ✅
+- [x] Read relevant files (Nav.jsx, Nav.css, CustomerLayout files) ✅ Done
+- [x] Edit Nav.css to move hamburger to right side on mobile:
+  - Update .header-top to row layout with space-between ✅
+  - Position .header-actions absolute top-right ✅
+  - Adjust .header-search margin ✅
+  - Ensure .hamburger-btn margin-left: auto ✅
+- [ ] Test in browser DevTools mobile view
+- [x] Update TODO.md ✅
+- [ ] Complete task
 
-✅ Task completed. Working tree clean, ready to push if changes made.
+Current status: CSS changes applied successfully. Test in mobile view (≤768px): hamburger now pinned top-right via absolute positioning in .header-actions, header-top row with space-between, search flexed with margin.
+
+

@@ -1,5 +1,5 @@
 /* ========================================
-   PROFILE SECTION
+   PROFILE SECTION after push
    ======================================== */
 
 .profile-section {
@@ -297,10 +297,274 @@
 }
 
 /* ========================================
-   RESPONSIVE
+   HAMBURGER BUTTON
+   ======================================== */
+
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #0f2d1a;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  z-index: 1002;
+  margin-left: auto;
+}
+
+.hamburger-btn:hover {
+  background: #f0fdf4;
+  color: #22c55e;
+  transform: scale(1.1);
+}
+
+.hamburger-btn.open {
+  color: #ef4444;
+}
+
+/* ========================================
+   MOBILE MENU OVERLAY - SLIDE FROM RIGHT
+   ======================================== */
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 80%;
+  max-width: 320px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  z-index: 1001;
+  transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow-y: auto;
+}
+
+.mobile-menu.open {
+  right: 0;
+}
+
+.mobile-menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s ease;
+}
+
+.mobile-menu.open + .mobile-menu-backdrop {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #e8f5eb;
+  background: linear-gradient(135deg, #f0fdf4, white);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b8f74;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.mobile-logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #22c55e;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-logo i {
+  font-size: 28px;
+}
+
+.mobile-nav {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  color: #1c1c1c;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  border-bottom: 1px solid #f8fafc;
+  transition: all 0.3s;
+  width: 100%;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
+  background: linear-gradient(90deg, #22c55e20, transparent);
+  color: #22c55e;
+  padding-left: 32px;
+}
+
+.mobile-nav-link i {
+  font-size: 20px;
+  width: 24px;
+  text-align: center;
+}
+
+.mobile-menu-actions {
+  padding: 0 20px 40px;
+  border-top: 1px solid #e8f5eb;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-cart-btn,
+.mobile-profile-btn,
+.mobile-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 2px solid #c9e8d1;
+  border-radius: 16px;
+  background: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  justify-content: flex-start;
+}
+
+.mobile-cart-btn:hover,
+.mobile-profile-btn:hover,
+.mobile-login-btn:hover {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(34,197,94,0.15);
+}
+
+.profile-avatar.mobile {
+  width: 48px;
+  height: 48px;
+}
+
+.mobile-login-btn {
+  color: #0f2d1a;
+}
+
+/* ========================================
+   RESPONSIVE - HIDE DESKTOP ELEMENTS
    ======================================== */
 
 @media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+  }
+  
+  .header-actions {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    z-index: 1003;
+  }
+
+  .header-actions .profile-section,
+  .header-actions .login-btn {
+    display: none !important;
+  }
+
+  .header-actions .hamburger-btn {
+    margin: 0;
+  }
+  
+  .nav {
+    display: flex !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 12px 20px;
+    gap: 12px;
+    border-top: 1px solid #e8e8e8;
+    background: white;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .header-top {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 20px;
+    position: relative;
+  }
+
+  .logo {
+    align-self: center;
+    font-size: 1.4rem;
+  }
+
+  .header-search {
+    flex: 1;
+    max-width: none;
+    margin: 0 100px 0 20px;
+    order: 0;
+  }
+  
+  .nav a {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
   .profile-dropdown {
     width: 280px;
     right: -10px;
@@ -323,6 +587,43 @@
     font-size: 20px;
   }
 }
+
+@media (max-width: 480px) {
+  .mobile-menu {
+    width: 100%;
+  }
+  
+  .profile-trigger {
+    padding: 6px 12px;
+    gap: 8px;
+  }
+
+  .profile-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .avatar-initials {
+    font-size: 14px;
+  }
+
+  .profile-name {
+    display: none;
+  }
+
+  .profile-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
 
 @media (max-width: 480px) {
   .profile-trigger {
@@ -460,22 +761,27 @@
 }
 
 @media (max-width: 480px) {
+  .header-top {
+    padding: 12px 15px;
+    gap: 10px;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
   .nav {
-    gap: 5px;
-    padding: 0 10px;
+    padding: 10px 15px;
+    gap: 8px;
   }
   
   .nav a {
     font-size: 12px;
-    padding: 6px 8px;
+    padding: 8px 12px;
   }
   
   .nav a i {
     font-size: 12px;
-  }
-  
-  .track-order-nav i {
-    font-size: 14px !important;
   }
 }
 
