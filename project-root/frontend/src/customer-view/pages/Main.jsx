@@ -13,6 +13,7 @@ const Main = ({ restaurants }) => {
   const [heroBanner, setHeroBanner] = useState(null);
   const [heroVideoError, setHeroVideoError] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
+  const [loadingHeroBanner, setLoadingHeroBanner] = useState(true);
   
   // Categories state
   const [categories, setCategories] = useState([]);
@@ -115,43 +116,7 @@ const Main = ({ restaurants }) => {
               </div>
             </div>
 
-            <div className="filter-buttons">
-              <button
-                className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
-                onClick={() => handleFilterClick('all')}
-              >
-                <i className="fas fa-border-all"></i> All
-              </button>
-
-              <button
-                className={`filter-btn ${activeFilter === 'rating' ? 'active' : ''}`}
-                onClick={() => handleFilterClick('rating')}
-              >
-                <i className="fas fa-star"></i> Top Rated
-              </button>
-
-              <button
-                className={`filter-btn ${activeFilter === 'fast' ? 'active' : ''}`}
-                onClick={() => handleFilterClick('fast')}
-              >
-                <i className="fas fa-bolt"></i> Fast Delivery
-              </button>
-
-              <button
-                className={`filter-btn ${activeFilter === 'new' ? 'active' : ''}`}
-                onClick={() => handleFilterClick('new')}
-              >
-                <i className="fas fa-plus"></i> New Arrivals
-              </button>
-
-              <button
-                className={`filter-btn ${activeFilter === 'offer' ? 'active' : ''}`}
-                onClick={() => handleFilterClick('offer')}
-              >
-                <i className="fas fa-tag"></i> Offers
-              </button>
-            </div>
-
+            
             <div className="menu-navigation">
               <Link to="/menu" className="menu-btn">
                 <i className="fas fa-utensils"></i> View Full Menu
