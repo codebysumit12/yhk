@@ -12,23 +12,21 @@ import Checkoutpage from './customer-view/pages/Checkoutpage';
 import TrackOrder from './customer-view/pages/TrackMyOrder';
 import MyOrders from './customer-view/pages/MyOrders';
 import MyProfile from './customer-view/pages/MyProfile';
+import ItemDetailPage from './customer-view/pages/ItemDetailPage'; // NEW - Item detail page
 import AdminLayout from './admin-view/layout/AdminLayout';
 import DeliveryBoyApp from './admin-view/pages/DeliveryBoyApp';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import './App.css';
 
-// Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const token = localStorage.getItem('token') || localStorage.getItem('userToken');
   const userStr = localStorage.getItem('user');
 
-  // No token → redirect to auth
   if (!token) {
     return <Navigate to="/auth" replace />;
   }
 
-  // Has token but no user data → clear and redirect
   if (!userStr) {
     localStorage.removeItem('token');
     localStorage.removeItem('userToken');
@@ -38,19 +36,17 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   try {
     const user = JSON.parse(userStr);
 
-    // Role-based access control
     if (requiredRole) {
       if (requiredRole === 'admin' && !user.isAdmin && user.role !== 'admin') {
-        return <Navigate to="/app" replace />;
+        return <Navigate to="/" replace />;
       }
       if (requiredRole === 'delivery' && user.role !== 'delivery_partner') {
-        return <Navigate to="/app" replace />;
+        return <Navigate to="/" replace />;
       }
     }
 
     return children;
   } catch (error) {
-    // Invalid user data → clear and redirect
     console.error('Invalid user data:', error);
     localStorage.removeItem('token');
     localStorage.removeItem('userToken');
@@ -59,7 +55,6 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 };
 
-// Public Route - Redirect if already logged in
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem('token') || localStorage.getItem('userToken');
   const userStr = localStorage.getItem('user');
@@ -68,16 +63,14 @@ const PublicRoute = ({ children }) => {
     try {
       const user = JSON.parse(userStr);
       
-      // Redirect based on role
       if (user.isAdmin || user.role === 'admin') {
         return <Navigate to="/admin" replace />;
       } else if (user.role === 'delivery_partner') {
         return <Navigate to="/delivery-app" replace />;
       } else {
-        return <Navigate to="/app" replace />;
+        return <Navigate to="/" replace />;
       }
     } catch (error) {
-      // Invalid data, let them access auth
       localStorage.removeItem('token');
       localStorage.removeItem('userToken');
       localStorage.removeItem('user');
@@ -93,7 +86,6 @@ function App() {
       <div className="App">
         <Routes>
 
-          {/* Admin Routes - MUST come first */}
           <Route 
             path="/admin/*" 
             element={
@@ -103,7 +95,6 @@ function App() {
             } 
           />
           
-          {/* Delivery Partner Direct Access */}
           <Route 
             path="/delivery-app" 
             element={
@@ -113,15 +104,7 @@ function App() {
             } 
           />
           
-          {/* Auth Routes - Public (redirect if already logged in) */}
-          <Route 
-            path="/" 
-            element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } 
-          />
+          {/* ✅ Auth Routes */}
           <Route 
             path="/auth" 
             element={
@@ -130,48 +113,113 @@ function App() {
               </PublicRoute>
             } 
           />
-          <Route 
-            path="/register" 
-            element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } 
-          />
           
-          {/* Privacy Policy & Terms */}
+          {/* ✅ Privacy & Terms - Public */}
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           
-          {/* Customer Routes with Nav */}
-          <Route path="/app" element={<CustomerLayout />}>
-            {/* Main app page moved to /app */}
-            <Route index element={<Main />} />
-              
-            {/* Customer Routes */}
-            <Route path="menu/:categorySlug" element={<Menu />} />
-            <Route path="menu" element={<Menu />} />
-            <Route path="menucard" element={<MenuCard />} />
-            <Route path="onlyveg" element={<OnlyVeg />} />
-            <Route path="trending" element={<Trending />} />
-            <Route path="offers" element={<Offers />} />
-            <Route path="checkout" element={<Checkoutpage />} />
-            <Route path="track-order" element={<TrackOrder />} />
-            
-            <Route path="my-orders" element={<MyOrders />} />
-              
-            <Route 
-              path="profile" 
-              element={
-                <ProtectedRoute>
-                  <MyProfile />
-                </ProtectedRoute>
-              } 
-            />
-          </Route>
+          {/* ✅ Customer Routes - Flat Structure (No /app prefix) */}
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <CustomerLayout>
+                  <Main />
+                </CustomerLayout>
+              </ProtectedRoute>
+            } 
+          />
           
-          {/* Redirect unknown routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/menu/:categorySlug" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <Menu />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/menu" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <Menu />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/menucard" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <MenuCard />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/onlyveg" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <OnlyVeg />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/trending" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <Trending />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/offers" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <Offers />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/checkout" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <Checkoutpage />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/track-order" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <TrackOrder />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/my-orders" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <MyOrders />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <MyProfile />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/item/:id" element={
+            <ProtectedRoute>
+              <CustomerLayout>
+                <ItemDetailPage />
+              </CustomerLayout>
+            </ProtectedRoute>
+          } />
+          
+          {/* ✅ Redirect unknown routes */}
+          <Route path="*" element={<Navigate to="/auth" replace />} />
         </Routes>
       </div>
     </Router>

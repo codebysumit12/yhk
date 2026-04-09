@@ -1,18 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import SearchComponent from '../components/SearchComponent';
 import './Nav.css';
 
 const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const [user, setUser] = useState(null);
-
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Update cart count
+  const updateCartCount = useCallback(() => {
+    if (cart && Array.isArray(cart)) {
+      setCartCount(cart.reduce((total, item) => total + (item.quantity || 1), 0));
+    } else {
+      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartCount(cartData.reduce((total, item) => total + (item.quantity || 1), 0));
+    }
+  }, [cart]);
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -23,17 +31,12 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
     // Get cart count from localStorage or from prop
     updateCartCount();
-  }, [cart]);
+  }, [updateCartCount]);
 
-  // Update cart count
-  const updateCartCount = () => {
-    if (cart && Array.isArray(cart)) {
-      setCartCount(cart.reduce((total, item) => total + (item.quantity || 1), 0));
-    } else {
-      const cartData = JSON.parse(localStorage.getItem('cart') || '[]');
-      setCartCount(cartData.reduce((total, item) => total + (item.quantity || 1), 0));
-    }
-  };
+  // Update cart count when cart prop changes
+  useEffect(() => {
+    updateCartCount();
+  }, [updateCartCount]);
 
   // Listen for storage changes (when cart is updated)
   useEffect(() => {
@@ -45,7 +48,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [updateCartCount]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -61,23 +64,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     };
   }, []);
 
-  // Close mobile menu on escape key
-  useEffect(() => {
-    const handleEscKey = (event) => {
-      if (event.key === 'Escape') {
-        setMobileMenuOpen(false);
-      }
-    };
-
-    if (mobileMenuOpen) {
-      document.addEventListener('keydown', handleEscKey);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscKey);
-    };
-  }, [mobileMenuOpen]);
-
   // Pages where Nav should NOT render
   const noNavPages = ['/auth', '/register', '/admin', '/delivery-app'];
   
@@ -85,11 +71,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
   if (noNavPages.some(page => location.pathname.startsWith(page))) {
     return null;
   }
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log('Searching for:', searchQuery);
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('userToken');
@@ -116,7 +97,15 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     }
   };
 
-  // Get user initials for avatar
+  // Helper function to check if link is active
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname === '/';
+    }
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  // Helper function to get user initials
   const getUserInitials = () => {
     if (!user?.name) return '?';
     const names = user.name.split(' ');
@@ -126,39 +115,19 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     return names[0][0];
   };
 
-  // Helper function to check if link is active
-  const isActive = (path) => {
-    if (path === '/app') {
-      return location.pathname === '/app' || location.pathname === '/';
-    }
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
-
   return (
     <>
       <header className="header">
         <div className="header-top">
-          <Link to="/app" className="logo">
+          <Link to="/" className="logo">
             <div className="logo-icon">
               <i className="fas fa-carrot"></i>
             </div>
-            Yeswanth's Healthy Kitchen
+            Yeswanth's Healthy Kitchens
           </Link>
           
           <div className="header-search">
-            <div className="search-bar">
-              <input 
-                type="text" 
-                id="searchInput" 
-                placeholder="Search for the best food..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
-              />
-              <button className="search-btn" onClick={handleSearch}>
-                <i className="fas fa-search"></i>
-              </button>
-            </div>
+            <SearchComponent placeholder="Search for the best food..." />
           </div>
           
           <div className="header-actions">
@@ -170,7 +139,6 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
             </button>
             {user ? (
               <div className="profile-section" ref={dropdownRef}>
-
                 <button 
                   className="profile-trigger" 
                   onClick={toggleProfileDropdown}
@@ -210,7 +178,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
                     <div className="dropdown-menu">
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/app/track-order')}
+                        onClick={() => handleDropdownClick('/track-order')}
                       >
                         <i className="fas fa-map-marker-alt"></i>
                         <span>Track My Order</span>
@@ -218,7 +186,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/app/my-orders')}
+                        onClick={() => handleDropdownClick('/my-orders')}
                       >
                         <i className="fas fa-receipt"></i>
                         <span>My Orders</span>
@@ -237,7 +205,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
 
                       <button 
                         className="dropdown-item"
-                        onClick={() => handleDropdownClick('/app/profile')}
+                        onClick={() => handleDropdownClick('/profile')}
                       >
                         <i className="fas fa-user-circle"></i>
                         <span>My Profile</span>
@@ -277,30 +245,30 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
         </div>
         
         <nav className="nav">
-          <Link to="/app" className={isActive('/app') ? 'active' : ''}>
+          <Link to="/" className={isActive('/') ? 'active' : ''}>
             <i className="fas fa-home"></i> Home
           </Link>
-          <Link to="/app/menucard" className={isActive('/app/menucard') ? 'active' : ''}>
+          <Link to="/menucard" className={isActive('/menucard') ? 'active' : ''}>
             <i className="fas fa-utensils"></i> Menu
           </Link>
-          <Link to="/app/trending" className={isActive('/app/trending') ? 'active' : ''}>
+          <Link to="/trending" className={isActive('/trending') ? 'active' : ''}>
             <i className="fas fa-fire"></i> Trending
           </Link>
-          <Link to="/app/offers" className={isActive('/app/offers') ? 'active' : ''}>
+          <Link to="/offers" className={isActive('/offers') ? 'active' : ''}>
             <i className="fas fa-percent"></i> Offers
           </Link>
-          <Link to="/app/onlyveg?type=drinks" className={isActive('/app/onlyveg?type=drinks') ? 'active' : ''}>
+          <Link to="/onlyveg?type=drinks" className={isActive('/onlyveg?type=drinks') ? 'active' : ''}>
             <i className="fas fa-mug-hot"></i> Drinks
           </Link>
-          <Link to="/app/onlyveg?type=smoothies" className={isActive('/app/onlyveg?type=smoothies') ? 'active' : ''}>
+          <Link to="/onlyveg?type=smoothies" className={isActive('/onlyveg?type=smoothies') ? 'active' : ''}>
             <i className="fas fa-blender"></i> Smoothies
           </Link>
-          <Link to="/app/onlyveg?type=desserts" className={isActive('/app/onlyveg?type=desserts') ? 'active' : ''}>
+          <Link to="/onlyveg?type=desserts" className={isActive('/onlyveg?type=desserts') ? 'active' : ''}>
             <i className="fas fa-birthday-cake"></i> Desserts
           </Link>
         </nav>
       </header>
-      
+
       {mobileMenuOpen && (
         <>
           <div 
@@ -310,7 +278,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
             <div className="mobile-menu-content">
               <div className="mobile-menu-header">
-                <a href="/app" className="mobile-logo">
+                <a href="/" className="mobile-logo">
                   <i className="fas fa-carrot"></i>
                   Yeswanth's Healthy Kitchen
                 </a>
@@ -321,15 +289,53 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
                   <i className="fas fa-times"></i>
                 </button>
               </div>
-              {/* No nav links in hamburger menu per request */}
-              <div className="mobile-menu-actions">
-                {user ? (
+              
+              <div className="mobile-nav">
+                <button 
+                  className="mobile-nav-link track-order-btn"
+                  onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/track-order'); }}
+                >
+                  <i className="fas fa-map-marker-alt"></i>
+                  Track My Order
+                </button>
+                {user && (
                   <button 
-                    className="mobile-profile-btn"
-                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/app/profile'); }}
+                    className="mobile-nav-link my-orders-btn"
+                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/my-orders'); }}
+                  >
+                    <i className="fas fa-receipt"></i>
+                    My Orders
+                  </button>
+                )}
+                <button 
+                  className="mobile-nav-link cart-btn"
+                  onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/cart'); }}
+                >
+                  <i className="fas fa-shopping-cart"></i>
+                  Cart
+                  {cartCount > 0 && (
+                    <span className="cart-count-badge">{cartCount}</span>
+                  )}
+                </button>
+                {user && (
+                  <button 
+                    className="mobile-nav-link"
+                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/profile'); }}
                   >
                     <i className="fas fa-user-circle"></i>
                     Profile
+                  </button>
+                )}
+              </div>
+              
+              <div className="mobile-menu-actions">
+                {user ? (
+                  <button 
+                    className="mobile-logout-btn"
+                    onClick={handleLogout}
+                  >
+                    <i className="fas fa-sign-out-alt"></i>
+                    Logout
                   </button>
                 ) : (
                   <Link to="/auth" className="mobile-login-btn" onClick={() => setMobileMenuOpen(false)}>
@@ -342,10 +348,8 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           </div>
         </>
       )}
-
     </>
   );
 };
-
 
 export default Nav;

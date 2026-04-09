@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import YHKLoader from './Yhkloader';
 import HeroBannerVideo from '../components/HeroBannerVideo';
 import { API_CONFIG } from '../../config/api';
 import './Main.css';
@@ -95,8 +96,7 @@ const Main = ({ restaurants }) => {
           backgroundRepeat: 'no-repeat'
         }}>
           <div className="hero-content">
-<h1>Yeswanth's Healthy Kitchen</h1>
-            <p className="hero-subtitle">Delicious healthy food delivered to your doorstep</p>
+            <h1>Yeswanth's Healthy Kitchen</h1>
 
             <div className="quick-links-section">
               <div className="quick-links">

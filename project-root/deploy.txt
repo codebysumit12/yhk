@@ -1,0 +1,9 @@
+Deployment trigger file - touch this file to force new deployment
+
+Latest changes deployed:
+- Fixed nodemailer import with fallback handling
+- Added postinstall script for nodemailer installation
+- Added Node.js engine specification
+- Added build script for production dependencies
+
+If Render is still using old version, this file will trigger a fresh deployment.

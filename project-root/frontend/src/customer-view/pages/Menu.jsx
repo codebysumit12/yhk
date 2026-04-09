@@ -50,12 +50,10 @@ const Menu = () => {
 
         const categoriesResponse = await fetch(`${API_URL}/categories?isActive=true`);
         const categoriesData = await categoriesResponse.json();
-        console.log('Categories loaded:', categoriesData.data?.length || 0);
-        
-        let matchedCategory = null;
+        console.log('✅ Categories loaded:', categoriesData.data?.length || 0);
         if (categoriesData.success) {
           setCategories(categoriesData.data);
-          matchedCategory = categoriesData.data.find(c => c.slug === categorySlug);
+          const matchedCategory = categoriesData.data.find(c => c.slug === categorySlug);
           if (matchedCategory) {
             setActiveCategory(matchedCategory._id);
           } else if (categoriesData.data.length > 0 && !activeCategory) {
@@ -68,12 +66,7 @@ const Menu = () => {
 
         let itemsUrl = `${API_URL}/items?isAvailable=true`;
         if (activeCategory) {
-          const activeCategoryObj = matchedCategory || categoriesData.data?.find(c => c._id === activeCategory);
-          if (activeCategoryObj && (activeCategoryObj.slug === 'smoothies' || activeCategoryObj.slug === 'desserts')) {
-            itemsUrl += `&type=${activeCategoryObj.slug}`;
-          } else {
-            itemsUrl += `&categoryId=${activeCategory}`;
-          }
+          itemsUrl += `&categoryId=${activeCategory}`;
         }
         const itemsResponse = await fetchWithCacheBust(itemsUrl);
         const itemsData = await itemsResponse.json();
@@ -88,7 +81,7 @@ const Menu = () => {
     };
 
     fetchData();
-  }, [categorySlug, activeCategory]);
+  }, [categorySlug]);
 
   useEffect(() => {
     const itemId = searchParams.get('id');
@@ -103,24 +96,16 @@ const Menu = () => {
   }, [searchParams, items]);
 
   const getFilteredItems = () => {
-    let filtered = items;
-    
-    // Only filter by categoryId for regular categories, not food types
-    if (activeCategory) {
-      const activeCategoryObj = categories.find(c => c._id === activeCategory);
-      // Don't filter food types - API already returns correct items
-      if (!activeCategoryObj || (activeCategoryObj.slug !== 'smoothies' && activeCategoryObj.slug !== 'desserts')) {
-        filtered = items.filter(item => {
-          let itemCategoryId;
-          if (item.categoryId) {
-            itemCategoryId = typeof item.categoryId === 'object' && item.categoryId !== null
-              ? item.categoryId._id
-              : item.categoryId;
-          }
-          return itemCategoryId && String(itemCategoryId) === String(activeCategory);
-        });
+    let filtered = items.filter(item => {
+      if (!activeCategory) return true;
+      let itemCategoryId;
+      if (item.categoryId) {
+        itemCategoryId = typeof item.categoryId === 'object' && item.categoryId !== null
+          ? item.categoryId._id
+          : item.categoryId;
       }
-    }
+      return itemCategoryId && String(itemCategoryId) === String(activeCategory);
+    });
 
     if (searchTerm) {
       filtered = filtered.filter(item =>

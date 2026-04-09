@@ -387,7 +387,7 @@ function AuthInner() {
         } else if (user.role === 'delivery_partner') {
           navigate('/delivery-app', { replace: true });
         } else {
-          navigate('/app', { replace: true });
+          navigate('/', { replace: true });
         }
       } catch (error) {
         // Invalid user data, clear storage and continue
@@ -516,7 +516,7 @@ function AuthInner() {
   const redirect = useCallback((user) => {
     if (user.isAdmin || user.role === 'admin') navigate('/admin', { replace: true });
     else if (user.role === 'delivery_partner') navigate('/delivery-app', { replace: true });
-    else navigate('/app', { replace: true });
+    else navigate('/', { replace: true });
   }, [navigate]);
 
   const handleGoogleSuccess = useCallback(async cr => {
@@ -615,12 +615,12 @@ function AuthInner() {
         } else {
           localStorage.setItem('verifiedPhone', ph);
           setGlobalSuccess('Verified! Redirecting…');
-          setTimeout(() => navigate('/app'), 900);
+          setTimeout(() => navigate('/'), 900);
         }
       } catch {
         localStorage.setItem('verifiedPhone', ph);
         setGlobalSuccess('Verified! Redirecting…');
-        setTimeout(() => navigate('/app'), 900);
+        setTimeout(() => navigate('/'), 900);
       }
     } catch(err) {
       if (err.code === 'auth/code-expired') setOtpError('OTP expired. Resend a new one.');

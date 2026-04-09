@@ -7,9 +7,9 @@ import cloudinary from '../config/cloudinary.js';
 // @access  Public
 const getCategories = async (req, res) => {
   try {
-    console.log('Category route hit:', req.method, req.url, req.query);
-    console.log('Request method:', req.method);
-    console.log('Request URL:', req.url);
+    console.log('🔍 getCategories called with query:', req.query);
+    console.log('🔍 Request method:', req.method);
+    console.log('🔍 Request URL:', req.url);
     
     // Build filter based on query parameters
     const filter = {};
@@ -21,20 +21,16 @@ const getCategories = async (req, res) => {
     }
     // If isActive is not specified, return all categories
     
-    console.log('Using filter:', filter);
+    console.log('🔍 Using filter:', filter);
     
     const categories = await Category.find(filter)
-      .sort({ displayOrder: 1, name: 1 })
-      .select('name slug description icon color imageUrl displayOrder isActive itemCount') // Only fetch needed fields
-      .lean(); // Return plain JavaScript objects for better performance
+      .sort({ displayOrder: 1, name: 1 });
     
-    console.log('Found categories:', categories.length);
-    
-    console.log('Found categories:', categories.length);
+    console.log('🔍 Found categories:', categories.length);
     
     // Transform categories to include full image URLs
     const transformedCategories = categories.map(category => {
-      const categoryObj = category;
+      const categoryObj = category.toObject();
       
       // Ensure imageUrl has full URL
       if (categoryObj.imageUrl) {

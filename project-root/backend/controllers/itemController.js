@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import MenuItem from '../models/MenuItem.js';
 import Category from '../models/Category.js';
 import cloudinary from '../config/cloudinary.js';
@@ -51,7 +50,7 @@ export const getItems = async (req, res) => {
     const filter = {};
     
     if (categoryId) {
-      filter.categoryId = new mongoose.Types.ObjectId(categoryId);
+      filter.categoryId = categoryId;
     } else if (category) {
       filter.category = category;
     }
@@ -75,9 +74,7 @@ export const getItems = async (req, res) => {
     const items = await MenuItem.find(filter)
       .sort(sort)
       .limit(Number(limit))
-      .skip(skip)
-      .select('name description price category categoryId image images isAvailable isPopular isFeatured type preparationTime dietary') // Only fetch needed fields
-      .lean(); // Return plain JavaScript objects for better performance
+      .skip(skip);
 
     const total = await MenuItem.countDocuments(filter);
 

@@ -1,3 +1,82 @@
+/* Category Cards Styles */
+.category-tabs {
+  margin: 20px 0;
+}
+
+.tabs-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 140px;
+  justify-content: center;
+}
+
+.tab-btn:hover {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+}
+
+.tab-btn.active {
+  border-color: #22c55e;
+  background: #22c55e;
+  color: white;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.25);
+}
+
+.tab-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.tab-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.tab-btn.active .tab-name {
+  color: white;
+}
+
+.tab-count {
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-weight: 600;
+}
+
+.tab-btn.active .tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.no-categories {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
 .price-strikethrough {
     text-decoration: line-through;
     color: var(--zomato-gray);

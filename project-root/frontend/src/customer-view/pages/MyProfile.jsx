@@ -5,6 +5,7 @@ import './MyProfile.css';
 import { API_CONFIG } from '../../config/api';
 
 const MyProfile = () => {
+  console.log('🚀 MyProfile component mounted!');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);

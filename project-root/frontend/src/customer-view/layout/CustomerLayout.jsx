@@ -1,12 +1,52 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import Nav from '../pages/Nav';
+import CartSidebar from '../pages/CartSidebar';
+import MobileTabs from '../components/MobileTabs';
 
-const CustomerLayout = () => {
+const CustomerLayout = ({ children }) => {
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Sync cart with localStorage
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Listen for storage events from other tabs/components
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleOpenCart = () => {
+    setIsCartOpen(true);
+  };
+
   return (
     <>
-      <Nav onOpenCart={() => {}} cart={[]} />
-      <Outlet />
+      <Nav 
+        onOpenCart={handleOpenCart} 
+        cart={cart} 
+        showCart={isCartOpen} 
+        setShowCart={setIsCartOpen} 
+      />
+      <MobileTabs />
+      {children}
+      <CartSidebar
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        setCart={setCart}
+      />
     </>
   );
 };
