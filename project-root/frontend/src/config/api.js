@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
-  API_URL: 'http://localhost:50017/api', // Force local backend for development
-  USER_API_URL: 'http://localhost:50017/api' // Force local backend for development
+  API_URL: 'https://yhk-66ta.onrender.com/api', // Production Render backend
+  USER_API_URL: 'https://yhk-66ta.onrender.com/api' // Production Render backend
 };
 
 // Cache-busting helper - forces fresh data

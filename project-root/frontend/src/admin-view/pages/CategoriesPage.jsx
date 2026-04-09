@@ -83,7 +83,7 @@ const CategoriesPage = () => {
   // Test direct API call
   useEffect(() => {
     console.log('🔍 Testing direct API call');
-    fetch('http://localhost:50017/api/categories?isActive=all')
+    fetch('https://yhk-66ta.onrender.com/api/categories?isActive=all')
       .then(response => {
         console.log('🔍 Direct API response status:', response.status);
         console.log('🔍 Direct API response headers:', response.headers);
