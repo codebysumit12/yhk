@@ -448,7 +448,7 @@ function AuthInner() {
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
-    if (p.get('mode') === 'register') setScreen('register');
+    if (p.get('mode') === 'register' || p.get('mode') === 'signup') setScreen('register');
   }, []);
 
   useEffect(() => {
@@ -514,6 +514,15 @@ function AuthInner() {
   const goTo = useCallback(s => { reset(); setScreen(s); }, [reset]);
 
   const redirect = useCallback((user) => {
+    // Check for stored redirect path after auth
+    const redirectPath = localStorage.getItem('redirectAfterAuth');
+    localStorage.removeItem('redirectAfterAuth'); // Clear after use
+    
+    if (redirectPath) {
+      navigate(redirectPath, { replace: true });
+      return;
+    }
+    
     if (user.isAdmin || user.role === 'admin') navigate('/admin', { replace: true });
     else if (user.role === 'delivery_partner') navigate('/delivery-app', { replace: true });
     else navigate('/', { replace: true });

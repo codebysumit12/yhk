@@ -19,17 +19,27 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import './App.css';
 
-const ProtectedRoute = ({ children, requiredRole }) => {
+const ProtectedRoute = ({ children, requiredRole, redirectToSignup = false }) => {
   const token = localStorage.getItem('token') || localStorage.getItem('userToken');
   const userStr = localStorage.getItem('user');
+  const location = window.location.pathname;
 
   if (!token) {
+    if (redirectToSignup && location === '/checkout') {
+      // Store current path for redirect after signup
+      localStorage.setItem('redirectAfterAuth', '/checkout');
+      return <Navigate to="/auth?mode=signup" replace />;
+    }
     return <Navigate to="/auth" replace />;
   }
 
   if (!userStr) {
     localStorage.removeItem('token');
     localStorage.removeItem('userToken');
+    if (redirectToSignup && location === '/checkout') {
+      localStorage.setItem('redirectAfterAuth', '/checkout');
+      return <Navigate to="/auth?mode=signup" replace />;
+    }
     return <Navigate to="/auth" replace />;
   }
 
@@ -37,7 +47,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     const user = JSON.parse(userStr);
 
     if (requiredRole) {
-      if (requiredRole === 'admin' && !user.isAdmin && user.role !== 'admin') {
+      if (requiredRole === 'admin' && (!user.isAdmin && user.role !== 'admin')) {
         return <Navigate to="/" replace />;
       }
       if (requiredRole === 'delivery' && user.role !== 'delivery_partner') {
@@ -114,80 +124,75 @@ function App() {
             } 
           />
           
-          {/* ✅ Privacy & Terms - Public */}
+          {/* Privacy & Terms - Public */}
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           
-          {/* ✅ Customer Routes - Flat Structure (No /app prefix) */}
+          {/* Customer Routes - Flat Structure (No /app prefix) */}
           <Route 
             path="/" 
             element={
-              <ProtectedRoute>
+              <CustomerLayout>
+                <Main />
+              </CustomerLayout>
+            } 
+          />
+          
+          <Route path="/menu/:categorySlug" element={
+           
+              <CustomerLayout>
+                <Menu />
+              </CustomerLayout>
+          
+          } />
+          
+          <Route path="/menu" element={
+           
+              <CustomerLayout>
+                <Menu />
+              </CustomerLayout>
+          
+          } />
+          
+          <Route path="/menucard" element={
+            
+              <CustomerLayout>
+                <MenuCard />
+              </CustomerLayout>
+          
+          } />
+          
+          <Route path="/onlyveg" element={
+              <CustomerLayout>
+                <OnlyVeg />
+              </CustomerLayout>
+          } />
+          
+          <Route path="/trending" element={
+              <CustomerLayout>
+                <Trending />
+              </CustomerLayout>
+          } />
+          
+          <Route path="/offers" element={
+              <CustomerLayout>
+                <Offers />
+              </CustomerLayout>
+          } />
+          
+          <Route 
+            path="/checkout" 
+            element={
+              <ProtectedRoute redirectToSignup={true}>
                 <CustomerLayout>
-                  <Main />
+                  <Checkoutpage />
                 </CustomerLayout>
               </ProtectedRoute>
             } 
           />
           
-          <Route path="/menu/:categorySlug" element={
-            <ProtectedRoute>
-              <CustomerLayout>
-                <Menu />
-              </CustomerLayout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/menu" element={
-            <ProtectedRoute>
-              <CustomerLayout>
-                <Menu />
-              </CustomerLayout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/menucard" element={
-            <ProtectedRoute>
-              <CustomerLayout>
-                <MenuCard />
-              </CustomerLayout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/onlyveg" element={
-            <ProtectedRoute>
-              <CustomerLayout>
-                <OnlyVeg />
-              </CustomerLayout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/trending" element={
-            <ProtectedRoute>
-              <CustomerLayout>
-                <Trending />
-              </CustomerLayout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/offers" element={
-            <ProtectedRoute>
-              <CustomerLayout>
-                <Offers />
-              </CustomerLayout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/checkout" element={
-            <ProtectedRoute>
-              <CustomerLayout>
-                <Checkoutpage />
-              </CustomerLayout>
-            </ProtectedRoute>
-          } />
-          
           <Route path="/track-order" element={
-            <ProtectedRoute>
+            <ProtectedRoute redirectToSignup={true}>
               <CustomerLayout>
                 <TrackOrder />
               </CustomerLayout>
@@ -195,7 +200,7 @@ function App() {
           } />
           
           <Route path="/my-orders" element={
-            <ProtectedRoute>
+            <ProtectedRoute redirectToSignup={true}>
               <CustomerLayout>
                 <MyOrders />
               </CustomerLayout>
@@ -203,7 +208,7 @@ function App() {
           } />
           
           <Route path="/profile" element={
-            <ProtectedRoute>
+            <ProtectedRoute redirectToSignup={true}>
               <CustomerLayout>
                 <MyProfile />
               </CustomerLayout>
@@ -211,11 +216,11 @@ function App() {
           } />
           
           <Route path="/item/:id" element={
-            <ProtectedRoute>
+           
               <CustomerLayout>
                 <ItemDetailPage />
               </CustomerLayout>
-            </ProtectedRoute>
+            
           } />
           
           {/* ✅ Redirect unknown routes */}
