@@ -1,4 +1,6 @@
 // Simple standalone search controller - doesn't modify existing logic
+import Item from '../models/Item.js';
+
 const simpleSearchItems = async (req, res) => {
   try {
     const { q } = req.query;
@@ -9,50 +11,39 @@ const simpleSearchItems = async (req, res) => {
 
     console.log('🔍 Simple search query:', q);
 
-    // Use existing items endpoint to get data, then filter in memory
     try {
-      // Fetch items using the existing working items API
-      const itemsResponse = await fetch(`http://localhost:50017/api/items`);
-      const itemsData = await itemsResponse.json();
-      
-      if (itemsData.success && itemsData.data) {
-        const searchRegex = new RegExp(q, 'i');
-        const filteredItems = itemsData.data.filter(item => {
-          // Handle null/undefined items and fields
-          if (!item) return false;
-          
-          const name = item.name || '';
-          const description = item.description || '';
-          
-          return name.match(searchRegex) || description.match(searchRegex);
-        });
+      // Direct database query instead of HTTP request
+      const searchRegex = new RegExp(q, 'i');
+      const items = await Item.find({
+        $or: [
+          { name: { $regex: searchRegex } },
+          { description: { $regex: searchRegex } }
+        ]
+      }).populate('category', 'name');
 
-        console.log('📦 Simple search found:', filteredItems.length, 'items');
+      console.log('📦 Simple search found:', items.length, 'items');
 
-        // Map to search result format with null checks
-        const searchResults = filteredItems.map(item => ({
-          _id: item._id,
-          name: item.name || 'Unknown Item',
-          description: (item.description || '').substring(0, 100) + '...' || 'Delicious food item',
-          price: item.price || 0,
-          discountPrice: item.discountPrice || null,
-          image: item.image || (item.images && item.images[0] ? item.images[0].url : null) || null,
-          category: 'Food',
-          categorySlug: 'food',
-          rating: item.ratings?.average || 4.5,
-          prepTime: item.preparationTime || '15-20 min'
-        }));
+      // Map to search result format with null checks
+      const searchResults = items.map(item => ({
+        _id: item._id,
+        name: item.name || 'Unknown Item',
+        description: (item.description || '').substring(0, 100) + (item.description && item.description.length > 100 ? '...' : '') || 'Delicious food item',
+        price: item.price || 0,
+        discountPrice: item.discountPrice || null,
+        image: item.image || (item.images && item.images[0] ? item.images[0].url : null) || null,
+        category: item.category?.name || 'Food',
+        categorySlug: item.category?.slug || 'food',
+        rating: item.ratings?.average || 4.5,
+        prepTime: item.preparationTime || '15-20 min'
+      }));
 
-        res.json({ 
-          success: true, 
-          data: searchResults,
-          count: searchResults.length 
-        });
-      } else {
-        res.json({ success: true, data: [], count: 0 });
-      }
-    } catch (fetchError) {
-      console.error('Error fetching items:', fetchError);
+      res.json({ 
+        success: true, 
+        data: searchResults,
+        count: searchResults.length 
+      });
+    } catch (dbError) {
+      console.error('Error querying database:', dbError);
       res.json({ success: true, data: [], count: 0 });
     }
   } catch (error) {
@@ -65,24 +56,17 @@ const simpleGetItemById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Use existing items endpoint to get item details
+    // Direct database query instead of HTTP request
     try {
-      const itemsResponse = await fetch(`http://localhost:50017/api/items`);
-      const itemsData = await itemsResponse.json();
+      const item = await Item.findById(id).populate('category', 'name slug');
       
-      if (itemsData.success && itemsData.data) {
-        const item = itemsData.data.find(item => item._id === id);
-        
-        if (item) {
-          res.json({ success: true, data: item });
-        } else {
-          res.status(404).json({ success: false, message: 'Item not found' });
-        }
+      if (item) {
+        res.json({ success: true, data: item });
       } else {
-        res.status(404).json({ success: false, message: 'Items not found' });
+        res.status(404).json({ success: false, message: 'Item not found' });
       }
-    } catch (fetchError) {
-      console.error('Error fetching item:', fetchError);
+    } catch (dbError) {
+      console.error('Error querying database:', dbError);
       res.status(500).json({ success: false, message: 'Error fetching item' });
     }
   } catch (error) {

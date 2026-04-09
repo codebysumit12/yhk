@@ -12,6 +12,10 @@ dotenv.config();
 // Import auth controller with nodemailer fix
 import { register, login, getMe, updateProfile, logout, handleDropdownClick } from './controllers/authController.js';
 import User from './models/User.js';
+import Banner from './models/Banner.js';
+import Category from './models/Category.js';
+import Item from './models/Item.js';
+import Order from './models/Order.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,127 +51,26 @@ app.use((req, res, next) => {
 // Connect to MongoDB
 connectDB();
 
-// Mock data for frontend
-const mockBanners = [
-  {
-    _id: '1',
-    title: 'Welcome to Yashwanth\'s Healthy Kitchen',
-    subtitle: 'Fresh, Healthy, Delicious',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
-    position: 'hero',
-    isActive: true,
-    createdAt: new Date()
-  }
-];
-
-const mockCategories = [
-  {
-    _id: '1',
-    name: 'Starters',
-    description: 'Fresh appetizers to begin your meal',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
-    isActive: true,
-    order: 1
-  },
-  {
-    _id: '2',
-    name: 'Main Course',
-    description: 'Hearty and satisfying main dishes',
-    image: 'https://images.unsplash.com/photo-1546833999-b03f31985c5e?w=400',
-    isActive: true,
-    order: 2
-  },
-  {
-    _id: '3',
-    name: 'Desserts',
-    description: 'Sweet endings to your meal',
-    image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400',
-    isActive: true,
-    order: 3
-  },
-  {
-    _id: '4',
-    name: 'Beverages',
-    description: 'Refreshing drinks and beverages',
-    image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400',
-    isActive: true,
-    order: 4
-  }
-];
-
-const mockItems = [
-  {
-    _id: '1',
-    name: 'Garden Fresh Salad',
-    description: 'Mixed greens with seasonal vegetables',
-    price: 8.99,
-    category: 'Starters',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400',
-    isAvailable: true,
-    isPopular: true,
-    isFeatured: true,
-    preparationTime: 10,
-    dietary: ['vegetarian', 'gluten-free']
-  },
-  {
-    _id: '2',
-    name: 'Grilled Chicken',
-    description: 'Tender grilled chicken with herbs',
-    price: 15.99,
-    category: 'Main Course',
-    image: 'https://images.unsplash.com/photo-1546833999-b03f31985c5e?w=400',
-    isAvailable: true,
-    isPopular: true,
-    isFeatured: false,
-    preparationTime: 25,
-    dietary: ['non-vegetarian']
-  },
-  {
-    _id: '3',
-    name: 'Chocolate Cake',
-    description: 'Rich chocolate cake with ganache',
-    price: 6.99,
-    category: 'Desserts',
-    image: 'https://images.unsplash.com/photo-1578985545062-69928311d6c7?w=400',
-    isAvailable: true,
-    isPopular: false,
-    isFeatured: true,
-    preparationTime: 5,
-    dietary: ['vegetarian']
-  },
-  {
-    _id: '4',
-    name: 'Fresh Orange Juice',
-    description: 'Freshly squeezed orange juice',
-    price: 4.99,
-    category: 'Beverages',
-    image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400',
-    isAvailable: true,
-    isPopular: true,
-    isFeatured: false,
-    preparationTime: 5,
-    dietary: ['vegan', 'gluten-free']
-  }
-];
-
-// Banners endpoint
-app.get('/api/banners', (req, res) => {
+// Banners endpoint - using real MongoDB data
+app.get('/api/banners', async (req, res) => {
   try {
     const { position, isActive } = req.query;
-    let filteredBanners = mockBanners;
+    let query = {};
     
     if (position) {
-      filteredBanners = filteredBanners.filter(b => b.position === position);
+      query.position = position;
     }
     
     if (isActive !== undefined) {
-      filteredBanners = filteredBanners.filter(b => b.isActive === (isActive === 'true'));
+      query.isActive = isActive === 'true';
     }
+    
+    const banners = await Banner.find(query).sort({ order: 1, createdAt: -1 });
     
     res.json({
       success: true,
-      data: filteredBanners,
-      count: filteredBanners.length
+      data: banners,
+      count: banners.length
     });
   } catch (error) {
     console.error('Banners endpoint error:', error);
@@ -178,20 +81,22 @@ app.get('/api/banners', (req, res) => {
   }
 });
 
-// Categories endpoint
-app.get('/api/categories', (req, res) => {
+// Categories endpoint - using real MongoDB data
+app.get('/api/categories', async (req, res) => {
   try {
     const { isActive } = req.query;
-    let filteredCategories = mockCategories;
+    let query = {};
     
     if (isActive !== undefined) {
-      filteredCategories = filteredCategories.filter(c => c.isActive === (isActive === 'true'));
+      query.isActive = isActive === 'true';
     }
+    
+    const categories = await Category.find(query).sort({ order: 1, name: 1 });
     
     res.json({
       success: true,
-      data: filteredCategories.sort((a, b) => a.order - b.order),
-      count: filteredCategories.length
+      data: categories,
+      count: categories.length
     });
   } catch (error) {
     console.error('Categories endpoint error:', error);
@@ -202,32 +107,34 @@ app.get('/api/categories', (req, res) => {
   }
 });
 
-// Items endpoint
-app.get('/api/items', (req, res) => {
+// Items endpoint - using real MongoDB data
+app.get('/api/items', async (req, res) => {
   try {
     const { isAvailable, isPopular, isFeatured, category } = req.query;
-    let filteredItems = mockItems;
+    let query = {};
     
     if (isAvailable !== undefined) {
-      filteredItems = filteredItems.filter(i => i.isAvailable === (isAvailable === 'true'));
+      query.isAvailable = isAvailable === 'true';
     }
     
     if (isPopular !== undefined) {
-      filteredItems = filteredItems.filter(i => i.isPopular === (isPopular === 'true'));
+      query.isPopular = isPopular === 'true';
     }
     
     if (isFeatured !== undefined) {
-      filteredItems = filteredItems.filter(i => i.isFeatured === (isFeatured === 'true'));
+      query.isFeatured = isFeatured === 'true';
     }
     
     if (category) {
-      filteredItems = filteredItems.filter(i => i.category === category);
+      query.category = category;
     }
+    
+    const items = await Item.find(query).sort({ name: 1 });
     
     res.json({
       success: true,
-      data: filteredItems,
-      count: filteredItems.length
+      data: items,
+      count: items.length
     });
   } catch (error) {
     console.error('Items endpoint error:', error);
@@ -238,15 +145,17 @@ app.get('/api/items', (req, res) => {
   }
 });
 
-// Orders endpoint
-app.get('/api/orders', (req, res) => {
+// Orders endpoint - using real MongoDB data
+app.get('/api/orders', async (req, res) => {
   try {
-    // Return empty orders array for now
+    // For now, return empty array since we don't have user authentication middleware
+    // In a real app, you'd get user ID from JWT token and filter by user
+    const orders = await Order.find({}).sort({ createdAt: -1 }).limit(10);
+    
     res.json({
       success: true,
-      data: [],
-      count: 0,
-      message: 'No orders found'
+      data: orders,
+      count: orders.length
     });
   } catch (error) {
     console.error('Orders endpoint error:', error);
@@ -363,7 +272,8 @@ app.get('/api/debug', (req, res) => {
       '/api/auth/register',
       '/api/auth/login',
       '/api/auth/me'
-    ]
+    ],
+    models: ['User', 'Banner', 'Category', 'Item', 'Order']
   });
 });
 
@@ -397,7 +307,7 @@ const PORT = process.env.PORT || 50017;
 app.listen(PORT, async () => {
   console.log(` Server running on port ${PORT}`);
   console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(` Available endpoints: /api/banners, /api/categories, /api/items, /api/orders`);
+  console.log(` Using real MongoDB data for all endpoints`);
   await seedAdminUser();
 });
 
