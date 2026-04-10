@@ -1,6 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   API_URL: 'https://yhk-66ta.onrender.com/api', // Production Render backend
+  LOCAL_API_URL: 'http://localhost:50017/api', // Local development backend
   USER_API_URL: 'https://yhk-66ta.onrender.com/api' // Production Render backend
 };
 

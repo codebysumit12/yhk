@@ -119,11 +119,11 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
     <>
       <header className="header">
         <div className="header-top">
-          <Link to="/" className="logo">
-            <div className="logo-icon">
-              <i className="fas fa-carrot"></i>
+          <Link to="/" className="logo001">
+            <div className="logo-icon001">
+              <img src="/logo015.png" alt="Yeswanth's Healthy Kitchen" className="logo-img001" />
             </div>
-            Yeswanth's Healthy Kitchens
+              Yeswanth's Healthy Kitchens
           </Link>
           
           <div className="header-search">
@@ -279,7 +279,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
             <div className="mobile-menu-content">
               <div className="mobile-menu-header">
                 <a href="/" className="mobile-logo">
-                  <i className="fas fa-carrot"></i>
+                  <img src="/logo192.png" alt="Yeswanth's Healthy Kitchen" className="mobile-logo-img" />
                   Yeswanth's Healthy Kitchen
                 </a>
                 <button 

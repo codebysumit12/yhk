@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-04-09T12:49:43.607Z",
+  "summary": {
+    "total": 13,
+    "passed": 11,
+    "failed": 2,
+    "successRate": "84.6"
+  },
+  "tests": [
+    {
+      "testName": "Server Health Check",
+      "passed": false,
+      "reason": "Missing success field in response",
+      "response": {
+        "dataLength": 0
+      }
+    },
+    {
+      "testName": "Empty Search Query",
+      "passed": false,
+      "reason": "Expected 0 results, got undefined",
+      "response": {
+        "success": true,
+        "dataLength": 0
+      }
+    },
+    {
+      "testName": "Search for Burger",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 2,
+        "dataLength": 2
+      }
+    },
+    {
+      "testName": "Search for Biryani",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 5,
+        "dataLength": 5
+      }
+    },
+    {
+      "testName": "Search for Ragi",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 3,
+        "dataLength": 3
+      }
+    },
+    {
+      "testName": "Case Insensitive Search",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 5,
+        "dataLength": 5
+      }
+    },
+    {
+      "testName": "Partial Match Search",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 5,
+        "dataLength": 5
+      }
+    },
+    {
+      "testName": "Special Characters Search",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 0,
+        "dataLength": 0
+      }
+    },
+    {
+      "testName": "Non-existent Item Search",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 0,
+        "dataLength": 0
+      }
+    },
+    {
+      "testName": "Single Character Search",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "count": 25,
+        "dataLength": 25
+      }
+    },
+    {
+      "testName": "Get Popular Items",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true,
+        "dataLength": 10
+      }
+    },
+    {
+      "testName": "Get Item by ID",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": true
+      }
+    },
+    {
+      "testName": "Get Non-existent Item by ID",
+      "passed": true,
+      "reason": "",
+      "response": {
+        "success": false,
+        "dataLength": 0
+      }
+    }
+  ]
+}

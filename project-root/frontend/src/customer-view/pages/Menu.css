@@ -201,6 +201,30 @@
     color: white;
 }
 
+/* Menu Page Back Button */
+.menu-page-back-btn {
+    background: white;
+    color: var(--zomato-dark);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    position: absolute;
+    top: 1rem;
+    left: 2rem;
+}
+
+.menu-page-back-btn:hover {
+    background: var(--zomato-red);
+    color: white;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .related-hero {

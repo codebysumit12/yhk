@@ -604,7 +604,7 @@ const Menu = () => {
             </video>
             <div className="related-hero-overlay"></div>
             <div className="related-hero-content">
-              <button className="back-btn" onClick={() => navigate('/')}>
+              <button className="back-btn menu-page-back-btn" onClick={() => navigate('/')}>
                 <i className="fas fa-arrow-left"></i> Back to Home
               </button>
               <h1>
@@ -624,7 +624,7 @@ const Menu = () => {
             }}
           >
             <div className="related-hero-content">
-              <button className="back-btn" onClick={() => navigate('/')}>
+              <button className="back-btn menu-page-back-btn" onClick={() => navigate('/')}>
                 <i className="fas fa-arrow-left"></i> Back to Home
               </button>
               <h1>

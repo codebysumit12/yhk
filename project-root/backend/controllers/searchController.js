@@ -1,7 +1,8 @@
-import Item from '../models/Item.js';
+import MenuItem from '../models/MenuItem.js';
 
 // Search items by name, description, or tags
 const searchItems = async (req, res) => {
+  console.log('ððð SEARCH CONTROLLER CALLED! Query:', req.query);
   try {
     const { q } = req.query;
     
@@ -11,8 +12,15 @@ const searchItems = async (req, res) => {
 
     console.log('🔍 Search query:', q);
 
-    // Use .lean() to get plain JavaScript objects without population
-    const items = await Item.find({}).lean().limit(20);
+    // Use MongoDB regex search for better performance
+    const searchRegex = new RegExp(q, 'i');
+    const items = await MenuItem.find({
+      $or: [
+        { name: { $regex: searchRegex } },
+        { description: { $regex: searchRegex } }
+      ]
+    }).lean().limit(100);
+    
     console.log('📦 Total items found:', items.length);
     
     if (items.length > 0) {
@@ -20,22 +28,8 @@ const searchItems = async (req, res) => {
       console.log('📝 Sample item name:', items[0].name || items[0].itemName || items[0].title || 'No name field');
     }
 
-    // Filter items manually
-    const searchRegex = new RegExp(q, 'i');
-    const filteredItems = items.filter(item => {
-      // Try different possible field names
-      const name = item.name || item.itemName || item.title || '';
-      const description = item.description || '';
-      
-      console.log(`🔍 Checking item: "${name}" against "${q}"`);
-      
-      return name.match(searchRegex) || description.match(searchRegex);
-    });
-    
-    console.log('🔍 Filtered items:', filteredItems.length);
-
-    // Return the filtered items without category dependency
-    const searchResults = filteredItems.map(item => ({
+    // Return the search results without category dependency
+    const searchResults = items.map(item => ({
       _id: item._id,
       name: item.name || item.itemName || item.title || 'Unknown Item',
       description: (item.description || '').substring(0, 100) + '...' || 'Delicious food item',
@@ -64,11 +58,11 @@ const getItemById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const item = await Item.findById(id)
+    const item = await MenuItem.findById(id)
       .populate('category', 'name slug')
       .select('-__v');
 
-    if (!item || !item.isActive) {
+    if (!item || !item.isAvailable) {
       return res.status(404).json({ success: false, message: 'Item not found' });
     }
 
@@ -82,11 +76,11 @@ const getItemById = async (req, res) => {
 // Get popular/recommended items (for search suggestions)
 const getPopularItems = async (req, res) => {
   try {
-    const items = await Item.find({ isActive: true })
+    const items = await MenuItem.find({ isAvailable: true })
       .populate('category', 'name')
-      .sort({ avgRating: -1, orderCount: -1 })
+      .sort({ 'ratings.average': -1, soldCount: -1 })
       .limit(10)
-      .select('name image price avgRating category');
+      .select('name image price ratings category');
 
     res.json({ success: true, data: items });
   } catch (error) {

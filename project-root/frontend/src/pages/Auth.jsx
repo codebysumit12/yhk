@@ -256,7 +256,7 @@ const RegisterScreen = ({
   <div className="sa-screen">
     <BackBtn to="landing" goTo={goTo} />
     <h2 className="sa-title">Create account</h2>
-    <p className="sa-subtitle">Fresh food awaits — sign up in 30 seconds</p>
+    <p className="sa-subtitle">Fresh food awaits — sign up Now</p>
     <Alert type="error" msg={globalError} />
     <Alert type="success" msg={globalSuccess} />
     <form onSubmit={handleRegister} className="sa-form">
@@ -332,17 +332,7 @@ const RegisterScreen = ({
           <FieldError msg={regErrors.confirmPassword} />
         </div>
       </div>
-      <div className="sa-field">
-        <label className="sa-label">I want to</label>
-        <select
-          className="sa-input sa-input--select"
-          value={reg.role}
-          onChange={e => setReg(r => ({ ...r, role: e.target.value }))}
-        >
-          <option value="customer">🛒 Order food — I'm a customer</option>
-          <option value="delivery_partner">🛵 Deliver food — I'm a partner</option>
-        </select>
-      </div>
+     
       <button type="submit" className="sa-primary-btn" disabled={isRegistering}>
         {isRegistering ? <><Spinner />Creating account…</> : 'Create Account'}
       </button>
@@ -448,7 +438,7 @@ function AuthInner() {
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
-    if (p.get('mode') === 'register') setScreen('register');
+    if (p.get('mode') === 'register' || p.get('mode') === 'signup') setScreen('register');
   }, []);
 
   useEffect(() => {
@@ -514,6 +504,15 @@ function AuthInner() {
   const goTo = useCallback(s => { reset(); setScreen(s); }, [reset]);
 
   const redirect = useCallback((user) => {
+    // Check for stored redirect path after auth
+    const redirectPath = localStorage.getItem('redirectAfterAuth');
+    localStorage.removeItem('redirectAfterAuth'); // Clear after use
+    
+    if (redirectPath) {
+      navigate(redirectPath, { replace: true });
+      return;
+    }
+    
     if (user.isAdmin || user.role === 'admin') navigate('/admin', { replace: true });
     else if (user.role === 'delivery_partner') navigate('/delivery-app', { replace: true });
     else navigate('/', { replace: true });

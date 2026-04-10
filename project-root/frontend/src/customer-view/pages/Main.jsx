@@ -117,11 +117,7 @@ const Main = ({ restaurants }) => {
             </div>
 
             
-            <div className="menu-navigation">
-              <Link to="/menu" className="menu-btn">
-                <i className="fas fa-utensils"></i> View Full Menu
-              </Link>
-            </div>
+         
           </div>
         </section>
       )}

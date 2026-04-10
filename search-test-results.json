@@ -1,0 +1,74 @@
+{
+  "test_summary": "Search functionality test results",
+  "timestamp": "2026-04-09T12:45:00Z",
+  "tests_performed": [
+    {
+      "test_name": "Server Health Check",
+      "endpoint": "/api/health",
+      "status": "✅ PASS",
+      "response": "API is running"
+    },
+    {
+      "test_name": "Items Endpoint Check",
+      "endpoint": "/api/items",
+      "status": "✅ PASS", 
+      "items_found": 50,
+      "sample_items": [
+        "Black Rice Biryani (Non-Veg)",
+        "Ragi Sangati (Non-Veg)",
+        "Banana Raghi Pancake"
+      ]
+    },
+    {
+      "test_name": "Search - Empty Query",
+      "endpoint": "/api/search?q=",
+      "status": "✅ PASS",
+      "results_count": 0,
+      "expected_behavior": "Should return empty array for empty query"
+    },
+    {
+      "test_name": "Search - Known Item Name",
+      "endpoint": "/api/search?q=banana",
+      "status": "❌ FAIL",
+      "results_count": 0,
+      "expected_results": "Should find 'Banana Raghi Pancake'",
+      "issue": "Search returning empty results despite matching items in database"
+    },
+    {
+      "test_name": "Search - Partial Match",
+      "endpoint": "/api/search?q=black",
+      "status": "❌ FAIL", 
+      "results_count": 0,
+      "expected_results": "Should find 'Black Rice Biryani'",
+      "issue": "Partial matching not working"
+    },
+    {
+      "test_name": "Simple Search - Known Item Name",
+      "endpoint": "/api/simple-search?q=banana",
+      "status": "❌ FAIL",
+      "results_count": 0,
+      "expected_results": "Should find 'Banana Raghi Pancake'",
+      "issue": "Simple search also returning empty results"
+    },
+    {
+      "test_name": "Case Sensitivity Test",
+      "endpoint": "/api/search?q=Banana",
+      "status": "❌ FAIL",
+      "results_count": 0,
+      "expected_results": "Should be case insensitive",
+      "issue": "Case insensitive search not working"
+    }
+  ],
+  "issues_identified": [
+    "Search functionality not returning any results despite items existing in database",
+    "Both main search and simple search endpoints affected",
+    "Database connection timeouts when trying to debug directly",
+    "Search regex logic may have issues"
+  ],
+  "recommendations": [
+    "Debug the search controller logging to see what's happening during search",
+    "Check if the Item model is properly connected to the correct collection",
+    "Verify the search regex is working correctly",
+    "Test database queries directly to isolate the issue"
+  ]
+}
