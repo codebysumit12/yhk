@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Auth from './pages/Auth';
 import CustomerLayout from './customer-view/layout/CustomerLayout';
 import Main from './customer-view/pages/Main';
@@ -17,6 +17,7 @@ import AdminLayout from './admin-view/layout/AdminLayout';
 import DeliveryBoyApp from './admin-view/pages/DeliveryBoyApp';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import CheckoutProtectedRoute from './shared/components/ProtectedRoute/CheckoutProtectedRoute';
 import './App.css';
 
 const ProtectedRoute = ({ children, requiredRole, redirectToSignup = false }) => {
@@ -183,11 +184,11 @@ function App() {
           <Route 
             path="/checkout" 
             element={
-              <ProtectedRoute redirectToSignup={true}>
-                <CustomerLayout>
+              <CustomerLayout>
+                <CheckoutProtectedRoute>
                   <Checkoutpage />
-                </CustomerLayout>
-              </ProtectedRoute>
+                </CheckoutProtectedRoute>
+              </CustomerLayout>
             } 
           />
           

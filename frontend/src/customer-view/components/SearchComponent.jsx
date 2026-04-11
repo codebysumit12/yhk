@@ -32,9 +32,9 @@ const SearchComponent = ({ placeholder = "Search for food items..." }) => {
     fetchPopularItems();
   }, []);
 
-  // Search API call with debouncing
+  // Search API call with debouncing and fallback logic
   const handleSearch = async (searchQuery) => {
-    console.log('🔍 Frontend search for:', searchQuery);
+    console.log('ð Frontend search for:', searchQuery);
     
     if (!searchQuery.trim()) {
       setResults([]);
@@ -44,17 +44,44 @@ const SearchComponent = ({ placeholder = "Search for food items..." }) => {
 
     setLoading(true);
     try {
-      // Use simple search endpoint that doesn't modify existing logic
-      const response = await fetch(`${API_CONFIG.API_URL}/simple-search?q=${encodeURIComponent(searchQuery)}`);
-      const data = await response.json();
-      console.log('📦 Search results:', data);
-      if (data.success) {
-        setResults(data.data);
-        setShowResults(true);
+      // Try localhost first, then fallback to production using original search endpoint
+      const searchEndpoints = [
+        'http://localhost:50017/api/search',
+        `${API_CONFIG.API_URL}/search`
+      ];
+      
+      let data = null;
+      let lastError = null;
+      
+      for (const endpoint of searchEndpoints) {
+        try {
+          console.log('ððð Trying search endpoint:', endpoint, 'with query:', searchQuery);
+          const response = await fetch(`${endpoint}?q=${encodeURIComponent(searchQuery)}`);
+          data = await response.json();
+          console.log('ððð Search results from', endpoint, ':', data);
+          
+          if (data.success) {
+            setResults(data.data);
+            setShowResults(true);
+            console.log('ð showResults set to true, results:', data.data);
+            return; // Success, exit the function
+          }
+        } catch (error) {
+          console.log('ð Search endpoint failed:', endpoint, error);
+          lastError = error;
+          continue; // Try next endpoint
+        }
       }
+      
+      // If all endpoints failed
+      console.error('All search endpoints failed. Last error:', lastError);
+      setResults([]);
+      setShowResults(false);
+      
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
+      setShowResults(false);
     } finally {
       setLoading(false);
     }
@@ -134,6 +161,7 @@ const SearchComponent = ({ placeholder = "Search for food items..." }) => {
 
       {showResults && (
         <div className="search-results">
+          {console.log('ð Rendering search dropdown, showResults:', showResults, 'results.length:', results.length, 'loading:', loading)}
           {loading ? (
             <div className="search-loading">
               <div className="search-spinner"></div>
