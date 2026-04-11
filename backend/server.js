@@ -59,7 +59,8 @@ app.use(cors({
     'https://yhk-66ta.onrender.com',
     'https://sumitweb.xyz',
     'https://www.sumitweb.xyz',
-    /^https:\/\/.*\.netlify\.app$/
+    /^https:\/\/.*\.netlify\.app$/,
+    'http://159.65.144.135'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
