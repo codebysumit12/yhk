@@ -44,15 +44,21 @@ const DeliveryBoyApp = () => {
   // ── OTP modal state ───────────────────────────────────────────────────────
   const [activeOrder,        setActiveOrder]        = useState(null);
   const [otpStep,            setOtpStep]            = useState('send');   // 'send' | 'enter' | 'success'
-  const [otpDigits,          setOtpDigits]          = useState(['', '', '', '', '', '']);
+  const [otpDigits,          setOtpDigits]          = useState(['', '', '', '', '']);
   const [otpError,           setOtpError]           = useState('');
   const [sendingOtp,         setSendingOtp]         = useState(false);
   const [verifying,          setVerifying]          = useState(false);
-  const [resendTimer,        setResendTimer]        = useState(0);
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [otpExpiredRef, setOtpExpiredRef] = useState(false);
+  const [otpExpiredDisplay, setOtpExpiredDisplay] = useState(false);
+  const [otpExpiryTimer, setOtpExpiryTimer] = useState(60);
+  const [resendTimer, setResendTimer] = useState(45);
+  const [otpErrorMsg, setOtpErrorMsg] = useState('');
+  const otpRefs = useRef([null, null, null, null, null, null, null]);
+  const isVerifyingRef = useRef(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
 
   // Refs
-  const otpRefs              = useRef([]);
   const isVerifyingRef       = useRef(false);
   const recaptchaVerifierRef = useRef(null);
   const recaptchaRenderedRef = useRef(false);
@@ -66,6 +72,13 @@ const DeliveryBoyApp = () => {
     const t = setTimeout(() => setResendTimer(v => v - 1), 1000);
     return () => clearTimeout(t);
   }, [resendTimer]);
+
+  // ── OTP expiry timer ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (otpExpiryTimer <= 0) return;
+    const t = setTimeout(() => setOtpExpiryTimer(v => v - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpExpiryTimer]);
 
   // ── reCAPTCHA ─────────────────────────────────────────────────────────────
   const clearRecaptcha = useCallback(() => {
