@@ -49,9 +49,9 @@
 }
 
 .logo-icon001 {
-    width: 55px;
-    height: 55px;
-    background: var(--zomato-red);
+    width: 45px;
+    height: 45px;
+ /*   background: var(--zomato-red); */
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -61,8 +61,8 @@
 }
 
   .logo-img001 {
-      width: 70px;
-      height: 70px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
 }
 

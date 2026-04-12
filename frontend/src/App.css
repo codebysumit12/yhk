@@ -312,7 +312,7 @@ i, .fas, .far, .fab, .fa {
 .hero-content {
     position: relative;
     z-index: 1;
-    height: 350px;
+    /* height: 350px; Removed for proper flex centering */
 }
 
 .hero h1 {

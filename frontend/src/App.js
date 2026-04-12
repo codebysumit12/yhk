@@ -184,11 +184,9 @@ function App() {
           <Route 
             path="/checkout" 
             element={
-              <CustomerLayout>
-                <CheckoutProtectedRoute>
-                  <Checkoutpage />
-                </CheckoutProtectedRoute>
-              </CustomerLayout>
+              <CheckoutProtectedRoute>
+                <Checkoutpage />
+              </CheckoutProtectedRoute>
             } 
           />
           

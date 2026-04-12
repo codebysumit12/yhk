@@ -620,7 +620,7 @@ const Checkoutpage = () => {
       <div className="checkout-page">
         <nav className="checkout-topnav">
           <div className="checkout-brand">
-            <div className="checkout-brand-icon">🍽️</div>
+            <div className="checkout-brand-icon">YHK</div>
             <h1>Yashwant's Healthy Kitchen</h1>
           </div>
         </nav>

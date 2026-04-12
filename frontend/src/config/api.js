@@ -1,8 +1,8 @@
 // API Configuration
 export const API_CONFIG = {
-  API_URL: '/api', // Local Droplet backend
+  API_URL: '/api', // Droplet backend
   LOCAL_API_URL: 'http://localhost:50017/api', // Local development backend
-  USER_API_URL: '/api' // Local Droplet backend
+  USER_API_URL: '/api' // Droplet backend
 };
 
 // Cache-busting helper - forces fresh data
