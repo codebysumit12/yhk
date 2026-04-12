@@ -471,7 +471,10 @@ function AuthInner() {
     el.innerHTML = '';
     try {
       recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-root', {
-        size:'invisible', callback:()=>{}, 'expired-callback':()=>clearRecaptcha(),
+        size:'invisible', 
+        callback:()=>{}, 
+        'expired-callback':()=>clearRecaptcha(),
+        timeout: 10000 // Set 10 second timeout
       });
       recaptchaRef.current.render()
         .then(() => { recaptchaRendered.current = true; res(recaptchaRef.current); })
@@ -560,7 +563,14 @@ function AuthInner() {
     setPhoneError(''); setIsSendingOTP(true);
     try {
       const verifier = await initRecaptcha();
-      const result = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
+      // Add timeout wrapper for signInWithPhoneNumber
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('reCAPTCHA timeout')), 15000)
+      );
+      const result = await Promise.race([
+        signInWithPhoneNumber(auth, `+91${phone}`, verifier),
+        timeoutPromise
+      ]);
       setConfirmResult(result);
       otpExpiredRef.current = false; setOtpExpiredState(false);
       setOtpDigits(['','','','','','']); setOtpError('');
@@ -568,9 +578,15 @@ function AuthInner() {
       setScreen('otp');
     } catch(err) {
       clearRecaptcha();
-      if (err.code === 'auth/too-many-requests') setPhoneError('Too many attempts. Wait a few minutes.');
-      else if (err.code === 'auth/invalid-phone-number') setPhoneError('Invalid phone number.');
-      else setPhoneError('Failed to send OTP. Try again.');
+      if (err.message === 'reCAPTCHA timeout' || err.code === 'auth/network-request-failed') {
+        setPhoneError('reCAPTCHA verification timed out. Please try again.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setPhoneError('Too many attempts. Wait a few minutes.');
+      } else if (err.code === 'auth/invalid-phone-number') {
+        setPhoneError('Invalid phone number.');
+      } else {
+        setPhoneError('Failed to send OTP. Try again.');
+      }
     } finally { setIsSendingOTP(false); }
   }, [phone, initRecaptcha, clearRecaptcha]);
 

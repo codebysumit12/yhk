@@ -176,6 +176,7 @@ const Checkoutpage = () => {
               console.warn('⚠️ reCAPTCHA expired');
               clearRecaptcha();
             },
+            timeout: 10000 // Set 10 second timeout
           }
         );
 
@@ -222,11 +223,19 @@ const Checkoutpage = () => {
       // FIX: always call initRecaptcha() — the guard inside will reuse or re-init
       const verifier = await initRecaptcha();
 
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        `+91${phoneNumber}`,
-        verifier
+      // Add timeout wrapper for signInWithPhoneNumber
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('reCAPTCHA timeout')), 15000)
       );
+      
+      const confirmation = await Promise.race([
+        signInWithPhoneNumber(
+          auth,
+          `+91${phoneNumber}`,
+          verifier
+        ),
+        timeoutPromise
+      ]);
 
       setConfirmationResult(confirmation);
 
@@ -243,11 +252,10 @@ const Checkoutpage = () => {
       console.log('✅ OTP sent');
     } catch (error) {
       console.error('❌ OTP send error:', error);
-      setPhoneError(true);
-      // FIX: always clear on failure so next attempt gets a fresh verifier
-      clearRecaptcha();
 
-      if (error.code === 'auth/too-many-requests') {
+      if (error.message === 'reCAPTCHA timeout' || error.code === 'auth/network-request-failed') {
+        alert('reCAPTCHA verification timed out. Please try again.');
+      } else if (error.code === 'auth/too-many-requests') {
         alert('Too many attempts. Please wait a few minutes before trying again.');
       } else if (error.code === 'auth/operation-not-allowed') {
         alert('Phone authentication is not enabled. Please contact support.');
@@ -620,7 +628,7 @@ const Checkoutpage = () => {
       <div className="checkout-page">
         <nav className="checkout-topnav">
           <div className="checkout-brand">
-            <div className="checkout-brand-icon">🍽️</div>
+            <div className="checkout-brand-icon">YHK</div>
             <h1>Yashwant's Healthy Kitchen</h1>
           </div>
         </nav>

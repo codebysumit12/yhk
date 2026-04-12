@@ -58,6 +58,7 @@ app.use(cors({
     'http://127.0.0.1:3001',
         'https://sumitweb.xyz',
     'https://www.sumitweb.xyz',
+    'http://www.sumitweb.xyz',
     /^https:\/\/.*\.netlify\.app$/,
     'http://159.65.144.135'
   ],

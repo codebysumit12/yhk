@@ -121,7 +121,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
         <div className="header-top">
           <Link to="/" className="logo001">
             <div className="logo-icon001">
-              <img src="/logo015.png" alt="Yeswanth's Healthy Kitchen" className="logo-img001" />
+              <img src="/logo116.png" alt="Yeswanth's Healthy Kitchen" className="logo-img001" />
             </div>
               Yeswanth's Healthy Kitchens
           </Link>
