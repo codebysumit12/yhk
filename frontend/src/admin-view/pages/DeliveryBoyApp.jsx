@@ -125,7 +125,10 @@ const DeliveryBoyApp = () => {
           'delivery-boy-recaptcha',
           {
             size: 'invisible',
-            callback: () => {},
+            callback: (response) => {
+              // Optional: handle successful reCAPTCHA verification
+              console.log('reCAPTCHA verified');
+            },
             'expired-callback': () => clearRecaptcha(),
           }
         );
