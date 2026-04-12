@@ -4,7 +4,24 @@ import { API_CONFIG } from '../../config/api';
 import { calculateOrderPricing } from '../services/pricingService';
 import './Checkout.css';
 import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 import { auth } from '../../firebase';
+
+// ── Secondary Firebase app for customer OTP ───────────────────────────────────
+let _checkoutCustomerAuth;
+const getCheckoutCustomerAuth = () => {
+  if (_checkoutCustomerAuth) return _checkoutCustomerAuth;
+  const primaryApp = getApps().find(a => a.name === '[DEFAULT]');
+  const config = primaryApp?.options;
+  const secondaryApp =
+    getApps().find(a => a.name === 'checkoutCustomerOtp') ||
+    initializeApp(config, 'checkoutCustomerOtp');
+  _checkoutCustomerAuth = getAuth(secondaryApp);
+  // Disable reCAPTCHA Enterprise for secondary app
+  _checkoutCustomerAuth.settings.appVerificationDisabledForTesting = true;
+  return _checkoutCustomerAuth;
+};
 
 const Checkoutpage = () => {
   const navigate = useNavigate();
@@ -167,7 +184,7 @@ const Checkoutpage = () => {
 
       try {
         recaptchaVerifierRef.current = new RecaptchaVerifier(
-          auth,
+          getCheckoutCustomerAuth(),
           'checkout-recaptcha-container',
           {
             size: 'invisible',
@@ -176,6 +193,7 @@ const Checkoutpage = () => {
               console.warn('⚠️ reCAPTCHA expired');
               clearRecaptcha();
             },
+            timeout: 10000 // Set 10 second timeout
           }
         );
 
@@ -222,11 +240,19 @@ const Checkoutpage = () => {
       // FIX: always call initRecaptcha() — the guard inside will reuse or re-init
       const verifier = await initRecaptcha();
 
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        `+91${phoneNumber}`,
-        verifier
+      // Add timeout wrapper for signInWithPhoneNumber
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('reCAPTCHA timeout')), 15000)
       );
+      
+      const confirmation = await Promise.race([
+        signInWithPhoneNumber(
+          getCheckoutCustomerAuth(),
+          `+91${phoneNumber}`,
+          verifier
+        ),
+        timeoutPromise
+      ]);
 
       setConfirmationResult(confirmation);
 
@@ -243,11 +269,10 @@ const Checkoutpage = () => {
       console.log('✅ OTP sent');
     } catch (error) {
       console.error('❌ OTP send error:', error);
-      setPhoneError(true);
-      // FIX: always clear on failure so next attempt gets a fresh verifier
-      clearRecaptcha();
 
-      if (error.code === 'auth/too-many-requests') {
+      if (error.message === 'reCAPTCHA timeout' || error.code === 'auth/network-request-failed') {
+        alert('reCAPTCHA verification timed out. Please try again.');
+      } else if (error.code === 'auth/too-many-requests') {
         alert('Too many attempts. Please wait a few minutes before trying again.');
       } else if (error.code === 'auth/operation-not-allowed') {
         alert('Phone authentication is not enabled. Please contact support.');

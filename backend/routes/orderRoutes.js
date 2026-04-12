@@ -72,7 +72,16 @@ router.post('/:id/rating', protect, rateOrder);
 
 router.get('/', protect, adminOnly, getAllOrders);
 
-router.put('/:id/status', protect, adminOnly, updateOrderStatus);
+router.put('/:id/status', protect, (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.isAdmin === true || req.user.role === 'delivery_partner')) {
+    next();
+  } else {
+    res.status(401).json({
+      success: false,
+      error: 'Admin or delivery partner access required'
+    });
+  }
+}, updateOrderStatus);
 
 router.put('/:id/assign-delivery', protect, adminOnly, assignDeliveryBoy);
 

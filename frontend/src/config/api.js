@@ -1,6 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  API_URL: '/api', // Droplet backend
+  API_URL: process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:50017/api', // Production: Droplet backend, Development: Local backend
   LOCAL_API_URL: 'http://localhost:50017/api', // Local development backend
   USER_API_URL: '/api' // Droplet backend
 };
