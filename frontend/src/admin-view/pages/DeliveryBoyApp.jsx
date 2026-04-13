@@ -40,7 +40,7 @@ const getToken = () => {
       console.log('User role debug:', user.role);
       console.log('User isAdmin debug:', user.isAdmin);
       
-      if (user.role !== 'delivery_partner' && user.role !== 'delivery_partner') {
+      if (user.role !== 'delivery_partner') {
         console.error('🚨 Role mismatch: User role is', user.role, 'but delivery_partner required');
       }
     } catch (e) {
@@ -164,8 +164,14 @@ const DeliveryBoyApp = () => {
           console.error('❌ reCAPTCHA render failed:', err);
           
           // Full fallback verifier (mock all Firebase methods)
-          if (err.code === 'auth/recaptcha-not-enabled' || err.message?.includes('reCAPTCHA') || err.message?.includes('already been rendered') || err.code === 'auth/internal-error') {
-            console.log('🔄 Full fallback verifier (handles internal-error/destroyed)');
+          // Handle Enterprise initialization failures and other reCAPTCHA errors
+          if (err.code === 'auth/recaptcha-not-enabled' || 
+              err.message?.includes('reCAPTCHA') || 
+              err.message?.includes('already been rendered') || 
+              err.code === 'auth/internal-error' ||
+              err.message?.includes('Enterprise') ||
+              err.message?.includes('Failed to initialize')) {
+            console.log('🔄 Full fallback verifier (handles Enterprise/internal-error/destroyed)');
             const mockVerifier = {
               verify: () => Promise.resolve(),
               clear: () => {},
@@ -189,14 +195,17 @@ const DeliveryBoyApp = () => {
             clear: () => {}
           });
         }
-      }, 10000);
+      }, 8000); // Reduced timeout for faster fallback
       
     } catch (err) { 
       console.error('❌ reCAPTCHA initialization error:', err);
-      // Fallback for any initialization error
+      // Fallback for any initialization error, including Enterprise failures
+      console.log('🔄 Using fallback verifier due to initialization error');
       resolve({
         verify: () => Promise.resolve(),
-        clear: () => {}
+        clear: () => {},
+        render: () => Promise.resolve(0),
+        getResponse: () => 'fallback-token',
       });
     }
   }), [clearRecaptcha]);
@@ -204,16 +213,22 @@ const DeliveryBoyApp = () => {
   useEffect(() => () => clearRecaptcha(), [clearRecaptcha]);
 
   // ── Fetch orders ──────────────────────────────────────────────────────────
-  const fetchMyOrders = useCallback(async () => {
+  const fetchMyOrders = useCallback(async (retryCount = 0) => {
     setLoading(true);
     try {
       const token = getToken();
       console.log('🔍 fetchMyOrders - Using token:', token ? `${token.substring(0, 20)}...` : 'null');
       
+      // Add timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
       const res  = await fetch(`${API_URL}/orders/my-deliveries`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
       
+      clearTimeout(timeoutId);
       console.log('📡 fetchMyOrders - Response status:', res.status);
       const data = await res.json();
       console.log('📦 fetchMyOrders - Response data:', data);
@@ -231,7 +246,23 @@ const DeliveryBoyApp = () => {
         }
       }
     } catch (err) { 
-      console.error('❌ fetchMyOrders exception:', err); 
+      console.error('❌ fetchMyOrders exception:', err);
+      
+      // Retry logic for network errors
+      if (retryCount < 2 && (err.name === 'AbortError' || err.message?.includes('fetch') || err.message?.includes('network'))) {
+        console.log(`🔄 Retrying fetchMyOrders (attempt ${retryCount + 1}/3)...`);
+        setTimeout(() => fetchMyOrders(retryCount + 1), 2000 * (retryCount + 1)); // Exponential backoff
+        return;
+      }
+      
+      // Show user-friendly error message
+      if (err.name === 'AbortError') {
+        setOtpError('❌ Network timeout. Please check your connection and try again.');
+      } else if (err.message?.includes('fetch') || err.message?.includes('network')) {
+        setOtpError('❌ Network error. Please check your internet connection.');
+      } else {
+        setOtpError(`❌ ${err.message || 'Failed to fetch orders'}`);
+      }
     } finally { 
       setLoading(false); 
     }
@@ -269,31 +300,22 @@ const DeliveryBoyApp = () => {
   const testOtpWithTestData = async () => {
     console.log('🧪 ACTIVATING TEST MODE...');
     
-    // Use first active order or create test
-    let testOrder = activeOrders[0];
+    // Use first active order if available
+    const testOrder = activeOrders[0];
     if (!testOrder) {
-      testOrder = {
-        _id: 'test-order-id',
-        orderNumber: 'TEST001',
-        customer: {
-          name: 'Test Customer',
-          phone: '9370337263'
-        },
-        delivery: {
-          deliveryPerson: { id: 'test-delivery-boy-id' }
-        }
-      };
+      setOtpError('❌ No active orders available for test mode');
+      return;
     }
     
     setTestMode(true);
     setActiveOrder(testOrder);
     setOtpStep('enter');  // Skip send, go direct to enter
     setOtpDigits(['1','2','3','4','5','6']);
-    setOtpError('');
+    setOtpError('✅ Test mode active - any 6-digit OTP will work');
     setConfirmationResult({ confirm: () => Promise.resolve() });  // Mock success
     clearRecaptcha();
     
-    console.log('✅ TEST MODE: Enter 123456 → auto-success. Toggle off after.');
+    console.log('✅ TEST MODE: Any 6-digit OTP will validate successfully');
   };
 
   const openOtpModal = (order) => {
@@ -317,8 +339,106 @@ const DeliveryBoyApp = () => {
     clearRecaptcha();
   };
 
-  // ── Send OTP ──────────────────────────────────────────────────────────────
-  const handleSendOtp = async () => {
+  // ── Firebase configuration and connectivity check ──────────────────────────────
+  const verifyFirebaseConfig = () => {
+    try {
+      const firebaseConfig = {
+        apiKey: "AIzaSyA8Rk5ViCQQdjnTXv98iO9jADFmtg3LxDU",
+        authDomain: "yeswanth-s-healthy-kitchen.firebaseapp.com",
+        projectId: "yeswanth-s-healthy-kitchen",
+        storageBucket: "yeswanth-s-healthy-kitchen.firebasestorage.app",
+        messagingSenderId: "579329797638",
+        appId: "1:579329797638:web:a48a7f64634775117b1d87",
+        measurementId: "G-8B3TWW3YDZ"
+      };
+      
+      // Validate required fields
+      const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
+      const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+      
+      if (missingFields.length > 0) {
+        console.error('❌ Firebase config missing fields:', missingFields);
+        return false;
+      }
+      
+      console.log('✅ Firebase configuration valid');
+      return true;
+    } catch (err) {
+      console.error('❌ Firebase config verification failed:', err);
+      return false;
+    }
+  };
+
+  const checkFirebaseConnectivity = async () => {
+    try {
+      // First verify config
+      if (!verifyFirebaseConfig()) {
+        return false;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      // Try multiple Firebase endpoints for better reliability
+      const endpoints = [
+        'https://firebase.googleapis.com/',
+        'https://identitytoolkit.googleapis.com/',
+        'https://www.googleapis.com/identitytoolkit/v3/projects/'
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'HEAD',
+            signal: controller.signal,
+            mode: 'no-cors'
+          });
+          clearTimeout(timeoutId);
+          console.log(`✅ Firebase endpoint reachable: ${endpoint}`);
+          return true;
+        } catch (endpointErr) {
+          console.warn(`Firebase endpoint ${endpoint} failed:`, endpointErr.message);
+          continue;
+        }
+      }
+      
+      clearTimeout(timeoutId);
+      return false;
+    } catch (err) {
+      console.warn('Firebase connectivity check failed:', err.message);
+      return false;
+    }
+  };
+
+  // ── Backend OTP service (alternative to Firebase) ───────────────────────
+  const sendBackendOtp = async (phone, orderId) => {
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_URL}/orders/${orderId}/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ phone: `+91${phone}` })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('✅ Backend OTP sent successfully');
+        return { success: true, backendOtp: true };
+      } else {
+        console.error('❌ Backend OTP failed:', data.message);
+        return { success: false, error: data.message };
+      }
+    } catch (err) {
+      console.error('❌ Backend OTP service error:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  // ── Send OTP with retry logic ───────────────────────────────────────────────────
+  const handleSendOtp = async (retryCount = 0) => {
     if (testMode) {
       setOtpError('✅ Test mode active - enter 123456');
       setOtpStep('enter');
@@ -332,25 +452,48 @@ const DeliveryBoyApp = () => {
 
     setSendingOtp(true);
     setOtpError('');
+    
     try {
-      console.log('🚀 Attempting Firebase OTP send to +91' + phone);
-      const verifier = await initRecaptcha();
+      // Check Firebase connectivity first
+      const isFirebaseReachable = await checkFirebaseConnectivity();
+      
+      if (isFirebaseReachable) {
+        console.log(`🚀 Attempting Firebase OTP send to +91${phone} (attempt ${retryCount + 1}/3)`);
+        const verifier = await initRecaptcha();
 
-      // Uses secondary app — delivery boy's primary auth.currentUser never changed
-      const confirmation = await Promise.race([
-        signInWithPhoneNumber(getCustomerAuth(), `+91${phone}`, verifier),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('reCAPTCHA timeout')), 15000)),
-      ]);
+        // Uses secondary app — delivery boy's primary auth.currentUser never changed
+        const confirmation = await Promise.race([
+          signInWithPhoneNumber(getCustomerAuth(), `+91${phone}`, verifier),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('reCAPTCHA timeout')), 10000)),
+        ]);
 
-      console.log('✅ Firebase OTP sent successfully');
-      setConfirmationResult(confirmation);
-      setOtpStep('enter');
-      setResendTimer(45);
-      setOtpDigits(BLANK_OTP);
-      setTimeout(() => otpRefs.current[0]?.focus(), 150);
+        console.log('✅ Firebase OTP sent successfully');
+        setConfirmationResult(confirmation);
+        setOtpStep('enter');
+        setResendTimer(45);
+        setOtpDigits(BLANK_OTP);
+        setTimeout(() => otpRefs.current[0]?.focus(), 150);
+        return;
+      } else {
+        console.log('🔄 Firebase unreachable, using backend OTP service');
+        throw new Error('Firebase connectivity check failed');
+      }
     } catch (err) {
+      console.error(`🚨 Firebase send OTP error (attempt ${retryCount + 1}):`, err.code, err.message);
+      
+      // Retry logic for network errors
+      if (retryCount < 2 && (
+        err.code === 'auth/network-request-failed' || 
+        err.message?.includes('timeout') ||
+        err.message?.includes('Firebase connectivity check failed')
+      )) {
+        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+        console.log(`🔄 Retrying OTP send in ${delay}ms...`);
+        setTimeout(() => handleSendOtp(retryCount + 1), delay);
+        return;
+      }
+      
       clearRecaptcha();
-      console.error('🚨 Firebase send OTP error:', err.code, err.message);
       
       if (err.code === 'auth/quota-exceeded') {
         setOtpError('📱 SMS quota exceeded. Use TEST MODE (9370337263/123456) or wait 1hr.');
@@ -358,14 +501,49 @@ const DeliveryBoyApp = () => {
         setOtpError('⏳ Too many attempts. Wait 5-10 mins or use TEST MODE.');
       } else if (err.code === 'auth/invalid-phone-number') {
         setOtpError('❌ Invalid phone. Check format. Try TEST MODE.');
-      } else if (err.code === 'auth/network-request-failed' || err.message?.includes('timeout')) {
-        setOtpError('🌐 Network timeout. Check internet & try again.');
+      } else if (err.code === 'auth/network-request-failed' || err.message?.includes('timeout') || err.message?.includes('Firebase connectivity check failed')) {
+        // Fallback to backend OTP service
+        console.log('🔄 Using backend OTP service as fallback');
+        const backendResult = await sendBackendOtp(phone, activeOrder._id);
+        
+        if (backendResult.success) {
+          // Create mock confirmation result for backend OTP
+          setConfirmationResult({
+            confirm: (otp) => {
+              // Verify OTP through backend
+              return fetch(`${API_URL}/orders/${activeOrder._id}/verify-otp`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${getToken()}`
+                },
+                body: JSON.stringify({ otp })
+              }).then(res => res.json()).then(data => {
+                if (data.success) {
+                  console.log('✅ Backend OTP verified successfully');
+                  return Promise.resolve();
+                } else {
+                  throw new Error(data.message || 'Invalid OTP');
+                }
+              });
+            }
+          });
+          setOtpStep('enter');
+          setResendTimer(45);
+          setOtpDigits(BLANK_OTP);
+          setOtpError('📱 OTP sent via backend service');
+          setTimeout(() => otpRefs.current[0]?.focus(), 150);
+        } else {
+          setOtpError(`❌ Backend OTP failed: ${backendResult.error}. Use TEST MODE.`);
+        }
       } else if (err.message?.includes('reCAPTCHA')) {
         setOtpError('🔐 reCAPTCHA issue. Refresh page or use TEST MODE.');
       } else {
         setOtpError(`❌ Send failed: ${err.message.slice(0,50)}... Try TEST MODE.`);
       }
-    } finally { setSendingOtp(false); }
+    } finally { 
+      setSendingOtp(false); 
+    }
   };
 
   // ── OTP input ─────────────────────────────────────────────────────────────
