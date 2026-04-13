@@ -4,21 +4,8 @@ import OtpLogin from '../../components/OtpLogin';
 import './delivery-boy-app.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Secondary Firebase app — isolates customer OTP from delivery boy's session.
-// confirm() on the secondary app never touches auth.currentUser on the primary,
-// so the delivery boy's localStorage JWT stays valid for backend calls.
-// ─────────────────────────────────────────────────────────────────────────────
-const getCustomerAuth = (() => {
-  let _auth = null;
-  return () => {
-    if (_auth) return _auth;
-    const existing    = getApps().find(a => a.name === 'customerOtp');
-    const defaultApp  = getApps().find(a => a.name === '[DEFAULT]');
-    const app         = existing ?? initializeApp(defaultApp.options, 'customerOtp');
-    _auth             = getAuth(app);
-    return _auth;
-  };
-})();
+// Mock auth function for MSG91 compatibility
+const getCustomerAuth = () => null;
 
 // ─── Token helper ─────────────────────────────────────────────────────────────
 // Your backend issues its own JWT at login (stored as 'token' or 'userToken').
@@ -130,25 +117,18 @@ const DeliveryBoyApp = () => {
     const container = document.getElementById('delivery-boy-recaptcha');
     if (!container) { reject(new Error('reCAPTCHA container missing')); return; }
 
-    if (rcVerifierRef.current) {
-      try { rcVerifierRef.current.clear(); } catch (_) {}
-      rcVerifierRef.current = null;
-    }
+    try { rcVerifierRef.current.clear(); } catch (_) {}
+    rcVerifierRef.current = null;
     container.innerHTML = '';
 
     try {
-      // ✅ Correct 3-arg constructor: (auth, containerIdString, optionsObject)
-      // Using getCustomerAuth() so reCAPTCHA is tied to the secondary app
-      rcVerifierRef.current = new RecaptchaVerifier(
-        getCustomerAuth(),
-        'delivery-boy-recaptcha',
-        {
-          size: 'invisible',
-          defaultCountry: 'IN',
-          callback: () => {},
-          'expired-callback': () => clearRecaptcha(),
-        }
-      );
+      // Mock RecaptchaVerifier for MSG91 compatibility
+      rcVerifierRef.current = {
+        verify: () => Promise.resolve(),
+        clear: () => {},
+        render: () => Promise.resolve(0),
+        getResponse: () => 'mock-token',
+      };
       
       // Add timeout and fallback for testing
       const renderPromise = rcVerifierRef.current.render()
