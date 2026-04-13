@@ -1,3 +1,35 @@
+#!/bin/bash
+
+# Direct fix for droplet - update existing files
+echo "=== Direct Fix for Droplet Backend ==="
+
+# Configuration - UPDATE THIS
+DROPLET_IP="YOUR_DROPLET_IP_HERE"
+
+if [ "$DROPLET_IP" = "YOUR_DROPLET_IP_HERE" ]; then
+    echo "ERROR: Please update DROPLET_IP in this script"
+    exit 1
+fi
+
+echo "Droplet IP: $DROPLET_IP"
+
+# Create the exact commands to run on droplet
+echo "=== Commands to run on droplet: ==="
+echo "ssh root@$DROPLET_IP"
+echo ""
+echo "# Once connected, run these commands:"
+echo ""
+echo "cd /var/www/yhk"
+echo ""
+echo "# 1. Fix User model - add delivery_partner role"
+echo "sudo sed -i \"s/enum: \\['customer', 'admin', 'restaurant'\\]/enum: ['customer', 'admin', 'restaurant', 'delivery_partner']/\" models/User.js"
+echo ""
+echo "# 2. Fix order routes - replace the status route"
+echo "sudo cp backend/routes/orderRoutes.js backend/routes/orderRoutes.js.backup"
+echo ""
+echo "# 3. Create the new orderRoutes.js content"
+echo "sudo tee backend/routes/orderRoutes.js > /dev/null << 'EOF'"
+cat << 'ROUTES_EOF'
 import express from 'express';
 
 import Order from '../models/Order.js';
@@ -38,17 +70,11 @@ import {
 
 import { protect, adminOnly, deliveryBoy } from '../middleware/authMiddleware.js';
 
-
-
 const router = express.Router();
-
-
 
 // Public routes
 
 router.get('/track', trackOrder);
-
-
 
 // Protected routes (User)
 
@@ -67,8 +93,6 @@ router.patch('/:id', protect, updateOrder);
 router.put('/:id/cancel', protect, cancelOrder);
 
 router.post('/:id/rating', protect, rateOrder);
-
-
 
 // Protected routes (Admin)
 
@@ -122,12 +146,46 @@ router.put('/:id/assign-delivery', protect, adminOnly, assignDeliveryBoy);
 
 router.delete('/:id', protect, adminOnly, deleteOrder);
 
-
-
 // Order by ID route (must be last)
 
 router.get('/:id', protect, getOrderById);
 
-
-
 export default router;
+ROUTES_EOF
+echo ""
+echo "# 4. Create delivery partner user"
+echo "node -e \""
+echo "const mongoose = require('mongoose');"
+echo "const User = require('./models/User');"
+echo ""
+echo "mongoose.connect('mongodb://localhost:27017/yhk')"
+echo "  .then(async () => {"
+echo "    console.log('Connected to MongoDB');"
+echo "    "
+echo "    const delivery = await User.findOneAndUpdate("
+echo "      { email: 'delivery@yhk.com' },"
+echo "      { "
+echo "        role: 'delivery_partner',"
+echo "        name: 'Test Delivery Partner',"
+echo "        phone: '9876543210',"
+echo "        isActive: true,"
+echo "        isVerified: true"
+echo "      },"
+echo "      { upsert: true, new: true }"
+echo "    );"
+echo "    console.log('Delivery partner created:', delivery.email, 'Role:', delivery.role);"
+echo "    "
+echo "    await mongoose.disconnect();"
+echo "  })"
+echo "  .catch(err => {"
+echo "    console.error('Error:', err);"
+echo "    process.exit(1);"
+echo "  });"
+echo "\""
+echo ""
+echo "# 5. Restart backend"
+echo "pm2 restart yhk-backend"
+echo "pm2 status"
+echo ""
+echo "# 6. Test the fix"
+echo "# Try delivery functionality with: delivery@yhk.com / delivery123"

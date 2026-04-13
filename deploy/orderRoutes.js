@@ -38,17 +38,11 @@ import {
 
 import { protect, adminOnly, deliveryBoy } from '../middleware/authMiddleware.js';
 
-
-
 const router = express.Router();
-
-
 
 // Public routes
 
 router.get('/track', trackOrder);
-
-
 
 // Protected routes (User)
 
@@ -67,8 +61,6 @@ router.patch('/:id', protect, updateOrder);
 router.put('/:id/cancel', protect, cancelOrder);
 
 router.post('/:id/rating', protect, rateOrder);
-
-
 
 // Protected routes (Admin)
 
@@ -122,12 +114,8 @@ router.put('/:id/assign-delivery', protect, adminOnly, assignDeliveryBoy);
 
 router.delete('/:id', protect, adminOnly, deleteOrder);
 
-
-
 // Order by ID route (must be last)
 
 router.get('/:id', protect, getOrderById);
-
-
 
 export default router;

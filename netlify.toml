@@ -25,13 +25,14 @@
   REACT_APP_API_URL = "/api"
   REACT_APP_USER_API_URL = "/api"
 
-# Headers for cache control
+# Headers for cache control and CSP
 [[headers]]
   for = "/*"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
     Expires = "0"
+    Content-Security-Policy = "frame-ancestors 'self' https://accounts.google.com https://*.google.com;"
 
 [[headers]]
   for = "/static/*"
