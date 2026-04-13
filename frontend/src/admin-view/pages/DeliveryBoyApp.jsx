@@ -336,77 +336,6 @@ const DeliveryBoyApp = () => {
     clearRecaptcha();
   };
 
-  // ── Firebase configuration and connectivity check ──────────────────────────────
-  const verifyFirebaseConfig = () => {
-    try {
-      const firebaseConfig = {
-        apiKey: "AIzaSyA8Rk5ViCQQdjnTXv98iO9jADFmtg3LxDU",
-        authDomain: "yeswanth-s-healthy-kitchen.firebaseapp.com",
-        projectId: "yeswanth-s-healthy-kitchen",
-        storageBucket: "yeswanth-s-healthy-kitchen.firebasestorage.app",
-        messagingSenderId: "579329797638",
-        appId: "1:579329797638:web:a48a7f64634775117b1d87",
-        measurementId: "G-8B3TWW3YDZ"
-      };
-      
-      // Validate required fields
-      const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
-      const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
-      
-      if (missingFields.length > 0) {
-        console.error('❌ Firebase config missing fields:', missingFields);
-        return false;
-      }
-      
-      console.log('✅ Firebase configuration valid');
-      return true;
-    } catch (err) {
-      console.error('❌ Firebase config verification failed:', err);
-      return false;
-    }
-  };
-
-  const checkFirebaseConnectivity = async () => {
-    try {
-      // First verify config
-      if (!verifyFirebaseConfig()) {
-        return false;
-      }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      // Try multiple Firebase endpoints for better reliability
-      const endpoints = [
-        'https://firebase.googleapis.com/',
-        'https://identitytoolkit.googleapis.com/',
-        'https://www.googleapis.com/identitytoolkit/v3/projects/'
-      ];
-      
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(endpoint, {
-            method: 'HEAD',
-            signal: controller.signal,
-            mode: 'no-cors'
-          });
-          clearTimeout(timeoutId);
-          console.log(`✅ Firebase endpoint reachable: ${endpoint}`);
-          return true;
-        } catch (endpointErr) {
-          console.warn(`Firebase endpoint ${endpoint} failed:`, endpointErr.message);
-          continue;
-        }
-      }
-      
-      clearTimeout(timeoutId);
-      return false;
-    } catch (err) {
-      console.warn('Firebase connectivity check failed:', err.message);
-      return false;
-    }
-  };
-
   // ── Backend OTP service (alternative to Firebase) ───────────────────────
   const sendBackendOtp = async (phone, orderId) => {
     try {
@@ -451,37 +380,29 @@ const DeliveryBoyApp = () => {
     setOtpError('');
     
     try {
-      // Check Firebase connectivity first
-      const isFirebaseReachable = await checkFirebaseConnectivity();
-      
-      if (isFirebaseReachable) {
-        console.log(`🚀 Attempting MSG91 OTP send to +91${phone} (attempt ${retryCount + 1}/3)`);
+      console.log(` Attempting MSG91 OTP send to +91${phone} (attempt ${retryCount + 1}/3)`);
 
-        // Use MSG91 OTP API instead of Firebase
-        const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/send-otp`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ phone: `+91${phone}` })
-        });
+      // Use MSG91 OTP API directly
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone: `+91${phone}` })
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (data.success) {
-          console.log('MSG91 OTP sent successfully');
-          setConfirmationResult({ confirm: () => Promise.resolve() }); // Mock for compatibility
-          setOtpStep('enter');
-          setResendTimer(45);
-          setOtpDigits(BLANK_OTP);
-          setTimeout(() => otpRefs.current[0]?.focus(), 150);
-          return;
-        } else {
-          throw new Error(data.message || 'Failed to send OTP');
-        }
+      if (data.success) {
+        console.log('MSG91 OTP sent successfully');
+        setConfirmationResult({ confirm: () => Promise.resolve() }); // Mock for compatibility
+        setOtpStep('enter');
+        setResendTimer(45);
+        setOtpDigits(BLANK_OTP);
+        setTimeout(() => otpRefs.current[0]?.focus(), 150);
+        return;
       } else {
-        console.log('Backend OTP service unavailable');
-        throw new Error('OTP service unavailable');
+        throw new Error(data.message || 'Failed to send OTP');
       }
     } catch (err) {
       console.error(`🚨 OTP send error (attempt ${retryCount + 1}):`, err.code, err.message);
