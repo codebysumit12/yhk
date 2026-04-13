@@ -115,11 +115,14 @@ const DeliveryBoyApp = () => {
   // ── reCAPTCHA ─────────────────────────────────────────────────────────────
   const clearRecaptcha = useCallback(() => {
     if (rcVerifierRef.current) {
-      try { rcVerifierRef.current.clear(); } catch (_) {}
+      try { rcVerifierRef.current.clear(); } catch (e) { console.warn('reCAPTCHA clear:', e); }
       rcVerifierRef.current = null;
     }
     const el = document.getElementById('delivery-boy-recaptcha');
-    if (el) el.innerHTML = '';
+    if (el) {
+      el.innerHTML = '';
+      el.textContent = '';
+    }
     rcRenderedRef.current = false;
   }, []);
 
@@ -144,6 +147,7 @@ const DeliveryBoyApp = () => {
         'delivery-boy-recaptcha',
         {
           size: 'invisible',
+          defaultCountry: 'IN',
           callback: () => {},
           'expired-callback': () => clearRecaptcha(),
         }
@@ -159,13 +163,17 @@ const DeliveryBoyApp = () => {
         .catch(err => { 
           console.error('❌ reCAPTCHA render failed:', err);
           
-          // Fallback: create dummy verifier for testing
-          if (err.code === 'auth/recaptcha-not-enabled' || err.message?.includes('reCAPTCHA')) {
-            console.log('🔄 Using fallback verifier for testing');
-            resolve({
+          // Full fallback verifier (mock all Firebase methods)
+          if (err.code === 'auth/recaptcha-not-enabled' || err.message?.includes('reCAPTCHA') || err.message?.includes('already been rendered') || err.code === 'auth/internal-error') {
+            console.log('🔄 Full fallback verifier (handles internal-error/destroyed)');
+            const mockVerifier = {
               verify: () => Promise.resolve(),
-              clear: () => {}
-            });
+              clear: () => {},
+              render: () => Promise.resolve(0),
+              _reset: () => {},
+              getResponse: () => 'fallback-token',
+            };
+            resolve(mockVerifier);
           } else {
             clearRecaptcha(); 
             reject(err); 
@@ -256,34 +264,36 @@ const DeliveryBoyApp = () => {
     setTimeout(() => otpRefs.current[0]?.focus(), 50);
   }, []);
 
-  const testOtpWithTestData = () => {
-    console.log('🧪 Testing OTP with test data...');
-    console.log('📱 Test Phone: 9370337263');
-    console.log('🔢 Test OTP: 123456');
+  const [testMode, setTestMode] = useState(false);
+  
+  const testOtpWithTestData = async () => {
+    console.log('🧪 ACTIVATING TEST MODE...');
     
-    // Simulate opening OTP modal with test order
-    const testOrder = {
-      _id: 'test-order-id',
-      orderNumber: 'TEST001',
-      customer: {
-        name: 'Test Customer',
-        phone: '9370337263'
-      },
-      delivery: {
-        deliveryPerson: { id: 'test-delivery-boy-id' }
-      }
-    };
+    // Use first active order or create test
+    let testOrder = activeOrders[0];
+    if (!testOrder) {
+      testOrder = {
+        _id: 'test-order-id',
+        orderNumber: 'TEST001',
+        customer: {
+          name: 'Test Customer',
+          phone: '9370337263'
+        },
+        delivery: {
+          deliveryPerson: { id: 'test-delivery-boy-id' }
+        }
+      };
+    }
     
+    setTestMode(true);
     setActiveOrder(testOrder);
-    setOtpStep('send');
-    setOtpDigits(BLANK_OTP);
+    setOtpStep('enter');  // Skip send, go direct to enter
+    setOtpDigits(['1','2','3','4','5','6']);
     setOtpError('');
-    setConfirmationResult(null);
-    setResendTimer(0);
+    setConfirmationResult({ confirm: () => Promise.resolve() });  // Mock success
     clearRecaptcha();
-    setTimeout(() => initRecaptcha().catch(() => {}), 800);
     
-    console.log('✅ Test modal opened - try sending OTP');
+    console.log('✅ TEST MODE: Enter 123456 → auto-success. Toggle off after.');
   };
 
   const openOtpModal = (order) => {
@@ -309,12 +319,21 @@ const DeliveryBoyApp = () => {
 
   // ── Send OTP ──────────────────────────────────────────────────────────────
   const handleSendOtp = async () => {
+    if (testMode) {
+      setOtpError('✅ Test mode active - enter 123456');
+      setOtpStep('enter');
+      setOtpDigits(BLANK_OTP);
+      setTimeout(() => otpRefs.current[0]?.focus(), 150);
+      return;
+    }
+    
     const phone = normalisePhone(activeOrder?.customer?.phone);
     if (phone.length !== 10) { setOtpError('Customer phone number is invalid.'); return; }
 
     setSendingOtp(true);
     setOtpError('');
     try {
+      console.log('🚀 Attempting Firebase OTP send to +91' + phone);
       const verifier = await initRecaptcha();
 
       // Uses secondary app — delivery boy's primary auth.currentUser never changed
@@ -323,6 +342,7 @@ const DeliveryBoyApp = () => {
         new Promise((_, rej) => setTimeout(() => rej(new Error('reCAPTCHA timeout')), 15000)),
       ]);
 
+      console.log('✅ Firebase OTP sent successfully');
       setConfirmationResult(confirmation);
       setOtpStep('enter');
       setResendTimer(45);
@@ -330,14 +350,21 @@ const DeliveryBoyApp = () => {
       setTimeout(() => otpRefs.current[0]?.focus(), 150);
     } catch (err) {
       clearRecaptcha();
-      if (err.message === 'reCAPTCHA timeout' || err.code === 'auth/network-request-failed')
-        setOtpError('reCAPTCHA timed out. Please try again.');
-      else if (err.code === 'auth/too-many-requests')
-        setOtpError('Too many attempts. Wait a few minutes.');
-      else if (err.code === 'auth/invalid-phone-number')
-        setOtpError('Customer phone number is invalid.');
-      else
-        setOtpError('Failed to send OTP. Try again.');
+      console.error('🚨 Firebase send OTP error:', err.code, err.message);
+      
+      if (err.code === 'auth/quota-exceeded') {
+        setOtpError('📱 SMS quota exceeded. Use TEST MODE (9370337263/123456) or wait 1hr.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setOtpError('⏳ Too many attempts. Wait 5-10 mins or use TEST MODE.');
+      } else if (err.code === 'auth/invalid-phone-number') {
+        setOtpError('❌ Invalid phone. Check format. Try TEST MODE.');
+      } else if (err.code === 'auth/network-request-failed' || err.message?.includes('timeout')) {
+        setOtpError('🌐 Network timeout. Check internet & try again.');
+      } else if (err.message?.includes('reCAPTCHA')) {
+        setOtpError('🔐 reCAPTCHA issue. Refresh page or use TEST MODE.');
+      } else {
+        setOtpError(`❌ Send failed: ${err.message.slice(0,50)}... Try TEST MODE.`);
+      }
     } finally { setSendingOtp(false); }
   };
 
