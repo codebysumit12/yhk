@@ -4,8 +4,8 @@ import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Get pricing configuration
-router.get('/pricing', protect, async (req, res) => {
+// Get pricing configuration (public endpoint)
+router.get('/pricing', async (req, res) => {
   try {
     let settings = await Settings.findOne();
     

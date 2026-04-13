@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { API_CONFIG } from '../../config/api';
-import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { auth } from '../../firebase';
+import OtpLogin from '../../components/OtpLogin';
 import './delivery-boy-app.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -458,28 +455,36 @@ const DeliveryBoyApp = () => {
       const isFirebaseReachable = await checkFirebaseConnectivity();
       
       if (isFirebaseReachable) {
-        console.log(`🚀 Attempting Firebase OTP send to +91${phone} (attempt ${retryCount + 1}/3)`);
-        const verifier = await initRecaptcha();
+        console.log(`🚀 Attempting MSG91 OTP send to +91${phone} (attempt ${retryCount + 1}/3)`);
 
-        // Uses secondary app — delivery boy's primary auth.currentUser never changed
-        const confirmation = await Promise.race([
-          signInWithPhoneNumber(getCustomerAuth(), `+91${phone}`, verifier),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('reCAPTCHA timeout')), 10000)),
-        ]);
+        // Use MSG91 OTP API instead of Firebase
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/send-otp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone: `+91${phone}` })
+        });
 
-        console.log('✅ Firebase OTP sent successfully');
-        setConfirmationResult(confirmation);
-        setOtpStep('enter');
-        setResendTimer(45);
-        setOtpDigits(BLANK_OTP);
-        setTimeout(() => otpRefs.current[0]?.focus(), 150);
-        return;
+        const data = await response.json();
+
+        if (data.success) {
+          console.log('MSG91 OTP sent successfully');
+          setConfirmationResult({ confirm: () => Promise.resolve() }); // Mock for compatibility
+          setOtpStep('enter');
+          setResendTimer(45);
+          setOtpDigits(BLANK_OTP);
+          setTimeout(() => otpRefs.current[0]?.focus(), 150);
+          return;
+        } else {
+          throw new Error(data.message || 'Failed to send OTP');
+        }
       } else {
-        console.log('🔄 Firebase unreachable, using backend OTP service');
-        throw new Error('Firebase connectivity check failed');
+        console.log('Backend OTP service unavailable');
+        throw new Error('OTP service unavailable');
       }
     } catch (err) {
-      console.error(`🚨 Firebase send OTP error (attempt ${retryCount + 1}):`, err.code, err.message);
+      console.error(`🚨 OTP send error (attempt ${retryCount + 1}):`, err.code, err.message);
       
       // Retry logic for network errors
       if (retryCount < 2 && (
@@ -573,13 +578,30 @@ const DeliveryBoyApp = () => {
     setVerifying(true);
     setOtpError('');
     try {
-      // confirm() on secondary app — primary auth untouched, localStorage JWT intact
-      await confirmationResult.confirm(val);
+      // Verify OTP using MSG91 API
+      const phone = normalisePhone(activeOrder?.customer?.phone);
+      const verifyResponse = await fetch(`${API_CONFIG.BASE_URL}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          phone: `+91${phone}`,
+          otp: val,
+          name: activeOrder?.customer?.name 
+        })
+      });
 
-      // getToken() reads localStorage — always gets delivery boy's own backend JWT
-      console.log('🚚 Updating order:', activeOrder._id, 'to delivered');
-      console.log('👤 Delivery boy ID from token:', JSON.parse(localStorage.getItem('user') || '{}')._id);
-      console.log('👤 Delivery boy ID from order:', activeOrder.delivery?.deliveryPerson?.id);
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyData.success) {
+        throw new Error(verifyData.message || 'Invalid OTP');
+      }
+
+      // getToken() reads localStorage - always gets delivery boy's own backend JWT
+      console.log(' Updating order:', activeOrder._id, 'to delivered');
+      console.log(' Delivery boy ID from token:', JSON.parse(localStorage.getItem('user') || '{}')._id);
+      console.log(' Delivery boy ID from order:', activeOrder.delivery?.deliveryPerson?.id);
       
       const res  = await fetch(`${API_URL}/orders/${activeOrder._id}/status`, {
         method:  'PUT',
@@ -587,34 +609,37 @@ const DeliveryBoyApp = () => {
         body:    JSON.stringify({ status: 'delivered' }),
       });
       
-      console.log('📡 Status update response:', res.status);
+      console.log(' Status update response:', res.status);
       const data = await res.json();
-      console.log('📦 Status update data:', data);
+      console.log(' Status update data:', data);
       
       if (!res.ok) {
-        console.error('❌ Status update failed - HTTP', res.status, data);
+        console.error(' Status update failed - HTTP', res.status, data);
         let errorMsg = data.error || data.message || `HTTP ${res.status}`;
         if (res.status === 401) errorMsg = 'Token expired - login again';
         else if (res.status === 403) errorMsg = data.error || 'Access denied';
-        setOtpError(`❌ ${errorMsg}`);
+        setOtpError(` ${errorMsg}`);
         return;
       }
 
       if (!data.success) {
-        console.error('❌ Status update failed:', data);
-        setOtpError(`❌ ${data.error || data.message || 'Update failed'}`);
+        console.error(' Status update failed:', data);
+        setOtpError(` ${data.error || data.message || 'Update failed'}`);
         return;
       }
 
-      console.log('✅ Status update success');
+      console.log(' Status update success');
       setOtpStep('success');
       fetchMyOrders();
       setTimeout(closeOtpModal, 3000);
     } catch (err) {
-      if      (err.code === 'auth/code-expired')              setOtpError('OTP expired. Please resend.');
-      else if (err.code === 'auth/invalid-verification-code') setOtpError('Incorrect OTP. Ask the customer again.');
-      else if (err.message)                                   setOtpError(err.message);
-      else                                                    setOtpError('Verification failed. Try again.');
+      if (err.message?.includes('Invalid') || err.message?.includes('expired')) {
+        setOtpError('Incorrect or expired OTP. Please ask customer again.');
+      } else if (err.message) {
+        setOtpError(err.message);
+      } else {
+        setOtpError('Verification failed. Try again.');
+      }
       setOtpDigits(BLANK_OTP);
       setTimeout(() => otpRefs.current[0]?.focus(), 50);
     } finally {
@@ -638,7 +663,7 @@ const DeliveryBoyApp = () => {
     setConfirmationResult(null);
   };
 
-  // ── Derived lists ─────────────────────────────────────────────────────────
+  // Derived lists
   const activeOrders    = myOrders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled');
   const completedOrders = myOrders.filter(o => o.status === 'delivered');
   const displayOrders   = statusView === 'active' ? activeOrders : completedOrders;

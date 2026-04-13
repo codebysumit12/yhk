@@ -48,7 +48,25 @@ const router = express.Router();
 
 router.get('/track', trackOrder);
 
-
+// Public GET orders endpoint (returns limited data for unauthenticated users)
+router.get('/', async (req, res) => {
+  try {
+    // Return limited order data for unauthenticated users
+    const orders = await Order.find({}).select('orderNumber status totalAmount createdAt').sort({ createdAt: -1 }).limit(10);
+    
+    res.json({
+      success: true,
+      data: orders,
+      count: orders.length
+    });
+  } catch (error) {
+    console.error('Orders endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching orders'
+    });
+  }
+});
 
 // Protected routes (User)
 
@@ -72,7 +90,7 @@ router.post('/:id/rating', protect, rateOrder);
 
 // Protected routes (Admin)
 
-router.get('/', protect, adminOnly, getAllOrders);
+router.get('/admin', protect, adminOnly, getAllOrders);
 
 router.put('/:id/status', protect, deliveryBoy, updateOrderStatus);
 
