@@ -3,32 +3,53 @@ import { API_CONFIG } from '../../config/api';
 import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { auth } from '../../firebase';   // delivery boy's primary auth — never mutated here
+import { auth } from '../../firebase';
 import './delivery-boy-app.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Secondary Firebase app for customer OTP
-//
-// WHY: calling confirmationResult.confirm() on the PRIMARY auth signs Firebase
-// in as the customer, replacing the delivery boy's currentUser. The backend
-// then rejects the next request with 401 because the UID changed.
-//
-// FIX: run the entire OTP flow (RecaptchaVerifier + signInWithPhoneNumber +
-// confirm) on a SECONDARY app instance. The primary app's currentUser — and
-// therefore the delivery boy's session — is never touched.
+// Secondary Firebase app — isolates customer OTP from delivery boy's session.
+// confirm() on the secondary app never touches auth.currentUser on the primary,
+// so the delivery boy's localStorage JWT stays valid for backend calls.
 // ─────────────────────────────────────────────────────────────────────────────
 const getCustomerAuth = (() => {
   let _auth = null;
   return () => {
     if (_auth) return _auth;
-    // Re-use existing secondary app or clone config from the default app
-    const existing = getApps().find(a => a.name === 'customerOtp');
-    const defaultApp = getApps().find(a => a.name === '[DEFAULT]');
-    const app = existing ?? initializeApp(defaultApp.options, 'customerOtp');
-    _auth = getAuth(app);
+    const existing    = getApps().find(a => a.name === 'customerOtp');
+    const defaultApp  = getApps().find(a => a.name === '[DEFAULT]');
+    const app         = existing ?? initializeApp(defaultApp.options, 'customerOtp');
+    _auth             = getAuth(app);
     return _auth;
   };
 })();
+
+// ─── Token helper ─────────────────────────────────────────────────────────────
+// Your backend issues its own JWT at login (stored as 'token' or 'userToken').
+// NEVER call auth.currentUser.getIdToken() here — that returns a Firebase ID
+// token which your backend middleware does not accept, causing 401s.
+const getToken = () => {
+  const token = localStorage.getItem('token') || localStorage.getItem('userToken') || '';
+  const userData = localStorage.getItem('user');
+  
+  console.log('Token debug - Retrieved token:', token ? `${token.substring(0, 20)}...` : 'null');
+  console.log('Token debug - User data:', userData);
+  
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      console.log('User role debug:', user.role);
+      console.log('User isAdmin debug:', user.isAdmin);
+      
+      if (user.role !== 'delivery_partner' && user.role !== 'delivery_partner') {
+        console.error('🚨 Role mismatch: User role is', user.role, 'but delivery_partner required');
+      }
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+    }
+  }
+  
+  return token;
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const buildMapsUrl = (addr) => {
@@ -68,7 +89,6 @@ const DeliveryBoyApp = () => {
   const [loading,    setLoading]    = useState(false);
   const [statusView, setStatusView] = useState('active');
 
-  // OTP modal
   const [activeOrder,        setActiveOrder]        = useState(null);
   const [otpStep,            setOtpStep]            = useState('send');
   const [otpDigits,          setOtpDigits]          = useState(BLANK_OTP);
@@ -85,21 +105,6 @@ const DeliveryBoyApp = () => {
 
   const API_URL = API_CONFIG.API_URL;
 
-  // ── Get a fresh delivery-boy token ────────────────────────────────────────
-  // We call auth.currentUser.getIdToken() right before the backend request so
-  // we always have a valid, non-expired token — regardless of what happened to
-  // the Firebase auth state during the OTP flow.
-  const getDeliveryBoyToken = useCallback(async () => {
-    // Prefer a fresh Firebase ID token if the delivery boy is still signed in
-    if (auth.currentUser) {
-      try {
-        return await auth.currentUser.getIdToken(/* forceRefresh= */ false);
-      } catch (_) { /* fall through to localStorage */ }
-    }
-    // Fallback: JWT stored at login time (email/password delivery-boy accounts)
-    return localStorage.getItem('token') || localStorage.getItem('userToken') || '';
-  }, []);
-
   // ── Resend countdown ──────────────────────────────────────────────────────
   useEffect(() => {
     if (resendTimer <= 0) return;
@@ -107,7 +112,7 @@ const DeliveryBoyApp = () => {
     return () => clearTimeout(t);
   }, [resendTimer]);
 
-  // ── reCAPTCHA — always on the SECONDARY app (getCustomerAuth) ────────────
+  // ── reCAPTCHA ─────────────────────────────────────────────────────────────
   const clearRecaptcha = useCallback(() => {
     if (rcVerifierRef.current) {
       try { rcVerifierRef.current.clear(); } catch (_) {}
@@ -132,13 +137,12 @@ const DeliveryBoyApp = () => {
     container.innerHTML = '';
 
     try {
-      // ✅ CORRECT constructor: (auth, containerIdString, optionsObject)
-      // Passing a single object OR swapping arg order causes the
-      // "deprecated parameters" warning + Enterprise config failure.
+      // ✅ Correct 3-arg constructor: (auth, containerIdString, optionsObject)
+      // Using getCustomerAuth() so reCAPTCHA is tied to the secondary app
       rcVerifierRef.current = new RecaptchaVerifier(
-        getCustomerAuth(),          // secondary app auth — not the delivery boy's
-        'delivery-boy-recaptcha',   // container ID as a STRING (2nd arg)
-        {                           // options object (3rd arg)
+        getCustomerAuth(),
+        'delivery-boy-recaptcha',
+        {
           size: 'invisible',
           callback: () => {},
           'expired-callback': () => clearRecaptcha(),
@@ -156,15 +160,35 @@ const DeliveryBoyApp = () => {
   const fetchMyOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await getDeliveryBoyToken();
-      const res   = await fetch(`${API_URL}/orders/my-deliveries`, {
+      const token = getToken();
+      console.log('🔍 fetchMyOrders - Using token:', token ? `${token.substring(0, 20)}...` : 'null');
+      
+      const res  = await fetch(`${API_URL}/orders/my-deliveries`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
+      console.log('📡 fetchMyOrders - Response status:', res.status);
       const data = await res.json();
-      if (data.success) setMyOrders(data.data || []);
-    } catch (err) { console.error('fetchMyOrders:', err); }
-    finally { setLoading(false); }
-  }, [API_URL, getDeliveryBoyToken]);
+      console.log('📦 fetchMyOrders - Response data:', data);
+      
+      if (data.success) {
+        setMyOrders(data.data || []);
+        console.log('✅ fetchMyOrders - Orders loaded:', data.data?.length || 0);
+      } else {
+        console.error('❌ my-deliveries error:', data.message);
+        if (data.message === 'Admin access required') {
+          console.error('🚨 User role issue - User may not have delivery_partner role');
+          setOtpError('❌ Access denied: Your account is not configured as a delivery partner. Please contact admin.');
+        } else {
+          setOtpError(`❌ ${data.message || 'Authentication failed'}`);
+        }
+      }
+    } catch (err) { 
+      console.error('❌ fetchMyOrders exception:', err); 
+    } finally { 
+      setLoading(false); 
+    }
+  }, [API_URL]);
 
   useEffect(() => {
     fetchMyOrders();
@@ -175,10 +199,9 @@ const DeliveryBoyApp = () => {
   // ── Mark picked up ────────────────────────────────────────────────────────
   const markPickedUp = async (orderId) => {
     try {
-      const token = await getDeliveryBoyToken();
-      const res   = await fetch(`${API_URL}/orders/${orderId}/status`, {
+      const res  = await fetch(`${API_URL}/orders/${orderId}/status`, {
         method:  'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
         body:    JSON.stringify({ status: 'out-for-delivery' }),
       });
       const data = await res.json();
@@ -225,7 +248,7 @@ const DeliveryBoyApp = () => {
     try {
       const verifier = await initRecaptcha();
 
-      // signInWithPhoneNumber on the SECONDARY app — delivery boy's session untouched
+      // Uses secondary app — delivery boy's primary auth.currentUser never changed
       const confirmation = await Promise.race([
         signInWithPhoneNumber(getCustomerAuth(), `+91${phone}`, verifier),
         new Promise((_, rej) => setTimeout(() => rej(new Error('reCAPTCHA timeout')), 15000)),
@@ -276,26 +299,38 @@ const DeliveryBoyApp = () => {
     setVerifying(true);
     setOtpError('');
     try {
-      // confirm() runs on the secondary app — delivery boy's primary auth untouched
+      // confirm() on secondary app — primary auth untouched, localStorage JWT intact
       await confirmationResult.confirm(val);
 
-      // ✅ Get a FRESH delivery-boy token AFTER confirm() to be safe.
-      // Even if the secondary app's confirm() somehow triggered an auth event,
-      // auth.currentUser still refers to the delivery boy (primary app is separate),
-      // so getIdToken() returns their valid token.
-      const freshToken = await getDeliveryBoyToken();
-
+      // getToken() reads localStorage — always gets delivery boy's own backend JWT
+      console.log('🚚 Updating order:', activeOrder._id, 'to delivered');
+      console.log('👤 Delivery boy ID from token:', JSON.parse(localStorage.getItem('user') || '{}')._id);
+      console.log('👤 Delivery boy ID from order:', activeOrder.delivery?.deliveryPerson?.id);
+      
       const res  = await fetch(`${API_URL}/orders/${activeOrder._id}/status`, {
         method:  'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${freshToken}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
         body:    JSON.stringify({ status: 'delivered' }),
       });
+      
+      console.log('📡 Status update response:', res.status);
       const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Failed to mark delivered');
-
-      setOtpStep('success');
-      fetchMyOrders();
-      setTimeout(closeOtpModal, 3000);
+      console.log('📦 Status update data:', data);
+      
+      if (!data.success) {
+        console.error('❌ Status update failed:', data.message);
+        if (data.message === 'Admin access required') {
+          setOtpError('❌ Permission denied: This order may not be assigned to you or there\'s an account configuration issue.');
+        } else if (data.message === 'You can only update status for orders assigned to you') {
+          setOtpError('❌ Assignment mismatch: This order is not assigned to your delivery account.');
+        } else {
+          setOtpError(`❌ ${data.message || 'Failed to update order status'}`);
+        }
+      } else {
+        setOtpStep('success');
+        fetchMyOrders();
+        setTimeout(closeOtpModal, 3000);
+      }
     } catch (err) {
       if      (err.code === 'auth/code-expired')              setOtpError('OTP expired. Please resend.');
       else if (err.code === 'auth/invalid-verification-code') setOtpError('Incorrect OTP. Ask the customer again.');
@@ -342,7 +377,6 @@ const DeliveryBoyApp = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="dba-page">
-      {/* Hidden reCAPTCHA anchor — always in DOM */}
       <div id="delivery-boy-recaptcha" style={{ display: 'none' }} />
 
       <div className="dba-header">
@@ -490,7 +524,6 @@ const DeliveryBoyApp = () => {
         </div>
       )}
 
-      {/* ── OTP Modal ───────────────────────────────────────────────────────── */}
       {activeOrder && (
         <div className="modal-overlay" onClick={closeOtpModal}>
           <div className="dba-otp-modal" onClick={e => e.stopPropagation()}>
@@ -550,7 +583,6 @@ const DeliveryBoyApp = () => {
                   }}>
                     ✅ OTP sent to <strong>{activeOrder.customer.phone}</strong>. Ask the customer for the code.
                   </div>
-
                   <div className="dba-otp-order-summary">
                     <p><strong>Order:</strong>    {activeOrder.orderNumber}</p>
                     <p><strong>Customer:</strong> {activeOrder.customer.name}</p>
@@ -560,9 +592,7 @@ const DeliveryBoyApp = () => {
                       </p>
                     )}
                   </div>
-
                   <p className="dba-otp-instruction">Enter the 6-digit OTP the customer received.</p>
-
                   <div className="dba-otp-input-row">
                     {otpDigits.map((digit, i) => (
                       <input
@@ -578,9 +608,7 @@ const DeliveryBoyApp = () => {
                       />
                     ))}
                   </div>
-
                   {otpError && <p className="dba-otp-error">❌ {otpError}</p>}
-
                   <p style={{ fontSize: 12, color: '#6b7280', textAlign: 'center', margin: '8px 0' }}>
                     Customer didn't get it?{' '}
                     <button
@@ -594,7 +622,6 @@ const DeliveryBoyApp = () => {
                       Resend OTP{resendTimer > 0 && ` (${resendTimer}s)`}
                     </button>
                   </p>
-
                   <div className="dba-otp-actions">
                     <button className="dba-btn dba-btn-clear" onClick={resetOtpDigits} disabled={verifying}>
                       🔄 Clear
