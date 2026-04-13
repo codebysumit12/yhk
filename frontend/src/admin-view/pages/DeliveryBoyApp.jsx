@@ -1,73 +1,74 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { API_CONFIG } from '../../config/api';
 import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
-// FIX: import initializeApp + getApps to create a secondary Firebase app instance.
-// Without this, confirmationResult.confirm() signs Firebase in AS THE CUSTOMER,
-// overwriting the delivery boy's currentUser and breaking their auth session +
-// backend Bearer token. The secondary app is isolated — delivery boy unaffected.
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { auth } from '../../firebase'; // delivery boy's own auth — never touched by this flow
+import { auth } from '../../firebase';   // delivery boy's primary auth — never mutated here
 import './delivery-boy-app.css';
 
-// ── Secondary Firebase app for customer OTP ───────────────────────────────────
-// Same project config, separate app instance named 'customerOtp'.
-// Created once and reused — getApps() check prevents duplicate-app errors.
-let _customerAuth;
-const getCustomerAuth = () => {
-  if (_customerAuth) return _customerAuth;
-  const primaryApp = getApps().find(a => a.name === '[DEFAULT]');
-  const config = primaryApp?.options;
-  const secondaryApp =
-    getApps().find(a => a.name === 'customerOtp') ||
-    initializeApp(config, 'customerOtp');
-  _customerAuth = getAuth(secondaryApp);
-  // Disable reCAPTCHA Enterprise for secondary app
-  _customerAuth.settings.appVerificationDisabledForTesting = true;
-  return _customerAuth;
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// Secondary Firebase app for customer OTP
+//
+// WHY: calling confirmationResult.confirm() on the PRIMARY auth signs Firebase
+// in as the customer, replacing the delivery boy's currentUser. The backend
+// then rejects the next request with 401 because the UID changed.
+//
+// FIX: run the entire OTP flow (RecaptchaVerifier + signInWithPhoneNumber +
+// confirm) on a SECONDARY app instance. The primary app's currentUser — and
+// therefore the delivery boy's session — is never touched.
+// ─────────────────────────────────────────────────────────────────────────────
+const getCustomerAuth = (() => {
+  let _auth = null;
+  return () => {
+    if (_auth) return _auth;
+    // Re-use existing secondary app or clone config from the default app
+    const existing = getApps().find(a => a.name === 'customerOtp');
+    const defaultApp = getApps().find(a => a.name === '[DEFAULT]');
+    const app = existing ?? initializeApp(defaultApp.options, 'customerOtp');
+    _auth = getAuth(app);
+    return _auth;
+  };
+})();
 
-// ── Helper: Google Maps URL ───────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const buildMapsUrl = (addr) => {
   if (!addr) return null;
   const lat = addr.coordinates?.lat ?? addr.lat;
   const lng = addr.coordinates?.lng ?? addr.lng ?? addr.lon;
   if (lat != null && lng != null)
     return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  const fullAddress = [addr.street, addr.apartment, addr.landmark, addr.city, addr.state, addr.zipCode]
+  const full = [addr.street, addr.apartment, addr.landmark, addr.city, addr.state, addr.zipCode]
     .filter(Boolean).join(', ');
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(full)}`;
 };
 
-// ── Helper: address lines array ───────────────────────────────────────────────
 const formatFullAddress = (addr) => {
   if (!addr) return ['—'];
   const lines = [];
   if (addr.street)    lines.push(addr.street);
   if (addr.apartment) lines.push(addr.apartment);
   if (addr.landmark)  lines.push(`📌 ${addr.landmark}`);
-  const cityLine = [addr.city, addr.state, addr.zipCode].filter(Boolean).join(', ');
-  if (cityLine) lines.push(cityLine);
+  const city = [addr.city, addr.state, addr.zipCode].filter(Boolean).join(', ');
+  if (city) lines.push(city);
   return lines.length ? lines : ['—'];
 };
 
-// ── Normalise phone to 10-digit Indian number ─────────────────────────────────
 const normalisePhone = (raw = '') => {
   let p = String(raw).replace(/\D/g, '');
   if (p.startsWith('91') && p.length === 12) p = p.slice(2);
-  if (p.startsWith('0'))  p = p.slice(1);
+  if (p.startsWith('0')) p = p.slice(1);
   return p;
 };
 
-// FIX: 6-digit blank OTP constant — original code used 5-item array everywhere
 const BLANK_OTP = ['', '', '', '', '', ''];
 
+// ─────────────────────────────────────────────────────────────────────────────
 const DeliveryBoyApp = () => {
   const [myOrders,   setMyOrders]   = useState([]);
   const [loading,    setLoading]    = useState(false);
   const [statusView, setStatusView] = useState('active');
 
-  // ── OTP modal state ───────────────────────────────────────────────────────
+  // OTP modal
   const [activeOrder,        setActiveOrder]        = useState(null);
   const [otpStep,            setOtpStep]            = useState('send');
   const [otpDigits,          setOtpDigits]          = useState(BLANK_OTP);
@@ -79,95 +80,103 @@ const DeliveryBoyApp = () => {
 
   const otpRefs        = useRef([]);
   const isVerifyingRef = useRef(false);
-  const recaptchaVerifierRef = useRef(null);
-  const recaptchaRenderedRef = useRef(false);
+  const rcVerifierRef  = useRef(null);
+  const rcRenderedRef  = useRef(false);
 
   const API_URL = API_CONFIG.API_URL;
-  const token   = localStorage.getItem('token') || localStorage.getItem('userToken');
 
-  // ── Resend timer ──────────────────────────────────────────────────────────
+  // ── Get a fresh delivery-boy token ────────────────────────────────────────
+  // We call auth.currentUser.getIdToken() right before the backend request so
+  // we always have a valid, non-expired token — regardless of what happened to
+  // the Firebase auth state during the OTP flow.
+  const getDeliveryBoyToken = useCallback(async () => {
+    // Prefer a fresh Firebase ID token if the delivery boy is still signed in
+    if (auth.currentUser) {
+      try {
+        return await auth.currentUser.getIdToken(/* forceRefresh= */ false);
+      } catch (_) { /* fall through to localStorage */ }
+    }
+    // Fallback: JWT stored at login time (email/password delivery-boy accounts)
+    return localStorage.getItem('token') || localStorage.getItem('userToken') || '';
+  }, []);
+
+  // ── Resend countdown ──────────────────────────────────────────────────────
   useEffect(() => {
     if (resendTimer <= 0) return;
     const t = setTimeout(() => setResendTimer(v => v - 1), 1000);
     return () => clearTimeout(t);
   }, [resendTimer]);
 
-  // ── reCAPTCHA — bound to customerAuth (secondary app) ─────────────────────
+  // ── reCAPTCHA — always on the SECONDARY app (getCustomerAuth) ────────────
   const clearRecaptcha = useCallback(() => {
-    if (recaptchaVerifierRef.current) {
-      try { recaptchaVerifierRef.current.clear(); } catch (_) {}
-      recaptchaVerifierRef.current = null;
+    if (rcVerifierRef.current) {
+      try { rcVerifierRef.current.clear(); } catch (_) {}
+      rcVerifierRef.current = null;
     }
     const el = document.getElementById('delivery-boy-recaptcha');
     if (el) el.innerHTML = '';
-    recaptchaRenderedRef.current = false;
+    rcRenderedRef.current = false;
   }, []);
 
-  const initRecaptcha = useCallback(() => {
-    return new Promise((resolve, reject) => {
-      if (recaptchaRenderedRef.current && recaptchaVerifierRef.current) {
-        resolve(recaptchaVerifierRef.current);
-        return;
-      }
-      const container = document.getElementById('delivery-boy-recaptcha');
-      if (!container) { reject(new Error('reCAPTCHA container missing')); return; }
+  const initRecaptcha = useCallback(() => new Promise((resolve, reject) => {
+    if (rcRenderedRef.current && rcVerifierRef.current) {
+      resolve(rcVerifierRef.current); return;
+    }
+    const container = document.getElementById('delivery-boy-recaptcha');
+    if (!container) { reject(new Error('reCAPTCHA container missing')); return; }
 
-      if (recaptchaVerifierRef.current) {
-        try { recaptchaVerifierRef.current.clear(); } catch (_) {}
-        recaptchaVerifierRef.current = null;
-      }
-      container.innerHTML = '';
+    if (rcVerifierRef.current) {
+      try { rcVerifierRef.current.clear(); } catch (_) {}
+      rcVerifierRef.current = null;
+    }
+    container.innerHTML = '';
 
-      try {
-        // FIX: use getCustomerAuth() — NOT the delivery boy's `auth` import
-        recaptchaVerifierRef.current = new RecaptchaVerifier(
-          getCustomerAuth(),
-          'delivery-boy-recaptcha',
-          {
-            size: 'invisible',
-            callback: (response) => {
-              // Optional: handle successful reCAPTCHA verification
-              console.log('reCAPTCHA verified');
-            },
-            'expired-callback': () => clearRecaptcha(),
-          }
-        );
-        recaptchaVerifierRef.current
-          .render()
-          .then(() => { recaptchaRenderedRef.current = true; resolve(recaptchaVerifierRef.current); })
-          .catch(err => { clearRecaptcha(); reject(err); });
-      } catch (err) { clearRecaptcha(); reject(err); }
-    });
-  }, [clearRecaptcha]);
+    try {
+      // ✅ CORRECT constructor: (auth, containerIdString, optionsObject)
+      // Passing a single object OR swapping arg order causes the
+      // "deprecated parameters" warning + Enterprise config failure.
+      rcVerifierRef.current = new RecaptchaVerifier(
+        getCustomerAuth(),          // secondary app auth — not the delivery boy's
+        'delivery-boy-recaptcha',   // container ID as a STRING (2nd arg)
+        {                           // options object (3rd arg)
+          size: 'invisible',
+          callback: () => {},
+          'expired-callback': () => clearRecaptcha(),
+        }
+      );
+      rcVerifierRef.current.render()
+        .then(() => { rcRenderedRef.current = true; resolve(rcVerifierRef.current); })
+        .catch(err => { clearRecaptcha(); reject(err); });
+    } catch (err) { clearRecaptcha(); reject(err); }
+  }), [clearRecaptcha]);
 
   useEffect(() => () => clearRecaptcha(), [clearRecaptcha]);
 
-  // ── Fetch my orders ───────────────────────────────────────────────────────
+  // ── Fetch orders ──────────────────────────────────────────────────────────
   const fetchMyOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${API_URL}/orders/my-deliveries`, {
+      const token = await getDeliveryBoyToken();
+      const res   = await fetch(`${API_URL}/orders/my-deliveries`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success) setMyOrders(data.data || []);
-    } catch (err) {
-      console.error('Error fetching my deliveries:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [API_URL, token]);
+    } catch (err) { console.error('fetchMyOrders:', err); }
+    finally { setLoading(false); }
+  }, [API_URL, getDeliveryBoyToken]);
 
   useEffect(() => {
     fetchMyOrders();
-    const interval = setInterval(fetchMyOrders, 30000);
-    return () => clearInterval(interval);
+    const id = setInterval(fetchMyOrders, 30000);
+    return () => clearInterval(id);
   }, [fetchMyOrders]);
 
   // ── Mark picked up ────────────────────────────────────────────────────────
   const markPickedUp = async (orderId) => {
     try {
-      const res  = await fetch(`${API_URL}/orders/${orderId}/status`, {
+      const token = await getDeliveryBoyToken();
+      const res   = await fetch(`${API_URL}/orders/${orderId}/status`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body:    JSON.stringify({ status: 'out-for-delivery' }),
@@ -175,18 +184,16 @@ const DeliveryBoyApp = () => {
       const data = await res.json();
       if (data.success) fetchMyOrders();
       else alert(data.message || 'Failed to update status');
-    } catch { console.error('Error marking picked up'); }
+    } catch { console.error('markPickedUp failed'); }
   };
 
-  // FIX: resetOtpDigits defined here (above JSX) — original was inside return,
-  // causing a ReferenceError when the Clear button tried to call it.
+  // ── OTP helpers ───────────────────────────────────────────────────────────
   const resetOtpDigits = useCallback(() => {
     setOtpDigits(BLANK_OTP);
     setOtpError('');
     setTimeout(() => otpRefs.current[0]?.focus(), 50);
   }, []);
 
-  // ── Open OTP modal ────────────────────────────────────────────────────────
   const openOtpModal = (order) => {
     setActiveOrder(order);
     setOtpStep('send');
@@ -208,7 +215,7 @@ const DeliveryBoyApp = () => {
     clearRecaptcha();
   };
 
-  // ── Send OTP to customer phone ────────────────────────────────────────────
+  // ── Send OTP ──────────────────────────────────────────────────────────────
   const handleSendOtp = async () => {
     const phone = normalisePhone(activeOrder?.customer?.phone);
     if (phone.length !== 10) { setOtpError('Customer phone number is invalid.'); return; }
@@ -218,16 +225,10 @@ const DeliveryBoyApp = () => {
     try {
       const verifier = await initRecaptcha();
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('reCAPTCHA timeout')), 15000)
-      );
-
-      // FIX: signInWithPhoneNumber uses getCustomerAuth() (secondary app),
-      // NOT the primary `auth`. This means the OTP session lives in a separate
-      // Firebase app instance and confirm() will never sign out the delivery boy.
+      // signInWithPhoneNumber on the SECONDARY app — delivery boy's session untouched
       const confirmation = await Promise.race([
         signInWithPhoneNumber(getCustomerAuth(), `+91${phone}`, verifier),
-        timeoutPromise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('reCAPTCHA timeout')), 15000)),
       ]);
 
       setConfirmationResult(confirmation);
@@ -237,81 +238,59 @@ const DeliveryBoyApp = () => {
       setTimeout(() => otpRefs.current[0]?.focus(), 150);
     } catch (err) {
       clearRecaptcha();
-      if (err.message === 'reCAPTCHA timeout' || err.code === 'auth/network-request-failed') {
-        setOtpError('reCAPTCHA verification timed out. Please try again.');
-      } else if (err.code === 'auth/too-many-requests') {
+      if (err.message === 'reCAPTCHA timeout' || err.code === 'auth/network-request-failed')
+        setOtpError('reCAPTCHA timed out. Please try again.');
+      else if (err.code === 'auth/too-many-requests')
         setOtpError('Too many attempts. Wait a few minutes.');
-      } else if (err.code === 'auth/invalid-phone-number') {
+      else if (err.code === 'auth/invalid-phone-number')
         setOtpError('Customer phone number is invalid.');
-      } else {
+      else
         setOtpError('Failed to send OTP. Try again.');
-      }
-    } finally {
-      setSendingOtp(false);
-    }
+    } finally { setSendingOtp(false); }
   };
 
-  // ── OTP input handling ────────────────────────────────────────────────────
-  const handleOtpChange = (index, value) => {
+  // ── OTP input ─────────────────────────────────────────────────────────────
+  const handleOtpChange = (i, value) => {
     if (!/^\d*$/.test(value)) return;
     const next = [...otpDigits];
-    next[index] = value;
+    next[i] = value;
     setOtpDigits(next);
     setOtpError('');
-    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+    if (value && i < 5) otpRefs.current[i + 1]?.focus();
     if (next.every(d => d) && next.join('').length === 6) handleVerifyOtp(next.join(''));
   };
 
-  const handleOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otpDigits[index] && index > 0)
-      otpRefs.current[index - 1]?.focus();
+  const handleOtpKeyDown = (i, e) => {
+    if (e.key === 'Backspace' && !otpDigits[i] && i > 0)
+      otpRefs.current[i - 1]?.focus();
   };
 
-  // ── Verify OTP then mark delivered ───────────────────────────────────────
+  // ── Verify OTP + mark delivered ───────────────────────────────────────────
   const handleVerifyOtp = async (otpOverride) => {
     const val = otpOverride || otpDigits.join('');
-    if (val.length < 6)        { setOtpError('Enter all 6 digits.'); return; }
-    if (isVerifyingRef.current) return;
-    if (!confirmationResult)   { setOtpError('Please send OTP first.'); return; }
+    if (val.length < 6)         { setOtpError('Enter all 6 digits.'); return; }
+    if (isVerifyingRef.current)  return;
+    if (!confirmationResult)    { setOtpError('Please send OTP first.'); return; }
     isVerifyingRef.current = true;
 
     setVerifying(true);
     setOtpError('');
     try {
-      console.log('🔐 Verifying OTP:', val);
-      // FIX: confirm() runs on the secondary app's confirmationResult.
-      // Delivery boy's primary `auth` currentUser is completely untouched,
-      // so their localStorage JWT token remains valid for the backend call below.
+      // confirm() runs on the secondary app — delivery boy's primary auth untouched
       await confirmationResult.confirm(val);
-      console.log('✅ OTP verified successfully');
 
-      console.log('🚚 Marking order delivered:', activeOrder._id);
-      console.log('🔑 Using delivery boy token:', token ? 'Present' : 'Missing');
-      console.log('📋 Full order details:', activeOrder);
-      console.log('👤 Delivery boy ID from order:', activeOrder.delivery?.deliveryPerson?.id);
-      
-      // Check if this order belongs to the current delivery boy
-      const deliveryBoyId = activeOrder.delivery?.deliveryPerson?.id;
-      if (!deliveryBoyId) {
-        console.error('❌ No delivery person assigned to this order');
-        throw new Error('Order is not assigned to any delivery person');
-      }
-
-      console.log('🔗 Making API call to:', `${API_URL}/orders/${activeOrder._id}/status`);
-      console.log('📤 Request body:', JSON.stringify({ status: 'delivered' }));
+      // ✅ Get a FRESH delivery-boy token AFTER confirm() to be safe.
+      // Even if the secondary app's confirm() somehow triggered an auth event,
+      // auth.currentUser still refers to the delivery boy (primary app is separate),
+      // so getIdToken() returns their valid token.
+      const freshToken = await getDeliveryBoyToken();
 
       const res  = await fetch(`${API_URL}/orders/${activeOrder._id}/status`, {
         method:  'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${freshToken}` },
         body:    JSON.stringify({ status: 'delivered' }),
       });
-      
-      console.log('📡 Delivery API Response Status:', res.status);
-      console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
-      
       const data = await res.json();
-      console.log('📦 Delivery API Response:', data);
-      
       if (!data.success) throw new Error(data.message || 'Failed to mark delivered');
 
       setOtpStep('success');
@@ -363,6 +342,7 @@ const DeliveryBoyApp = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="dba-page">
+      {/* Hidden reCAPTCHA anchor — always in DOM */}
       <div id="delivery-boy-recaptcha" style={{ display: 'none' }} />
 
       <div className="dba-header">
@@ -419,6 +399,7 @@ const DeliveryBoyApp = () => {
 
             return (
               <div key={order._id} className={`dba-order-card ${order.status}`}>
+
                 <div className="dba-order-card-header">
                   <div className="dba-order-meta">
                     <span className="dba-order-number">{order.orderNumber}</span>
@@ -502,6 +483,7 @@ const DeliveryBoyApp = () => {
                     </a>
                   )}
                 </div>
+
               </div>
             );
           })}
