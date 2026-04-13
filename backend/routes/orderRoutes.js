@@ -74,29 +74,7 @@ router.post('/:id/rating', protect, rateOrder);
 
 router.get('/', protect, adminOnly, getAllOrders);
 
-router.put('/:id/status', protect, async (req, res, next) => {
-  console.log('🔧 Status middleware - User role:', req.user?.role, 'ID:', req.user?._id);
-  
-  try {
-    // Admin OR delivery_partner can update (removed strict assignment check for testing)
-    if (req.user && (req.user.role === 'admin' || req.user.isAdmin === true || req.user.role === 'delivery_partner')) {
-      console.log('✅ Status update allowed for', req.user.role);
-      return next();
-    }
-    
-    console.log('❌ Access denied - role:', req.user?.role);
-    res.status(401).json({
-      success: false,
-      error: 'Admin or delivery partner access required'
-    });
-  } catch (error) {
-    console.error('Error in order status middleware:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Server error validating access'
-    });
-  }
-}, updateOrderStatus);
+router.put('/:id/status', protect, deliveryBoy, updateOrderStatus);
 
 router.put('/:id/assign-delivery', protect, adminOnly, assignDeliveryBoy);
 
