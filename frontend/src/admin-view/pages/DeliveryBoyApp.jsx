@@ -413,20 +413,25 @@ const DeliveryBoyApp = () => {
       const data = await res.json();
       console.log('📦 Status update data:', data);
       
-      if (!data.success) {
-        console.error('❌ Status update failed:', data.message);
-        if (data.message === 'Admin access required') {
-          setOtpError('❌ Permission denied: This order may not be assigned to you or there\'s an account configuration issue.');
-        } else if (data.message === 'You can only update status for orders assigned to you') {
-          setOtpError('❌ Assignment mismatch: This order is not assigned to your delivery account.');
-        } else {
-          setOtpError(`❌ ${data.message || 'Failed to update order status'}`);
-        }
-      } else {
-        setOtpStep('success');
-        fetchMyOrders();
-        setTimeout(closeOtpModal, 3000);
+      if (!res.ok) {
+        console.error('❌ Status update failed - HTTP', res.status, data);
+        let errorMsg = data.error || data.message || `HTTP ${res.status}`;
+        if (res.status === 401) errorMsg = 'Token expired - login again';
+        else if (res.status === 403) errorMsg = data.error || 'Access denied';
+        setOtpError(`❌ ${errorMsg}`);
+        return;
       }
+
+      if (!data.success) {
+        console.error('❌ Status update failed:', data);
+        setOtpError(`❌ ${data.error || data.message || 'Update failed'}`);
+        return;
+      }
+
+      console.log('✅ Status update success');
+      setOtpStep('success');
+      fetchMyOrders();
+      setTimeout(closeOtpModal, 3000);
     } catch (err) {
       if      (err.code === 'auth/code-expired')              setOtpError('OTP expired. Please resend.');
       else if (err.code === 'auth/invalid-verification-code') setOtpError('Incorrect OTP. Ask the customer again.');

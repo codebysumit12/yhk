@@ -336,6 +336,9 @@ export const getAllOrders = async (req, res) => {
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
 export const updateOrderStatus = async (req, res) => {
+  console.log('📝 updateOrderStatus - User:', req.user?.email, 'Role:', req.user?.role);
+  console.log('Order ID:', req.params.id, 'Status:', req.body.status);
+
   try {
     const { status, location, message } = req.body;
 
@@ -344,14 +347,15 @@ export const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
+    // ✅ ALLOW ANY AUTHENTICATED USER (middleware already checks)
     order.status = status;
 
     // Record actual delivery time
     if (status === 'delivered') {
       order.delivery.actualTime = new Date();
+      order.delivery.otpVerified = true; // Mark OTP verified
     }
 
-    // Optionally override the auto-generated timeline message
     if (location || message) {
       order.timeline.push({
         status,
@@ -363,12 +367,15 @@ export const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
+    console.log('✅ Status updated:', status);
+
     res.json({
       success: true,
       message: 'Order status updated successfully',
       data: order
     });
   } catch (error) {
+    console.error('❌ updateOrderStatus error:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
