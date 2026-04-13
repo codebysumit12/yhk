@@ -18,7 +18,8 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: false, // Always optional for Firebase
-    trim: true
+    trim: true,
+    default: null // Ensure null instead of empty string
   },
   password: {
     type: String,
