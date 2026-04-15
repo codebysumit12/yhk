@@ -77,7 +77,7 @@ export const adminOnly = (req, res, next) => {
 // @desc    Delivery partner middleware
 // @access  Private/Delivery
 export const deliveryBoy = (req, res, next) => {
-  if (req.user && req.user.role === 'delivery_partner') {
+  if (req.user && (req.user.role === 'delivery_partner' || req.user.role === 'admin' || req.user.isAdmin === true)) {
     next();
   } else {
     res.status(403).json({

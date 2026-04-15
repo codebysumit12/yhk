@@ -15,7 +15,7 @@ cd project-root/frontend
 npm ci --force
 npm run build
 
-echo "2. Preparing backend files..."
+echo "2. Preparing deployment files..."
 cd ../..
 cp -r project-root/backend ./deployment-backend/
 cp server.js ./deployment-backend/
@@ -40,6 +40,7 @@ ssh ${DROPLET_USER}@${DROPLET_IP} << 'EOF'
     
     # Update backend files
     sudo rm -rf /var/www/yhk/backend
+    sudo rm -rf /var/www/yhk/server.js
     sudo mkdir -p /var/www/yhk
     sudo cp -r deployment-backend/* /var/www/yhk/
     
@@ -53,20 +54,13 @@ ssh ${DROPLET_USER}@${DROPLET_IP} << 'EOF'
     
     # Update database with new roles
     cd /var/www/yhk
-    node -e "
-    const mongoose = require('mongoose');
-    const User = require('./models/User');
+    node --experimental-modules -e "
+    import mongoose from 'mongoose';
+    import User from './backend/models/User.js';
     
     mongoose.connect('mongodb://localhost:27017/yhk')
       .then(async () => {
         console.log('Connected to MongoDB');
-        
-        // Update User schema to include delivery_partner
-        const userSchema = User.schema;
-        if (!userSchema.paths.role.enumValues.includes('delivery_partner')) {
-          userSchema.paths.role.enumValues.push('delivery_partner');
-          console.log('Added delivery_partner to role enum');
-        }
         
         // Create/update delivery partner
         const delivery = await User.findOneAndUpdate(

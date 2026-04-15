@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_CONFIG } from '../config/api';
-import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
-import { auth } from '../firebase';
+// Firebase imports removed - using MSG91 OTP system
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import './Auth.css';
 
@@ -470,12 +469,13 @@ function AuthInner() {
     if (recaptchaRef.current) { try { recaptchaRef.current.clear(); } catch(_) {} recaptchaRef.current = null; }
     el.innerHTML = '';
     try {
-      recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-root', {
-        size:'invisible', 
-        callback:()=>{}, 
-        'expired-callback':()=>clearRecaptcha(),
-        timeout: 10000 // Set 10 second timeout
-      });
+      // Mock RecaptchaVerifier for MSG91 compatibility
+      recaptchaRef.current = {
+        verify: () => Promise.resolve(),
+        clear: () => {},
+        render: () => Promise.resolve(0),
+        getResponse: () => 'mock-token',
+      };
       recaptchaRef.current.render()
         .then(() => { recaptchaRendered.current = true; res(recaptchaRef.current); })
         .catch(err => { clearRecaptcha(); rej(err); });
@@ -563,14 +563,21 @@ function AuthInner() {
     setPhoneError(''); setIsSendingOTP(true);
     try {
       const verifier = await initRecaptcha();
-      // Add timeout wrapper for signInWithPhoneNumber
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('reCAPTCHA timeout')), 15000)
-      );
-      const result = await Promise.race([
-        signInWithPhoneNumber(auth, `+91${phone}`, verifier),
-        timeoutPromise
-      ]);
+      // Use MSG91 OTP API instead of Firebase
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone: `+91${phone}` })
+      });
+      
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to send OTP');
+      }
+      
+      const result = { confirm: () => Promise.resolve() }; // Mock for compatibility
       setConfirmResult(result);
       otpExpiredRef.current = false; setOtpExpiredState(false);
       setOtpDigits(['','','','','','']); setOtpError('');
@@ -614,27 +621,45 @@ function AuthInner() {
     if (otpExpiredRef.current) { setOtpError('OTP expired. Resend a new one.'); return; }
     isVerifyingRef.current = true; setIsVerifyingOTP(true);
     try {
-      const result = await confirmResult.confirm(val);
-      const ph = result.user.phoneNumber;
+      // Verify OTP using MSG91 API
+      const verifyResponse = await fetch(`${API_CONFIG.BASE_URL}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          phone: `+91${phone}`,
+          otp: val,
+          name: 'User' 
+        })
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyData.success) {
+        throw new Error(verifyData.message || 'Invalid OTP');
+      }
+
+      const ph = `+91${phone}`;
       try {
         const r = await fetch(`${API_CONFIG.API_URL}/auth/firebase-login`, {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ uid:result.user.uid, phone:ph, name:null, email:null }),
+          body: JSON.stringify({ uid:verifyData.user?.id || 'temp-uid', phone:ph, name:verifyData.user?.name || null, email:verifyData.user?.email || null }),
         });
         const data = await r.json();
         if (data.success) {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
-          setGlobalSuccess('Phone verified! Redirecting…');
+          setGlobalSuccess('Phone verified! Redirecting...');
           setTimeout(() => redirect(data.user), 900);
         } else {
           localStorage.setItem('verifiedPhone', ph);
-          setGlobalSuccess('Verified! Redirecting…');
+          setGlobalSuccess('Verified! Redirecting...');
           setTimeout(() => navigate('/'), 900);
         }
       } catch {
         localStorage.setItem('verifiedPhone', ph);
-        setGlobalSuccess('Verified! Redirecting…');
+        setGlobalSuccess('Verified! Redirecting...');
         setTimeout(() => navigate('/'), 900);
       }
     } catch(err) {
@@ -642,7 +667,7 @@ function AuthInner() {
       else if (err.code === 'auth/invalid-verification-code') setOtpError('Incorrect OTP. Try again.');
       else setOtpError('Verification failed. Try again.');
     } finally { setIsVerifyingOTP(false); isVerifyingRef.current = false; }
-  }, [otpDigits, confirmResult, redirect, navigate]);
+  }, [otpDigits, redirect, navigate]);
 
   useEffect(() => { handleVerifyOTPRef.current = handleVerifyOTP; }, [handleVerifyOTP]);
 

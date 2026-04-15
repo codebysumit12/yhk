@@ -123,7 +123,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
             <div className="logo-icon001">
               <img src="/logo116.png" alt="Yeswanth's Healthy Kitchen" className="logo-img001" />
             </div>
-              Yeswanth's Healthy Kitchens
+              Yeswanth's Healthy Kitchen
           </Link>
           
           <div className="header-search">
@@ -277,18 +277,7 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
           />
           <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
             <div className="mobile-menu-content">
-              <div className="mobile-menu-header">
-                <a href="/" className="mobile-logo">
-                  <img src="/logo192.png" alt="Yeswanth's Healthy Kitchen" className="mobile-logo-img" />
-                  Yeswanth's Healthy Kitchen
-                </a>
-                <button 
-                  className="close-btn"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
+             
               
               <div className="mobile-nav">
                 <button 
@@ -298,15 +287,20 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
                   <i className="fas fa-map-marker-alt"></i>
                   Track My Order
                 </button>
-                {user && (
-                  <button 
+                <button 
                     className="mobile-nav-link my-orders-btn"
-                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/my-orders'); }}
+                    onClick={() => { 
+                      setMobileMenuOpen(false); 
+                      if (user) {
+                        handleDropdownClick('/my-orders');
+                      } else {
+                        handleDropdownClick('/auth');
+                      }
+                    }}
                   >
                     <i className="fas fa-receipt"></i>
                     My Orders
                   </button>
-                )}
                 <button 
                   className="mobile-nav-link cart-btn"
                   onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/cart'); }}
@@ -317,31 +311,37 @@ const Nav = ({ onOpenCart, cart, showCart, setShowCart }) => {
                     <span className="cart-count-badge">{cartCount}</span>
                   )}
                 </button>
+                <button 
+                  className="mobile-nav-link"
+                  onClick={() => { 
+                    setMobileMenuOpen(false); 
+                    if (user) {
+                      handleDropdownClick('/profile');
+                    } else {
+                      handleDropdownClick('/auth');
+                    }
+                  }}
+                >
+                  <i className="fas fa-user-circle"></i>
+                  Profile
+                </button>
                 {user && (
                   <button 
-                    className="mobile-nav-link"
-                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/profile'); }}
-                  >
-                    <i className="fas fa-user-circle"></i>
-                    Profile
-                  </button>
-                )}
-              </div>
-              
-              <div className="mobile-menu-actions">
-                {user ? (
-                  <button 
-                    className="mobile-logout-btn"
+                    className="mobile-nav-link mobile-logout-btn"
                     onClick={handleLogout}
                   >
                     <i className="fas fa-sign-out-alt"></i>
                     Logout
                   </button>
-                ) : (
-                  <Link to="/auth" className="mobile-login-btn" onClick={() => setMobileMenuOpen(false)}>
+                )}
+                {!user && (
+                  <button 
+                    className="mobile-nav-link mobile-login-btn"
+                    onClick={() => { setMobileMenuOpen(false); handleDropdownClick('/auth'); }}
+                  >
                     <i className="fas fa-user"></i>
                     Login / Sign Up
-                  </Link>
+                  </button>
                 )}
               </div>
             </div>

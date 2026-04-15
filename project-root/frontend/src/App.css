@@ -771,9 +771,15 @@ i, .fas, .far, .fab, .fa {
 }
 
 @media (max-width: 768px) {
+    body {
+        font-size: 1px; /* base size for whole app */
+    }
+    
+
     .header-top {
         flex-wrap: wrap;
         gap: 15px;
+        font-size: 1px;
     }
     
     .header-search {

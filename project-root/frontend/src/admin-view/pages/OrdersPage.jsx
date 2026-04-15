@@ -471,7 +471,7 @@ const submitCancellation = async () => {
                   {/* Items */}
                   <td>
                     <div className="items-count">
-                      {order.orderItems.length} item{order.orderItems.length !== 1 ? 's' : ''}
+                      {order.orderItems?.length || 0} item{(order.orderItems?.length || 0) !== 1 ? 's' : ''}
                     </div>
                   </td>
 
@@ -652,7 +652,7 @@ const submitCancellation = async () => {
                 <div className="info-card full-width">
                   <h4>🍽️ Order Items</h4>
                   <div className="order-items-list">
-                    {selectedOrder.orderItems.map((item, index) => (
+                    {(selectedOrder.orderItems || []).map((item, index) => (
                       <div key={index} className="order-item-row">
                         <div className="item-image">
                           {item.image ? <img src={item.image} alt={item.name} /> : <div className="no-image">🍽️</div>}
@@ -698,7 +698,7 @@ const submitCancellation = async () => {
           </div>
           <div className="info-row">
             <span>Customer:</span>
-            <strong>{orderToCancel.customer.name}</strong>
+            <strong>{orderToCancel.customer?.name || 'Unknown Customer'}</strong>
           </div>
           <div className="info-row">
             <span>Total Amount:</span>
@@ -761,7 +761,7 @@ const submitCancellation = async () => {
                   <div className="info-content">
                     <p><strong>Name:</strong> <CustomerName order={selectedOrder} cacheRef={customerNamesRef} API_URL={API_URL} token={token} /></p>
                     <p><strong>Email:</strong> {selectedOrder.customer?.email || 'Not provided'}</p>
-                    <p><strong>Phone:</strong> {selectedOrder.customer?.phone}</p>
+                    <p><strong>Phone:</strong> {selectedOrder.customer?.phone || 'N/A'}</p>
                   </div>
                 </div>
 
@@ -786,9 +786,9 @@ const submitCancellation = async () => {
                   <div className="info-card">
                     <h4>📍 Delivery Address</h4>
                     <div className="info-content">
-                      <p>{selectedOrder.deliveryAddress.street}</p>
+                      <p>{selectedOrder.deliveryAddress.street || 'N/A'}</p>
                       {selectedOrder.deliveryAddress.apartment && <p>{selectedOrder.deliveryAddress.apartment}</p>}
-                      <p>{selectedOrder.deliveryAddress.city}, {selectedOrder.deliveryAddress.state} - {selectedOrder.deliveryAddress.zipCode}</p>
+                      <p>{selectedOrder.deliveryAddress.city || 'N/A'}, {selectedOrder.deliveryAddress.state || 'N/A'} - {selectedOrder.deliveryAddress.zipCode || 'N/A'}</p>
                       {selectedOrder.deliveryAddress.landmark && <p><strong>Landmark:</strong> {selectedOrder.deliveryAddress.landmark}</p>}
                     </div>
                   </div>
@@ -798,7 +798,7 @@ const submitCancellation = async () => {
                 <div className="info-card">
                   <h4>💳 Payment Information</h4>
                   <div className="info-content">
-                    <p><strong>Method:</strong> {selectedOrder.paymentMethod?.toUpperCase()}</p>
+                    <p><strong>Method:</strong> {selectedOrder.paymentMethod?.toUpperCase() || 'N/A'}</p>
                     <p>
                       <strong>Status:</strong>{' '}
                       <span className={`payment-badge ${selectedOrder.paymentStatus}`}>
@@ -844,14 +844,14 @@ const submitCancellation = async () => {
               <div className="info-card full-width">
                 <h4>💰 Pricing Breakdown</h4>
                 <div className="pricing-table">
-                  <div className="pricing-row"><span>Subtotal:</span><span>₹{selectedOrder.pricing.subtotal}</span></div>
-                  <div className="pricing-row"><span>Delivery Fee:</span><span>₹{selectedOrder.pricing.deliveryFee}</span></div>
-                  <div className="pricing-row"><span>Tax (5%):</span><span>₹{selectedOrder.pricing.tax.toFixed(2)}</span></div>
-                  {selectedOrder.pricing.discount > 0 && (
+                  <div className="pricing-row"><span>Subtotal:</span><span>₹{selectedOrder.pricing?.subtotal || 0}</span></div>
+                  <div className="pricing-row"><span>Delivery Fee:</span><span>₹{selectedOrder.pricing?.deliveryFee || 0}</span></div>
+                  <div className="pricing-row"><span>Tax (5%):</span><span>₹{(selectedOrder.pricing?.tax || 0).toFixed(2)}</span></div>
+                  {(selectedOrder.pricing?.discount || 0) > 0 && (
                     <div className="pricing-row discount"><span>Discount:</span><span>-₹{selectedOrder.pricing.discount}</span></div>
                   )}
                   <div className="pricing-row total">
-                    <strong>Total:</strong><strong>₹{selectedOrder.pricing.total.toFixed(2)}</strong>
+                    <strong>Total:</strong><strong>₹{(selectedOrder.pricing?.total || 0).toFixed(2)}</strong>
                   </div>
                 </div>
               </div>

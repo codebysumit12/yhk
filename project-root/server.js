@@ -3,19 +3,21 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import connectDB from './config/db.js';
+import connectDB from './backend/config/db.js';
 import fs from 'fs';
 
 // Load environment variables
 dotenv.config();
 
 // Import auth controller with nodemailer fix
-import { register, login, getMe, updateProfile, logout, handleDropdownClick } from './controllers/authController.js';
-import User from './models/User.js';
-import Banner from './models/Banner.js';
-import Category from './models/Category.js';
-import Item from './models/Item.js';
-import Order from './models/Order.js';
+import { register, login, getMe, updateProfile, logout } from './backend/controllers/authController.js';
+import User from './backend/models/User.js';
+import Banner from './backend/models/Banner.js';
+import Category from './backend/models/Category.js';
+import Item from './backend/models/Item.js';
+import Order from './backend/models/Order.js';
+import settingsRoutes from './backend/routes/settingsRoutes.js';
+import orderRoutes from './backend/routes/orderRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -144,26 +146,9 @@ app.get('/api/items', async (req, res) => {
   }
 });
 
-// Orders endpoint - using real MongoDB data
-app.get('/api/orders', async (req, res) => {
-  try {
-    // For now, return empty array since we don't have user authentication middleware
-    // In a real app, you'd get user ID from JWT token and filter by user
-    const orders = await Order.find({}).sort({ createdAt: -1 }).limit(10);
-    
-    res.json({
-      success: true,
-      data: orders,
-      count: orders.length
-    });
-  } catch (error) {
-    console.error('Orders endpoint error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching orders'
-    });
-  }
-});
+// Mount routes
+app.use('/api/settings', settingsRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Auth Routes with better error handling
 app.post('/api/auth/register', async (req, res, next) => {
@@ -231,18 +216,6 @@ app.post('/api/auth/logout', async (req, res, next) => {
   }
 });
 
-app.post('/api/auth/dropdown', async (req, res, next) => {
-  try {
-    await handleDropdownClick(req, res);
-  } catch (error) {
-    console.error('Dropdown route error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error handling dropdown action',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
 
 // Health check route
 app.get('/api/health', (req, res) => {

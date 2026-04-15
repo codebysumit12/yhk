@@ -17,6 +17,7 @@ import itemRoutes from './routes/itemRoutes.js';
 import bannerRoutes from './routes/bannerRoutes.js';
 import ingredientRoutes from './routes/ingredientRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import otpRoutes from './routes/otpRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import searchRoutes from './routes/searchRoutes.js'; // NEW - Search routes
 import simpleSearchRoutes from './routes/simpleSearchRoutes.js'; // NEW - Simple search routes
@@ -36,6 +37,7 @@ import './models/Reservation.js';
 import './models/Review.js';
 import './models/Payment.js';
 import './models/RestaurantInfo.js';
+import './models/Otp.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -110,6 +112,7 @@ connectDB();
 
 // ROUTES (Use each route ONCE only) - Updated with Razorpay
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', otpRoutes); // Add OTP routes to auth
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);        
 app.use('/api/payments', paymentRoutes);

@@ -1,57 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { API_CONFIG } from '../../config/api';
-import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { auth } from '../../firebase';
 import './delivery-boy-app.css';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Secondary Firebase app — isolates customer OTP from delivery boy's session.
-// confirm() on the secondary app never touches auth.currentUser on the primary,
-// so the delivery boy's localStorage JWT stays valid for backend calls.
-// ─────────────────────────────────────────────────────────────────────────────
-const getCustomerAuth = (() => {
-  let _auth = null;
-  return () => {
-    if (_auth) return _auth;
-    const existing    = getApps().find(a => a.name === 'customerOtp');
-    const defaultApp  = getApps().find(a => a.name === '[DEFAULT]');
-    const app         = existing ?? initializeApp(defaultApp.options, 'customerOtp');
-    _auth             = getAuth(app);
-    return _auth;
-  };
-})();
+// ── Token helper ──────────────────────────────────────────────────────────────
+// Backend issues its own JWT at login — always read from localStorage.
+const getToken = () => localStorage.getItem('token') || localStorage.getItem('userToken') || '';
 
-// ─── Token helper ─────────────────────────────────────────────────────────────
-// Your backend issues its own JWT at login (stored as 'token' or 'userToken').
-// NEVER call auth.currentUser.getIdToken() here — that returns a Firebase ID
-// token which your backend middleware does not accept, causing 401s.
-const getToken = () => {
-  const token = localStorage.getItem('token') || localStorage.getItem('userToken') || '';
-  const userData = localStorage.getItem('user');
-  
-  console.log('Token debug - Retrieved token:', token ? `${token.substring(0, 20)}...` : 'null');
-  console.log('Token debug - User data:', userData);
-  
-  if (userData) {
-    try {
-      const user = JSON.parse(userData);
-      console.log('User role debug:', user.role);
-      console.log('User isAdmin debug:', user.isAdmin);
-      
-      if (user.role !== 'delivery_partner' && user.role !== 'delivery_partner') {
-        console.error('🚨 Role mismatch: User role is', user.role, 'but delivery_partner required');
-      }
-    } catch (e) {
-      console.error('Error parsing user data:', e);
-    }
-  }
-  
-  return token;
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const buildMapsUrl = (addr) => {
   if (!addr) return null;
   const lat = addr.coordinates?.lat ?? addr.lat;
@@ -96,12 +51,9 @@ const DeliveryBoyApp = () => {
   const [sendingOtp,         setSendingOtp]         = useState(false);
   const [verifying,          setVerifying]          = useState(false);
   const [resendTimer,        setResendTimer]        = useState(0);
-  const [confirmationResult, setConfirmationResult] = useState(null);
 
   const otpRefs        = useRef([]);
   const isVerifyingRef = useRef(false);
-  const rcVerifierRef  = useRef(null);
-  const rcRenderedRef  = useRef(false);
 
   const API_URL = API_CONFIG.API_URL;
 
@@ -112,129 +64,18 @@ const DeliveryBoyApp = () => {
     return () => clearTimeout(t);
   }, [resendTimer]);
 
-  // ── reCAPTCHA ─────────────────────────────────────────────────────────────
-  const clearRecaptcha = useCallback(() => {
-    if (rcVerifierRef.current) {
-      try { rcVerifierRef.current.clear(); } catch (e) { console.warn('reCAPTCHA clear:', e); }
-      rcVerifierRef.current = null;
-    }
-    const el = document.getElementById('delivery-boy-recaptcha');
-    if (el) {
-      el.innerHTML = '';
-      el.textContent = '';
-    }
-    rcRenderedRef.current = false;
-  }, []);
-
-  const initRecaptcha = useCallback(() => new Promise((resolve, reject) => {
-    if (rcRenderedRef.current && rcVerifierRef.current) {
-      resolve(rcVerifierRef.current); return;
-    }
-    const container = document.getElementById('delivery-boy-recaptcha');
-    if (!container) { reject(new Error('reCAPTCHA container missing')); return; }
-
-    if (rcVerifierRef.current) {
-      try { rcVerifierRef.current.clear(); } catch (_) {}
-      rcVerifierRef.current = null;
-    }
-    container.innerHTML = '';
-
-    try {
-      // ✅ Correct 3-arg constructor: (auth, containerIdString, optionsObject)
-      // Using getCustomerAuth() so reCAPTCHA is tied to the secondary app
-      rcVerifierRef.current = new RecaptchaVerifier(
-        getCustomerAuth(),
-        'delivery-boy-recaptcha',
-        {
-          size: 'invisible',
-          defaultCountry: 'IN',
-          callback: () => {},
-          'expired-callback': () => clearRecaptcha(),
-        }
-      );
-      
-      // Add timeout and fallback for testing
-      const renderPromise = rcVerifierRef.current.render()
-        .then(() => { 
-          rcRenderedRef.current = true; 
-          console.log('✅ reCAPTCHA rendered successfully');
-          resolve(rcVerifierRef.current); 
-        })
-        .catch(err => { 
-          console.error('❌ reCAPTCHA render failed:', err);
-          
-          // Full fallback verifier (mock all Firebase methods)
-          if (err.code === 'auth/recaptcha-not-enabled' || err.message?.includes('reCAPTCHA') || err.message?.includes('already been rendered') || err.code === 'auth/internal-error') {
-            console.log('🔄 Full fallback verifier (handles internal-error/destroyed)');
-            const mockVerifier = {
-              verify: () => Promise.resolve(),
-              clear: () => {},
-              render: () => Promise.resolve(0),
-              _reset: () => {},
-              getResponse: () => 'fallback-token',
-            };
-            resolve(mockVerifier);
-          } else {
-            clearRecaptcha(); 
-            reject(err); 
-          }
-        });
-      
-      // Add overall timeout for reCAPTCHA initialization
-      setTimeout(() => {
-        if (!rcRenderedRef.current) {
-          console.warn('⚠️ reCAPTCHA initialization timeout - using fallback');
-          resolve({
-            verify: () => Promise.resolve(),
-            clear: () => {}
-          });
-        }
-      }, 10000);
-      
-    } catch (err) { 
-      console.error('❌ reCAPTCHA initialization error:', err);
-      // Fallback for any initialization error
-      resolve({
-        verify: () => Promise.resolve(),
-        clear: () => {}
-      });
-    }
-  }), [clearRecaptcha]);
-
-  useEffect(() => () => clearRecaptcha(), [clearRecaptcha]);
-
   // ── Fetch orders ──────────────────────────────────────────────────────────
   const fetchMyOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const token = getToken();
-      console.log('🔍 fetchMyOrders - Using token:', token ? `${token.substring(0, 20)}...` : 'null');
-      
       const res  = await fetch(`${API_URL}/orders/my-deliveries`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
-      
-      console.log('📡 fetchMyOrders - Response status:', res.status);
       const data = await res.json();
-      console.log('📦 fetchMyOrders - Response data:', data);
-      
-      if (data.success) {
-        setMyOrders(data.data || []);
-        console.log('✅ fetchMyOrders - Orders loaded:', data.data?.length || 0);
-      } else {
-        console.error('❌ my-deliveries error:', data.message);
-        if (data.message === 'Admin access required') {
-          console.error('🚨 User role issue - User may not have delivery_partner role');
-          setOtpError('❌ Access denied: Your account is not configured as a delivery partner. Please contact admin.');
-        } else {
-          setOtpError(`❌ ${data.message || 'Authentication failed'}`);
-        }
-      }
-    } catch (err) { 
-      console.error('❌ fetchMyOrders exception:', err); 
-    } finally { 
-      setLoading(false); 
-    }
+      if (data.success) setMyOrders(data.data || []);
+      else console.error('my-deliveries:', data.message);
+    } catch (err) { console.error('fetchMyOrders:', err); }
+    finally { setLoading(false); }
   }, [API_URL]);
 
   useEffect(() => {
@@ -264,47 +105,12 @@ const DeliveryBoyApp = () => {
     setTimeout(() => otpRefs.current[0]?.focus(), 50);
   }, []);
 
-  const [testMode, setTestMode] = useState(false);
-  
-  const testOtpWithTestData = async () => {
-    console.log('🧪 ACTIVATING TEST MODE...');
-    
-    // Use first active order or create test
-    let testOrder = activeOrders[0];
-    if (!testOrder) {
-      testOrder = {
-        _id: 'test-order-id',
-        orderNumber: 'TEST001',
-        customer: {
-          name: 'Test Customer',
-          phone: '9370337263'
-        },
-        delivery: {
-          deliveryPerson: { id: 'test-delivery-boy-id' }
-        }
-      };
-    }
-    
-    setTestMode(true);
-    setActiveOrder(testOrder);
-    setOtpStep('enter');  // Skip send, go direct to enter
-    setOtpDigits(['1','2','3','4','5','6']);
-    setOtpError('');
-    setConfirmationResult({ confirm: () => Promise.resolve() });  // Mock success
-    clearRecaptcha();
-    
-    console.log('✅ TEST MODE: Enter 123456 → auto-success. Toggle off after.');
-  };
-
   const openOtpModal = (order) => {
     setActiveOrder(order);
     setOtpStep('send');
     setOtpDigits(BLANK_OTP);
     setOtpError('');
-    setConfirmationResult(null);
     setResendTimer(0);
-    clearRecaptcha();
-    setTimeout(() => initRecaptcha().catch(() => {}), 800);
   };
 
   const closeOtpModal = () => {
@@ -313,58 +119,37 @@ const DeliveryBoyApp = () => {
     setOtpStep('send');
     setOtpDigits(BLANK_OTP);
     setOtpError('');
-    setConfirmationResult(null);
-    clearRecaptcha();
   };
 
-  // ── Send OTP ──────────────────────────────────────────────────────────────
+  // ── Send OTP via backend ──────────────────────────────────────────────────
+  // FIX Issue 6: was calling /auth/send-otp (doesn't exist).
+  // Correct endpoint: POST /api/orders/:id/send-otp
   const handleSendOtp = async () => {
-    if (testMode) {
-      setOtpError('✅ Test mode active - enter 123456');
-      setOtpStep('enter');
-      setOtpDigits(BLANK_OTP);
-      setTimeout(() => otpRefs.current[0]?.focus(), 150);
-      return;
-    }
-    
     const phone = normalisePhone(activeOrder?.customer?.phone);
     if (phone.length !== 10) { setOtpError('Customer phone number is invalid.'); return; }
 
     setSendingOtp(true);
     setOtpError('');
     try {
-      console.log('🚀 Attempting Firebase OTP send to +91' + phone);
-      const verifier = await initRecaptcha();
+      const res  = await fetch(`${API_URL}/orders/${activeOrder._id}/send-otp`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await res.json();
 
-      // Uses secondary app — delivery boy's primary auth.currentUser never changed
-      const confirmation = await Promise.race([
-        signInWithPhoneNumber(getCustomerAuth(), `+91${phone}`, verifier),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('reCAPTCHA timeout')), 15000)),
-      ]);
+      if (!data.success) throw new Error(data.message || 'Failed to send OTP');
 
-      console.log('✅ Firebase OTP sent successfully');
-      setConfirmationResult(confirmation);
       setOtpStep('enter');
       setResendTimer(45);
       setOtpDigits(BLANK_OTP);
       setTimeout(() => otpRefs.current[0]?.focus(), 150);
-    } catch (err) {
-      clearRecaptcha();
-      console.error('🚨 Firebase send OTP error:', err.code, err.message);
-      
-      if (err.code === 'auth/quota-exceeded') {
-        setOtpError('📱 SMS quota exceeded. Use TEST MODE (9370337263/123456) or wait 1hr.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setOtpError('⏳ Too many attempts. Wait 5-10 mins or use TEST MODE.');
-      } else if (err.code === 'auth/invalid-phone-number') {
-        setOtpError('❌ Invalid phone. Check format. Try TEST MODE.');
-      } else if (err.code === 'auth/network-request-failed' || err.message?.includes('timeout')) {
-        setOtpError('🌐 Network timeout. Check internet & try again.');
-      } else if (err.message?.includes('reCAPTCHA')) {
-        setOtpError('🔐 reCAPTCHA issue. Refresh page or use TEST MODE.');
-      } else {
-        setOtpError(`❌ Send failed: ${err.message.slice(0,50)}... Try TEST MODE.`);
+
+      // Dev helper: show OTP in console if backend returns it
+      if (data.data?.otp) {
+        console.log('🧪 Dev OTP:', data.data.otp);
       }
+    } catch (err) {
+      setOtpError(err.message || 'Failed to send OTP. Try again.');
     } finally { setSendingOtp(false); }
   };
 
@@ -384,54 +169,32 @@ const DeliveryBoyApp = () => {
       otpRefs.current[i - 1]?.focus();
   };
 
-  // ── Verify OTP + mark delivered ───────────────────────────────────────────
+  // ── Verify OTP via backend ────────────────────────────────────────────────
+  // FIX Issue 6: was calling /auth/verify-otp (doesn't exist).
+  // Correct endpoint: POST /api/orders/:id/verify-otp
   const handleVerifyOtp = async (otpOverride) => {
     const val = otpOverride || otpDigits.join('');
     if (val.length < 6)         { setOtpError('Enter all 6 digits.'); return; }
     if (isVerifyingRef.current)  return;
-    if (!confirmationResult)    { setOtpError('Please send OTP first.'); return; }
     isVerifyingRef.current = true;
 
     setVerifying(true);
     setOtpError('');
     try {
-      // confirm() on secondary app — primary auth untouched, localStorage JWT intact
-      await confirmationResult.confirm(val);
-
-      // getToken() reads localStorage — always gets delivery boy's own backend JWT
-      console.log('🚚 Updating order:', activeOrder._id, 'to delivered');
-      console.log('👤 Delivery boy ID from token:', JSON.parse(localStorage.getItem('user') || '{}')._id);
-      console.log('👤 Delivery boy ID from order:', activeOrder.delivery?.deliveryPerson?.id);
-      
-      const res  = await fetch(`${API_URL}/orders/${activeOrder._id}/status`, {
-        method:  'PUT',
+      const res  = await fetch(`${API_URL}/orders/${activeOrder._id}/verify-otp`, {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-        body:    JSON.stringify({ status: 'delivered' }),
+        body:    JSON.stringify({ otp: val }),
       });
-      
-      console.log('📡 Status update response:', res.status);
       const data = await res.json();
-      console.log('📦 Status update data:', data);
-      
-      if (!data.success) {
-        console.error('❌ Status update failed:', data.message);
-        if (data.message === 'Admin access required') {
-          setOtpError('❌ Permission denied: This order may not be assigned to you or there\'s an account configuration issue.');
-        } else if (data.message === 'You can only update status for orders assigned to you') {
-          setOtpError('❌ Assignment mismatch: This order is not assigned to your delivery account.');
-        } else {
-          setOtpError(`❌ ${data.message || 'Failed to update order status'}`);
-        }
-      } else {
-        setOtpStep('success');
-        fetchMyOrders();
-        setTimeout(closeOtpModal, 3000);
-      }
+
+      if (!data.success) throw new Error(data.message || 'OTP verification failed');
+
+      setOtpStep('success');
+      fetchMyOrders();
+      setTimeout(closeOtpModal, 3000);
     } catch (err) {
-      if      (err.code === 'auth/code-expired')              setOtpError('OTP expired. Please resend.');
-      else if (err.code === 'auth/invalid-verification-code') setOtpError('Incorrect OTP. Ask the customer again.');
-      else if (err.message)                                   setOtpError(err.message);
-      else                                                    setOtpError('Verification failed. Try again.');
+      setOtpError(err.message || 'Verification failed. Try again.');
       setOtpDigits(BLANK_OTP);
       setTimeout(() => otpRefs.current[0]?.focus(), 50);
     } finally {
@@ -448,11 +211,9 @@ const DeliveryBoyApp = () => {
 
   const handleResend = () => {
     if (resendTimer > 0) return;
-    clearRecaptcha();
     setOtpStep('send');
     setOtpDigits(BLANK_OTP);
     setOtpError('');
-    setConfirmationResult(null);
   };
 
   // ── Derived lists ─────────────────────────────────────────────────────────
@@ -473,7 +234,6 @@ const DeliveryBoyApp = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="dba-page">
-      <div id="delivery-boy-recaptcha" style={{ display: 'none' }} />
 
       <div className="dba-header">
         <div className="dba-header-left">
@@ -526,6 +286,8 @@ const DeliveryBoyApp = () => {
             const addrLines = formatFullAddress(order.deliveryAddress);
             const mapsUrl   = buildMapsUrl(order.deliveryAddress);
             const hasCoords = (order.deliveryAddress?.coordinates?.lat ?? order.deliveryAddress?.lat) != null;
+            const customerName  = order.userId?.name  || order.customer?.name  || 'Customer';
+            const customerPhone = order.userId?.phone || order.customer?.phone || '';
 
             return (
               <div key={order._id} className={`dba-order-card ${order.status}`}>
@@ -550,10 +312,12 @@ const DeliveryBoyApp = () => {
                   <div className="dba-info-row">
                     <span className="dba-info-icon">👤</span>
                     <div>
-                      <strong>{order.customer.name}</strong>
-                      <a href={`tel:${order.customer.phone}`} className="dba-phone-link">
-                        📞 {order.customer.phone}
-                      </a>
+                      <strong>{customerName}</strong>
+                      {customerPhone && (
+                        <a href={`tel:${customerPhone}`} className="dba-phone-link">
+                          📞 {customerPhone}
+                        </a>
+                      )}
                     </div>
                   </div>
                   <div className="dba-info-row">
@@ -620,6 +384,7 @@ const DeliveryBoyApp = () => {
         </div>
       )}
 
+      {/* ── OTP Modal ───────────────────────────────────────────────────────── */}
       {activeOrder && (
         <div className="modal-overlay" onClick={closeOtpModal}>
           <div className="dba-otp-modal" onClick={e => e.stopPropagation()}>
@@ -642,8 +407,8 @@ const DeliveryBoyApp = () => {
                 <div className="dba-otp-body">
                   <div className="dba-otp-order-summary">
                     <p><strong>Order:</strong>    {activeOrder.orderNumber}</p>
-                    <p><strong>Customer:</strong> {activeOrder.customer.name}</p>
-                    <p><strong>Phone:</strong>    {activeOrder.customer.phone}</p>
+                    <p><strong>Customer:</strong> {activeOrder.userId?.name || activeOrder.customer?.name}</p>
+                    <p><strong>Phone:</strong>    {activeOrder.userId?.phone || activeOrder.customer?.phone}</p>
                     <p><strong>Address:</strong>  {formatFullAddress(activeOrder.deliveryAddress).join(', ')}</p>
                     {activeOrder.paymentMethod === 'cod' && (
                       <p className="dba-cod-collect">
@@ -677,11 +442,11 @@ const DeliveryBoyApp = () => {
                     borderRadius: 10, border: '1px solid #86efac',
                     fontSize: 13, marginBottom: 16,
                   }}>
-                    ✅ OTP sent to <strong>{activeOrder.customer.phone}</strong>. Ask the customer for the code.
+                    ✅ OTP sent to <strong>{activeOrder.userId?.phone || activeOrder.customer?.phone}</strong>. Ask the customer for the code.
                   </div>
                   <div className="dba-otp-order-summary">
                     <p><strong>Order:</strong>    {activeOrder.orderNumber}</p>
-                    <p><strong>Customer:</strong> {activeOrder.customer.name}</p>
+                    <p><strong>Customer:</strong> {activeOrder.userId?.name || activeOrder.customer?.name}</p>
                     {activeOrder.paymentMethod === 'cod' && (
                       <p className="dba-cod-collect">
                         💵 Collect <strong>₹{activeOrder.pricing?.total}</strong> cash from customer
