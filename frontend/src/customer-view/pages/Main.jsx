@@ -51,25 +51,71 @@ const Main = ({ restaurants }) => {
     fetchHeroBanner();
   }, []);
 
-  // Fetch categories
+  // Fetch categories with ratings
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategoriesWithRatings = async () => {
       setLoadingCategories(true);
       try {
         console.log('🔍 Main: Fetching categories...');
-        const response = await fetch(`${API_CONFIG.API_URL}/categories?isActive=true`);
-        const data = await response.json();
-        console.log('✅ Main: Categories loaded:', data.data?.length || 0);
-        if (data.success) {
-          setCategories(data.data);
+        const categoriesResponse = await fetch(`${API_CONFIG.API_URL}/categories?isActive=true`);
+        const categoriesData = await categoriesResponse.json();
+        
+        if (!categoriesData.success) {
+          throw new Error('Failed to fetch categories');
         }
+
+        console.log('✅ Main: Categories loaded:', categoriesData.data?.length || 0);
+
+        // Fetch items to calculate category ratings
+        const itemsResponse = await fetch(`${API_CONFIG.API_URL}/items?isAvailable=true`);
+        const itemsData = await itemsResponse.json();
+        
+        if (!itemsData.success) {
+          throw new Error('Failed to fetch items');
+        }
+
+        const items = itemsData.data;
+        
+        // Calculate ratings for each category
+        const categoriesWithRatings = categoriesData.data.map(category => {
+          const categoryItems = items.filter(item => {
+            const itemCategoryId = item.categoryId ? 
+              (typeof item.categoryId === 'object' ? item.categoryId._id : item.categoryId) 
+              : null;
+            return itemCategoryId === category._id;
+          });
+
+          // Calculate average rating for the category
+          let totalRating = 0;
+          let ratingCount = 0;
+          let totalRatingsCount = 0;
+
+          categoryItems.forEach(item => {
+            if (item.ratings && item.ratings.count > 0) {
+              totalRating += item.ratings.average * item.ratings.count;
+              totalRatingsCount += item.ratings.count;
+              ratingCount++;
+            }
+          });
+
+          const avgRating = totalRatingsCount > 0 ? totalRating / totalRatingsCount : 0;
+
+          return {
+            ...category,
+            avgRating: avgRating.toFixed(1),
+            itemCount: categoryItems.length
+          };
+        });
+
+        console.log('✅ Main: Categories with ratings calculated:', categoriesWithRatings);
+        setCategories(categoriesWithRatings);
       } catch (error) {
         console.error('❌ Main: Categories fetch error:', error);
       } finally {
         setLoadingCategories(false);
       }
     };
-    fetchCategories();
+    fetchCategoriesWithRatings();
   }, []);
 
   const handleFilterClick = (filter) => {
@@ -132,24 +178,18 @@ const Main = ({ restaurants }) => {
           >
             <i className="fas fa-border-all"></i> All
           </button>
-          <button 
-            className={`filter-btn ${activeFilter === 'rating' ? 'active' : ''}`} 
-            onClick={() => handleFilterClick('rating')}
-          >
+          <Link to="/trending" className="filter-btn">
             <i className="fas fa-star"></i> Top Rated
-          </button>
+          </Link>
           <button 
             className={`filter-btn ${activeFilter === 'fast' ? 'active' : ''}`} 
             onClick={() => handleFilterClick('fast')}
           >
             <i className="fas fa-bolt"></i> Fast Delivery
           </button>
-          <button 
-            className={`filter-btn ${activeFilter === 'offer' ? 'active' : ''}`} 
-            onClick={() => handleFilterClick('offer')}
-          >
+          <Link to="/offers" className="filter-btn">
             <i className="fas fa-tag"></i> Offers
-          </button>
+          </Link>
         </div>
 
         {/* Categories Grid */}
@@ -186,7 +226,7 @@ const Main = ({ restaurants }) => {
                   {category.description || 'Delicious food options'}
                 </div>
                 <div className="restaurant-details">
-                  <span className="rating">★ {category.avgRating || '4.5'}</span>
+                  <span className="rating">★ {category.avgRating > 0 ? category.avgRating : 'No ratings'}</span>
                   <span className="delivery-time">🍽️ {category.itemCount || 0} items</span>
                 </div>
               </div>

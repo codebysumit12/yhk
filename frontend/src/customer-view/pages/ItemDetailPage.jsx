@@ -5,6 +5,7 @@ import CartSidebar from './CartSidebar';
 import CartNotification from './CartNotification';
 import YHKLoader from './Yhkloader';
 import './ItemDetailPage.css';
+import './Main.css';
 
 const ItemDetailPage = () => {
   const { id } = useParams();
@@ -127,6 +128,22 @@ const ItemDetailPage = () => {
         onViewCart={handleViewCart}
         onClose={() => setShowNotification(false)}
       />
+
+      {/* Floating Cart Button */}
+      {console.log('Cart state:', cart) || cart.length > 0 && (
+        <button 
+          className="floating-cart"
+          onClick={handleViewCart}
+          style={{ display: 'block' }}
+        >
+          <i className="fas fa-shopping-cart"></i>
+          {cart.reduce((total, item) => total + item.quantity, 0) > 0 && (
+            <span className="cart-count-badge">
+              {cart.reduce((total, item) => total + item.quantity, 0)}
+            </span>
+          )}
+        </button>
+      )}
 
       <div className="item-detail-page">
         <div className="item-detail-container">

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import YHKLoader from './Yhkloader';
+import CartSidebar from './CartSidebar';
 import { API_CONFIG } from '../../config/api';
 import './Menu.css';
+import './Main.css';
 
 const API_URL = API_CONFIG.API_URL;
 
@@ -15,7 +17,10 @@ const RelatedItems = () => {
   const [relatedItems, setRelatedItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
   const [showCart, setShowCart] = useState(false);
   const [isCategoryView, setIsCategoryView] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -117,6 +122,12 @@ const RelatedItems = () => {
     setCart(cart.filter(item => item.id !== itemId));
   };
 
+  // Sync cart with localStorage
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('storage'));
+  }, [cart]);
+
   const handleItemClick = (item) => {
     // Navigate to recipe details if recipe details exist
     if (item.recipeDetails) {
@@ -133,6 +144,22 @@ const RelatedItems = () => {
 
   return (
     <>
+      {/* Floating Cart Button */}
+      {console.log('RelatedItems Cart:', cart) || (
+        <button 
+          className="floating-cart"
+          onClick={() => setShowCart(true)}
+          style={{ display: 'block' }}
+        >
+          <i className="fas fa-shopping-cart"></i>
+          {cart.reduce((total, item) => total + item.quantity, 0) > 0 && (
+            <span className="cart-count-badge">
+              {cart.reduce((total, item) => total + item.quantity, 0)}
+            </span>
+          )}
+        </button>
+      )}
+
       {/* Hero Section */}
       <section className="menu-hero">
         <div className="menu-hero-content">
@@ -235,6 +262,13 @@ const RelatedItems = () => {
           © 2024 Yeswanth's Healthy Kitchen - All rights reserved
         </div>
       </footer>
+
+      <CartSidebar
+        isOpen={showCart}
+        onClose={() => setShowCart(false)}
+        cart={cart}
+        setCart={setCart}
+      />
     </>
   );
 };

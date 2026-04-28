@@ -3,25 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { API_CONFIG } from '../../config/api';
 import { calculateOrderPricing } from '../services/pricingService';
 import './Checkout.css';
-import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { auth } from '../../firebase';
+// Firebase imports removed - using MSG91 OTP system
 
-// ── Secondary Firebase app for customer OTP ───────────────────────────────────
-let _checkoutCustomerAuth;
-const getCheckoutCustomerAuth = () => {
-  if (_checkoutCustomerAuth) return _checkoutCustomerAuth;
-  const primaryApp = getApps().find(a => a.name === '[DEFAULT]');
-  const config = primaryApp?.options;
-  const secondaryApp =
-    getApps().find(a => a.name === 'checkoutCustomerOtp') ||
-    initializeApp(config, 'checkoutCustomerOtp');
-  _checkoutCustomerAuth = getAuth(secondaryApp);
-  // Disable reCAPTCHA Enterprise for secondary app
-  _checkoutCustomerAuth.settings.appVerificationDisabledForTesting = true;
-  return _checkoutCustomerAuth;
-};
+// ──// Mock auth function for MSG91 compatibility
+const getCheckoutCustomerAuth = () => null;
 
 const Checkoutpage = () => {
   const navigate = useNavigate();
@@ -183,19 +168,13 @@ const Checkoutpage = () => {
       container.innerHTML = '';
 
       try {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(
-          getCheckoutCustomerAuth(),
-          'checkout-recaptcha-container',
-          {
-            size: 'invisible',
-            callback: () => console.log('✅ reCAPTCHA solved'),
-            'expired-callback': () => {
-              console.warn('⚠️ reCAPTCHA expired');
-              clearRecaptcha();
-            },
-            timeout: 10000 // Set 10 second timeout
-          }
-        );
+        // Mock RecaptchaVerifier for MSG91 compatibility
+        recaptchaVerifierRef.current = {
+          verify: () => Promise.resolve(),
+          clear: () => {},
+          render: () => Promise.resolve(0),
+          getResponse: () => 'mock-token',
+        };
 
         // render() returns a promise that resolves when the widget is ready
         recaptchaVerifierRef.current
@@ -237,23 +216,24 @@ const Checkoutpage = () => {
     setIsSendingOTP(true);
 
     try {
-      // FIX: always call initRecaptcha() — the guard inside will reuse or re-init
+      // FIX: always call initRecaptcha() - the guard inside will reuse or re-init
       const verifier = await initRecaptcha();
 
-      // Add timeout wrapper for signInWithPhoneNumber
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('reCAPTCHA timeout')), 15000)
-      );
+      // Use MSG91 OTP API instead of Firebase
+      const response = await fetch(`${API_CONFIG.API_URL}/auth/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone: `+91${phoneNumber}` })
+      });
       
-      const confirmation = await Promise.race([
-        signInWithPhoneNumber(
-          getCheckoutCustomerAuth(),
-          `+91${phoneNumber}`,
-          verifier
-        ),
-        timeoutPromise
-      ]);
-
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to send OTP');
+      }
+      
+      const confirmation = { confirm: () => Promise.resolve() }; // Mock for compatibility
       setConfirmationResult(confirmation);
 
       // Reset all OTP state atomically before switching step
@@ -266,9 +246,9 @@ const Checkoutpage = () => {
       setResendTimer(45);
       setPhoneStep('otp'); // switch step LAST
 
-      console.log('✅ OTP sent');
+      console.log(' OTP sent');
     } catch (error) {
-      console.error('❌ OTP send error:', error);
+      console.error(' OTP send error:', error);
 
       if (error.message === 'reCAPTCHA timeout' || error.code === 'auth/network-request-failed') {
         alert('reCAPTCHA verification timed out. Please try again.');
@@ -325,42 +305,58 @@ const Checkoutpage = () => {
     const otpValue = otpOverride || otp.join('');
     if (otpValue.length < 6) { setOtpError(true); return; }
 
-    // ← THE KEY FIX: block double-calls
+    // THE KEY FIX: block double-calls
     if (isVerifyingRef.current) return;
     isVerifyingRef.current = true;
 
     if (otpExpiredRef.current) {
       setOtpErrorMsg('OTP has expired. Please request a new one.');
       setOtpError(true);
-      setPhoneStep('input');
+      setTimeout(() => setPhoneStep('input'), 2000);
       isVerifyingRef.current = false;
       return;
     }
 
     try {
-      if (!confirmationResult) throw new Error('No confirmation result. Please request OTP again.');
-      const result = await confirmationResult.confirm(otpValue);
+      // Verify OTP using MSG91 API
+      const verifyResponse = await fetch(`${API_CONFIG.API_URL}/auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          phone: `+91${phoneNumber}`,
+          otp: otpValue,
+          name: 'Customer' 
+        })
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyData.success) {
+        throw new Error(verifyData.message || 'Invalid OTP');
+      }
 
       setOtpError(false);
-      localStorage.setItem('verifiedPhone', result.user.phoneNumber);
+      localStorage.setItem('verifiedPhone', `+91${phoneNumber}`);
       setPhoneStep('verified');
       
-      // FIX: Stop OTP timer immediately on successful verification
+      // Stop OTP timer immediately on successful verification
       otpExpiredRef.current = false;
       setOtpExpiredDisplay(false);
       setOtpExpiryTimer(0);
       
-      console.log('✅ Phone verified:', result.user.phoneNumber);
+      console.log(' Phone verified:', `+91${phoneNumber}`);
     } catch (error) {
-      console.error('❌ OTP verify error:', error);
+      console.error(' OTP verify error:', error);
 
-      if (error.code === 'auth/code-expired') {
+      if (error.message?.includes('expired')) {
         otpExpiredRef.current = true;
         setOtpExpiredDisplay(true);
         setOtpErrorMsg('OTP has expired. Please request a new one.');
         setOtpError(true);
         setTimeout(() => setPhoneStep('input'), 2000);
-      } else if (error.code === 'auth/invalid-verification-code') {
+      } else if (error.message?.includes('Invalid')) {
         setOtpErrorMsg('Incorrect OTP. Please check and try again.');
         setOtpError(true);
       } else {
@@ -368,11 +364,11 @@ const Checkoutpage = () => {
         setOtpError(true);
       }
     } finally {
-      isVerifyingRef.current = false;  // ← always reset
+      isVerifyingRef.current = false;  // always reset
     }
   };
 
-  // FIX: resend — clear first, THEN send (initRecaptcha inside handleSendOTP handles re-init)
+  // FIX: resend - clear first, THEN send (initRecaptcha inside handleSendOTP handles re-init)
   const handleResendOTP = useCallback(async () => {
     if (resendTimer > 0) return;
     clearRecaptcha();

@@ -2277,6 +2277,15 @@
 
 /* Responsive for Recipe Detail */
 @media (max-width: 1024px) {
+
+    .add-btn,
+    .add-btn-small{
+        padding: 4px 4px !important;
+        font-size: 8px !important;
+        min-height: 18px !important;
+        border-radius: 3px !important;
+    }
+
     .recipe-detail-layout {
         grid-template-columns: 1fr;
     }
@@ -2307,6 +2316,31 @@
 }
 
 @media (max-width: 768px) {
+
+    
+    .add-btn,
+    .add-btn-small{
+        /* Increase font size for better readability */
+        font-size: 8px !important; 
+        
+        /* Increase padding for a larger touch target (min 44px height recommended) */
+        padding: 5px 10px !important;
+        
+        /* Ensure it doesn't overflow its container */
+        width: 30% !important; 
+        min-width: 100px;
+        min-height: 44px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+
+    /* Keep price and button in same row, align button to left */
+    .menu-item-pricing {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+    
     .recipe-detail-container {
         padding: 20px;
     }

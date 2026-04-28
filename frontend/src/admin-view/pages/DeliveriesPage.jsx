@@ -3,15 +3,13 @@ import { API_CONFIG } from '../../config/api';
 import './deliveries-page.css';
 
 const DeliveriesPage = () => {
-  const [deliveries,     setDeliveries]     = useState([]);
-  const [deliveryBoys,   setDeliveryBoys]   = useState([]);
-  const [loading,        setLoading]        = useState(false);
-  const [filterStatus,   setFilterStatus]   = useState('all');
-  const [searchTerm,     setSearchTerm]     = useState('');
+  const [deliveries,       setDeliveries]       = useState([]);
+  const [deliveryBoys,     setDeliveryBoys]     = useState([]);
+  const [loading,          setLoading]          = useState(false);
+  const [filterStatus,     setFilterStatus]     = useState('all');
+  const [searchTerm,       setSearchTerm]       = useState('');
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-
-  // Per-row assign dropdown selections: { [orderId]: boyId }
   const [assignSelections, setAssignSelections] = useState({});
   const [assigningId,      setAssigningId]      = useState(null);
 
@@ -22,11 +20,11 @@ const DeliveriesPage = () => {
   const fetchDeliveries = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(
+      const res  = await fetch(
         `${API_URL}/orders?status=ready,out-for-delivery,delivered`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const data = await response.json();
+      const data = await res.json();
       if (data.success) setDeliveries(data.data || []);
     } catch (err) {
       console.error('Error fetching deliveries:', err);
@@ -38,10 +36,10 @@ const DeliveriesPage = () => {
   // ── Fetch delivery boys ───────────────────────────────────────────────────
   const fetchDeliveryBoys = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/users`, {
+      const res  = await fetch(`${API_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json();
+      const data = await res.json();
       if (data.success) {
         setDeliveryBoys(
           (data.data || []).filter(u => u.role === 'delivery_partner' && u.isActive)
@@ -63,12 +61,12 @@ const DeliveriesPage = () => {
     if (!boyId) return;
     setAssigningId(orderId);
     try {
-      const response = await fetch(`${API_URL}/orders/${orderId}/assign-delivery`, {
+      const res  = await fetch(`${API_URL}/orders/${orderId}/assign-delivery`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body:    JSON.stringify({ deliveryBoyId: boyId }),
       });
-      const data = await response.json();
+      const data = await res.json();
       if (data.success) {
         await fetchDeliveries();
         await fetchDeliveryBoys();
@@ -83,15 +81,15 @@ const DeliveriesPage = () => {
     }
   };
 
-  // ── Dispatch order (ready → out-for-delivery) ─────────────────────────────
+  // ── Dispatch order ────────────────────────────────────────────────────────
   const dispatchOrder = async (orderId) => {
     try {
-      const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+      const res  = await fetch(`${API_URL}/orders/${orderId}/status`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body:    JSON.stringify({ status: 'out-for-delivery' }),
       });
-      const data = await response.json();
+      const data = await res.json();
       if (data.success) {
         fetchDeliveries();
         setShowDetailsModal(false);
@@ -103,7 +101,7 @@ const DeliveriesPage = () => {
     }
   };
 
-  // ── Filters ───────────────────────────────────────────────────────────────
+  // ── Derived ───────────────────────────────────────────────────────────────
   const filteredDeliveries = deliveries.filter(d => {
     const matchSearch =
       d.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,8 +144,8 @@ const DeliveriesPage = () => {
         <div className="delivery-person">
           <div className="dp-avatar">{assigned.name?.[0]?.toUpperCase() || '?'}</div>
           <div>
-            <strong>{assigned.name}</strong>
-            <small>{assigned.phone}</small>
+            <strong>{assigned.name || 'N/A'}</strong>
+            <small>{assigned.phone || 'N/A'}</small>
             {assigned.vehicleNumber && <small>🛵 {assigned.vehicleNumber}</small>}
           </div>
         </div>
@@ -258,51 +256,71 @@ const DeliveriesPage = () => {
             <tbody>
               {filteredDeliveries.map(delivery => (
                 <tr key={delivery._id}>
+
+                  {/* Order # */}
                   <td>
                     <span className="order-number">{delivery.orderNumber}</span>
                     <small className="order-date">{new Date(delivery.createdAt).toLocaleDateString()}</small>
                   </td>
+
+                  {/* Customer */}
                   <td>
                     <div className="customer-info">
-                      <strong>{delivery.customer.name}</strong>
-                      <small>{delivery.customer.phone}</small>
+                      <strong>{delivery.customer?.name || 'Guest Customer'}</strong>
+                      <small>{delivery.customer?.phone || 'N/A'}</small>
                     </div>
                   </td>
+
+                  {/* Address */}
                   <td>
                     <div className="address-info">
-                      <span>{delivery.deliveryAddress?.street}</span>
-                      {delivery.deliveryAddress?.city && <small>{delivery.deliveryAddress.city}</small>}
+                      <span>{delivery.deliveryAddress?.street || '—'}</span>
+                      {delivery.deliveryAddress?.city && (
+                        <small>{delivery.deliveryAddress.city}</small>
+                      )}
                     </div>
                   </td>
+
+                  {/* Amount */}
                   <td>
                     <span className="order-total">₹{delivery.pricing?.total || 0}</span>
                     <small className={`payment-badge ${delivery.paymentStatus}`}>
                       {delivery.paymentStatus?.toUpperCase()}
                     </small>
                   </td>
-                  <td><StatusBadge status={delivery.status} /></td>
-                  <td><AssignCell delivery={delivery} /></td>
-                  <td>
-                    <div className="table-actions">
 
-                      {/* View details */}
+                  {/* Status */}
+                  <td>
+                    <StatusBadge status={delivery.status} />
+                  </td>
+
+                  {/* Assigned Boy */}
+                  <td>
+                    <AssignCell delivery={delivery} />
+                  </td>
+
+                  {/* Actions */}
+                  <td style={{ textAlign: 'center' }}>
+                    <div className="table-actions">
                       <button
                         className="table-action-btn view"
                         title="View Details"
                         onClick={() => { setSelectedDelivery(delivery); setShowDetailsModal(true); }}
-                      >👁️</button>
-
-                      {/* Dispatch — only when assigned & ready */}
+                      >
+                        👁️
+                      </button>
                       {delivery.status === 'ready' && delivery.delivery?.deliveryPerson && (
                         <button
                           className="table-action-btn dispatch"
                           title="Dispatch for Delivery"
                           onClick={() => dispatchOrder(delivery._id)}
-                        >🚚</button>
+                        >
+                          🚚
+                        </button>
                       )}
-
                     </div>
                   </td>
+
                 </tr>
               ))}
             </tbody>
@@ -323,9 +341,9 @@ const DeliveriesPage = () => {
               <div className="info-card">
                 <h4>👤 Customer</h4>
                 <div className="info-content">
-                  <p><strong>Name:</strong>  {selectedDelivery.customer.name}</p>
-                  <p><strong>Phone:</strong> {selectedDelivery.customer.phone}</p>
-                  <p><strong>Email:</strong> {selectedDelivery.customer.email}</p>
+                  <p><strong>Name:</strong>  {selectedDelivery.customer?.name || 'Unknown Customer'}</p>
+                  <p><strong>Phone:</strong> {selectedDelivery.customer?.phone || 'N/A'}</p>
+                  <p><strong>Email:</strong> {selectedDelivery.customer?.email || 'N/A'}</p>
                 </div>
               </div>
 
@@ -348,10 +366,10 @@ const DeliveriesPage = () => {
               <div className="info-card">
                 <h4>📦 Order Info</h4>
                 <div className="info-content">
-                  <p><strong>Order #:</strong>  {selectedDelivery.orderNumber}</p>
-                  <p><strong>Items:</strong>    {selectedDelivery.orderItems?.length || 0}</p>
-                  <p><strong>Total:</strong>    ₹{selectedDelivery.pricing?.total || 0}</p>
-                  <p><strong>Payment:</strong>  {selectedDelivery.paymentMethod?.toUpperCase()}</p>
+                  <p><strong>Order #:</strong> {selectedDelivery.orderNumber}</p>
+                  <p><strong>Items:</strong>   {selectedDelivery.orderItems?.length || 0}</p>
+                  <p><strong>Total:</strong>   ₹{selectedDelivery.pricing?.total || 0}</p>
+                  <p><strong>Payment:</strong> {selectedDelivery.paymentMethod?.toUpperCase()}</p>
                 </div>
               </div>
 
@@ -359,9 +377,9 @@ const DeliveriesPage = () => {
                 <div className="info-card">
                   <h4>🛵 Delivery Boy</h4>
                   <div className="info-content">
-                    <p><strong>Name:</strong>    {selectedDelivery.delivery.deliveryPerson.name}</p>
-                    <p><strong>Phone:</strong>   {selectedDelivery.delivery.deliveryPerson.phone}</p>
-                    {selectedDelivery.delivery.deliveryPerson.vehicleNumber && (
+                    <p><strong>Name:</strong>  {selectedDelivery.delivery.deliveryPerson?.name || 'N/A'}</p>
+                    <p><strong>Phone:</strong> {selectedDelivery.delivery.deliveryPerson?.phone || 'N/A'}</p>
+                    {selectedDelivery.delivery.deliveryPerson?.vehicleNumber && (
                       <p><strong>Vehicle:</strong> {selectedDelivery.delivery.deliveryPerson.vehicleNumber}</p>
                     )}
                   </div>
@@ -375,7 +393,6 @@ const DeliveriesPage = () => {
                 </div>
               )}
 
-              {/* Dispatch action inside modal */}
               {selectedDelivery.status === 'ready' && selectedDelivery.delivery?.deliveryPerson && (
                 <div className="info-card full-width">
                   <button
@@ -388,7 +405,6 @@ const DeliveriesPage = () => {
                 </div>
               )}
 
-              {/* Info note when out for delivery */}
               {selectedDelivery.status === 'out-for-delivery' && (
                 <div className="info-card full-width" style={{
                   background: '#f0fdf4', border: '1px solid #86efac',

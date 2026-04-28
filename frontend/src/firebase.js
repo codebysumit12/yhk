@@ -1,29 +1,24 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Note: measurementId removed since we're not using Analytics
 const firebaseConfig = {
   apiKey: "AIzaSyA8Rk5ViCQQdjnTXv98iO9jADFmtg3LxDU",
   authDomain: "yeswanth-s-healthy-kitchen.firebaseapp.com",
   projectId: "yeswanth-s-healthy-kitchen",
   storageBucket: "yeswanth-s-healthy-kitchen.firebasestorage.app",
   messagingSenderId: "579329797638",
-  appId: "1:579329797638:web:a48a7f64634775117b1d87",
-  measurementId: "G-8B3TWW3YDZ"
+  appId: "1:579329797638:web:a48a7f64634775117b1d87"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
-// Initialize Firebase services
-export const auth = getAuth(app);
+// Initialize Firebase services (only Firestore since we use MSG91 for auth)
 export const db = getFirestore(app);
 
 // Export the app instance for use in other components
