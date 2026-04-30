@@ -1111,7 +1111,7 @@
   font-size: 1.1rem !important;
   font-family:'Gill Sans','Gill Sans MT',Calibri,'Trebuchet MS',sans-serif;
 
-  background: linear-gradient(to right, #afefc3, #1b261b);
+   background: linear-gradient(to right, #000000, #000000);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
