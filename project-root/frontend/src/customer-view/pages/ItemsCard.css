@@ -183,6 +183,78 @@
 }
 
 /* ========================================
+   RATING DISPLAY
+   ======================================== */
+
+.menu-item-rating {
+    margin-bottom: 12px;
+}
+
+.rating-stars {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.rating-stars .stars {
+    color: #fbbf24; /* ← Yellow/gold color for stars */
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.rating-stars .rating-text {
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.rating-stars.no-ratings .stars {
+    color: #d1d5db; /* ← Light gray for empty stars */
+}
+
+.rating-stars.no-ratings .rating-text {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ========================================
+   RELATED ITEMS RATING DISPLAY
+   ======================================== */
+
+.related-item-rating {
+    margin-bottom: 8px;
+}
+
+.related-item-rating .rating-stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.related-item-rating .rating-stars .stars {
+    color: #fbbf24; /* ← Yellow/gold color for stars */
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.related-item-rating .rating-stars .rating-text {
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.related-item-rating .rating-stars.no-ratings .stars {
+    color: #d1d5db; /* ← Light gray for empty stars */
+}
+
+.related-item-rating .rating-stars.no-ratings .rating-text {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ========================================
    PRICING SECTION
    ======================================== */
 

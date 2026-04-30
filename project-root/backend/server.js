@@ -58,9 +58,10 @@ app.use(cors({
     'http://127.0.0.1:3000', 
     'http://localhost:3001',
     'http://127.0.0.1:3001',
-        'https://sumitweb.xyz',
-    'https://www.sumitweb.xyz',
-    'http://www.sumitweb.xyz',
+    'https://yeswanthshealthykitchen.in',
+    'https://www.yeswanthshealthykitchen.in',
+    'http://www.yeswanthshealthykitchen.in',
+    'http://yeswanthshealthykitchen.in',
     /^https:\/\/.*\.netlify\.app$/,
     'http://159.65.144.135'
   ],

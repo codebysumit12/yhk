@@ -445,10 +445,7 @@ const Trending = () => {
                           <i className="fas fa-shopping-bag"></i>
                           <span>{item.orders || item.soldCount || 0} orders</span>
                         </div>
-                        <div className="trending-revenue">
-                          <i className="fas fa-rupee-sign"></i>
-                          <span>₹{Math.round(item.revenue || item.totalRevenue || 0).toLocaleString()} revenue</span>
-                        </div>
+                      
                       </div>
 
                       <div className="trending-item-pricing">

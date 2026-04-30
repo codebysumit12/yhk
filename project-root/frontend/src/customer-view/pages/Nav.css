@@ -46,7 +46,9 @@
     font-weight: 700;
     color: var(--zomato-red);
     text-decoration: none;
-    font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #000000, #000000);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
     
     letter-spacing: 1px;
 }
@@ -65,8 +67,8 @@
 
   .logo-img001 {
     border-radius: 8px;
-      width: 45px;
-      height: 45px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
 }
 
@@ -634,15 +636,30 @@
   color: #3b82f6 !important;
 }
 
-/* Cart button special orange styling */
-.mobile-nav button.cart-btn:hover {
-  border-left: 3px solid #f97316 !important;
-  background: linear-gradient(90deg, #fff7ed 0%, transparent 100%) !important;
-  color: #f97316 !important;
+/* Cart button default green styling */
+.mobile-nav button.cart-btn,
+.mobile-nav-link.cart-btn {
+  color: #22c55e !important;
 }
 
-.mobile-nav button.cart-btn:hover i {
-  color: #f97316 !important;
+.mobile-nav button.cart-btn i,
+.mobile-nav-link.cart-btn i,
+.cart-item i.fas.fa-shopping-cart {
+  color: #22c55e !important;
+}
+
+/* Cart button hover dark green styling */
+.mobile-nav button.cart-btn:hover,
+.mobile-nav-link.cart-btn:hover {
+  border-left: 3px solid #16a34a !important;
+  background: linear-gradient(90deg, #f0fdf4 0%, transparent 100%) !important;
+  color: #16a34a !important;
+}
+
+.mobile-nav button.cart-btn:hover i,
+.mobile-nav-link.cart-btn:hover i,
+.cart-item:hover i.fas.fa-shopping-cart {
+  color: #16a34a !important;
 }
 
 /* ========================================
@@ -1051,8 +1068,18 @@
 
 /* Large tablets and small desktops */
 @media (max-width: 900px) {
-  .hamburger-btn {
-    display: block !important;
+
+  
+  .header-actions .hamburger-btn {
+    display: flex !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 20px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    background: #f0fdf4 !important;
+    border: 1px solid #22c55e !important;
+    color: #22c55e !important;
   }
   
   .nav {
@@ -1060,13 +1087,13 @@
   }
   
   .header-actions {
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
+    position: absolute !important;
+    top: 28% !important;
+    right: 20px !important;
+    transform: translateY(-50%) !important;
     display: flex !important;
     align-items: center;
-    z-index: 1003;
+    z-index: 1003 !important;
   }
 
   .header-actions .profile-section,
@@ -1074,9 +1101,20 @@
     display: none !important;
   }
 
-  .header-actions .hamburger-btn {
+  .header-actions{
     margin: 0;
+    
   }
+
+
+  .logo001{
+  font-size: 1.1rem !important;
+  font-family:'Gill Sans','Gill Sans MT',Calibri,'Trebuchet MS',sans-serif;
+
+  background: linear-gradient(to right, #afefc3, #1b261b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 }
 
 @media (max-width: 480px) {

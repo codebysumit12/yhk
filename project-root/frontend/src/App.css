@@ -80,12 +80,13 @@ i, .fas, .far, .fab, .fa {
 
 /* Header Styles */
 .header {
-    background: #fff;
-    box-shadow: var(--shadow);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
+    /* Fresh green */
+/* Purple to pink */
+/* Premium dark blue */
+/* Purple to pink */
+/* Orange sunset */
+/* Fresh green */
+background: linear-gradient(to right, #00b09b, #96c93d);}
 
 .header-top {
     display: flex;

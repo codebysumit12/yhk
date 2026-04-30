@@ -530,6 +530,27 @@ const Menu = () => {
                           <div className="related-item-info">
                             <h4>{item.name}</h4>
                             <p>{item.description?.substring(0, 60)}...</p>
+                            
+                            {/* Rating Display for Related Items */}
+                            <div className="related-item-rating">
+                              {item.ratings && item.ratings.count > 0 ? (
+                                <div className="rating-stars">
+                                  <span className="stars">
+                                    {'★'.repeat(Math.round(item.ratings.average || 0))}
+                                    {'☆'.repeat(5 - Math.round(item.ratings.average || 0))}
+                                  </span>
+                                  <span className="rating-text">
+                                    {(item.ratings.average || 0).toFixed(1)} ({item.ratings.count})
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="rating-stars no-ratings">
+                                  <span className="stars">☆☆☆☆☆</span>
+                                  <span className="rating-text">No ratings</span>
+                                </div>
+                              )}
+                            </div>
+                            
                             <div className="related-item-pricing">
                               <span className="related-item-price">
                                 ₹{item.discountPrice || item.price}
@@ -699,6 +720,26 @@ const Menu = () => {
                     <div className="menu-item-info">
                       <h4>{item.name}</h4>
                       <p>{item.description || 'Delicious food item'}</p>
+
+                      {/* Rating Display */}
+                      <div className="menu-item-rating">
+                        {item.ratings && item.ratings.count > 0 ? (
+                          <div className="rating-stars">
+                            <span className="stars">
+                              {'★'.repeat(Math.round(item.ratings.average || 0))}
+                              {'☆'.repeat(5 - Math.round(item.ratings.average || 0))}
+                            </span>
+                            <span className="rating-text">
+                              {(item.ratings.average || 0).toFixed(1)} ({item.ratings.count})
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="rating-stars no-ratings">
+                            <span className="stars">☆☆☆☆☆</span>
+                            <span className="rating-text">No ratings</span>
+                          </div>
+                        )}
+                      </div>
 
                       <div className="menu-item-pricing">
                         <div className="price-info">

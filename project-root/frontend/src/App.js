@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
 import Auth from './pages/Auth';
 import CustomerLayout from './customer-view/layout/CustomerLayout';
 import Main from './customer-view/pages/Main';
@@ -94,6 +95,7 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="App">
         <Routes>
 
