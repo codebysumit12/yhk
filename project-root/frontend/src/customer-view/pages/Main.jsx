@@ -321,11 +321,7 @@ const Main = ({ restaurants }) => {
             </div>
           </div>
         </div>
-        <div className="footer-bottom">
-          <p>Yeswanth's Healthy Kitchen is a comprehensive food ordering and delivery platform that connects customers with local restaurants, providing a seamless dining experience with online ordering, real-time tracking, and secure payments.</p>
-          <p>By continuing past this page, you agree to our Terms of Service, Cookie Policy, Privacy Policy and Content Policies. All trademarks are properties of their respective owners.</p>
-          <p>2024 Yeswanth's Healthy Kitchen - All rights reserved</p>
-        </div>
+        
       </footer>
 
       </React.Fragment>
